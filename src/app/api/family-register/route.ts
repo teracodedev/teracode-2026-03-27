@@ -18,7 +18,7 @@ export async function GET(req: NextRequest) {
         ? {
             OR: [
               { name: { contains: q } },
-              { householders: { some: { OR: [
+              { householders: { is: { OR: [
                 { familyName: { contains: q } },
                 { givenName:  { contains: q } },
                 { familyNameKana: { contains: qKana, mode: "insensitive" } },

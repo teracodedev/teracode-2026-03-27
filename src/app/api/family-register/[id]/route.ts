@@ -17,7 +17,6 @@ export async function GET(_req: NextRequest, { params }: Params) {
       include: {
         householders: {
           include: { members: true },
-          orderBy: { createdAt: "asc" },
         },
       },
     });

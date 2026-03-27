@@ -62,6 +62,8 @@ export default function KakochoPage() {
     try {
       const params = new URLSearchParams();
       if (query) params.set("q", query);
+      params.set("sort", "nen");
+      params.set("order", "desc");
       const res = await fetchWithAuth("/api/kakocho?" + params);
       const data = await res.json();
       const rows = Array.isArray(data) ? data : [];

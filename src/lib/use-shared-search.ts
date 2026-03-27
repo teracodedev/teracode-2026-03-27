@@ -5,7 +5,11 @@ const STORAGE_KEY = "teracode_shared_search";
 export function useSharedSearch() {
   const [query, setQueryState] = useState(() => {
     if (typeof window === "undefined") return "";
-    return localStorage.getItem(STORAGE_KEY) ?? "";
+    try {
+      return localStorage.getItem(STORAGE_KEY) ?? "";
+    } catch {
+      return "";
+    }
   });
 
   // 他タブ・ページからの変更を同期
@@ -20,10 +24,14 @@ export function useSharedSearch() {
   const setQuery = (value: string) => {
     setQueryState(value);
     if (typeof window !== "undefined") {
-      if (value) {
-        localStorage.setItem(STORAGE_KEY, value);
-      } else {
-        localStorage.removeItem(STORAGE_KEY);
+      try {
+        if (value) {
+          localStorage.setItem(STORAGE_KEY, value);
+        } else {
+          localStorage.removeItem(STORAGE_KEY);
+        }
+      } catch {
+        // Storage が利用不可の環境ではメモリ状態のみ更新する
       }
     }
   };

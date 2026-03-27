@@ -65,7 +65,7 @@ export async function GET(request: NextRequest) {
           },
         },
       },
-      orderBy: { id: "asc" },
+      orderBy: [{ familyNameKana: "asc" }, { givenNameKana: "asc" }, { familyName: "asc" }],
     });
 
     return NextResponse.json(records);
