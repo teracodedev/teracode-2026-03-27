@@ -2,11 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getHouseholderDelegate, getHouseholderFieldMap, getHouseholderModelKind } from "@/lib/prisma-models";
 import { requireAuth } from "@/lib/require-auth";
 import { prisma } from "@/lib/prisma";
-<<<<<<< HEAD
-import { hiraganaToKatakana } from "@/lib/kana";
-=======
 import { toFullWidthKatakana } from "@/lib/yaml-utils";
->>>>>>> 793ba5f (temp)
 
 export const runtime = "nodejs";
 
@@ -16,11 +12,7 @@ export async function GET(request: NextRequest) {
   if (unauth) return unauth;
   const searchParams = request.nextUrl.searchParams;
   const query = searchParams.get("q") || "";
-<<<<<<< HEAD
-  const queryKana = hiraganaToKatakana(query);
-=======
   const queryKana = toFullWidthKatakana(query) || query;
->>>>>>> 793ba5f (temp)
   const activeOnly = searchParams.get("active") !== "false";
 
   try {

@@ -1,11 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getHouseholderFieldMap, getHouseholderModelKind, getMemberDelegate } from "@/lib/prisma-models";
 import { requireAuth } from "@/lib/require-auth";
-<<<<<<< HEAD
-import { hiraganaToKatakana } from "@/lib/kana";
-=======
 import { toFullWidthKatakana } from "@/lib/yaml-utils";
->>>>>>> 793ba5f (temp)
 
 export const runtime = "nodejs";
 
@@ -60,11 +56,7 @@ export async function GET(request: NextRequest) {
 
   const sp = request.nextUrl.searchParams;
   const query   = sp.get("q") || "";
-<<<<<<< HEAD
-  const queryKana = hiraganaToKatakana(query);
-=======
   const queryKana = toFullWidthKatakana(query) || query;
->>>>>>> 793ba5f (temp)
   const sort    = (sp.get("sort") || "nen") as SortMode;
   const order   = (sp.get("order") || "asc") as "asc" | "desc";
   const era     = sp.get("era") || "";
