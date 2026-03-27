@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/require-auth";
+import { hiraganaToKatakana } from "@/lib/kana";
 
 export const runtime = "nodejs";
 
@@ -9,6 +10,7 @@ export async function GET(req: NextRequest) {
   if (unauth) return unauth;
 
   const q = req.nextUrl.searchParams.get("q")?.trim() || "";
+  const qKana = hiraganaToKatakana(q);
 
   try {
     const registers = await prisma.familyRegister.findMany({
@@ -19,8 +21,8 @@ export async function GET(req: NextRequest) {
               { householders: { some: { OR: [
                 { familyName: { contains: q } },
                 { givenName:  { contains: q } },
-                { familyNameKana: { contains: q } },
-                { givenNameKana:  { contains: q } },
+                { familyNameKana: { contains: qKana } },
+                { givenNameKana:  { contains: qKana } },
               ] } } },
             ],
           }

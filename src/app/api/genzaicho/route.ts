@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getHouseholderFieldMap, getHouseholderModelKind, getMemberDelegate } from "@/lib/prisma-models";
 import { requireAuth } from "@/lib/require-auth";
+import { hiraganaToKatakana } from "@/lib/kana";
 
 export const runtime = "nodejs";
 
@@ -11,6 +12,7 @@ export async function GET(request: NextRequest) {
 
   const searchParams = request.nextUrl.searchParams;
   const query = searchParams.get("q") || "";
+  const queryKana = hiraganaToKatakana(query);
 
   try {
     const kind = getHouseholderModelKind();
@@ -31,8 +33,8 @@ export async function GET(request: NextRequest) {
           ? [
               { familyName: { contains: query, mode: "insensitive" } },
               { givenName: { contains: query, mode: "insensitive" } },
-              { familyNameKana: { contains: query, mode: "insensitive" } },
-              { givenNameKana: { contains: query, mode: "insensitive" } },
+              { familyNameKana: { contains: queryKana, mode: "insensitive" } },
+              { givenNameKana: { contains: queryKana, mode: "insensitive" } },
               { relation: { contains: query, mode: "insensitive" } },
               { [relationName]: { familyName: { contains: query, mode: "insensitive" } } },
               { [relationName]: { givenName: { contains: query, mode: "insensitive" } } },

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getHouseholderFieldMap, getHouseholderModelKind, getMemberDelegate } from "@/lib/prisma-models";
 import { requireAuth } from "@/lib/require-auth";
+import { hiraganaToKatakana } from "@/lib/kana";
 
 export const runtime = "nodejs";
 
@@ -55,6 +56,7 @@ export async function GET(request: NextRequest) {
 
   const sp = request.nextUrl.searchParams;
   const query   = sp.get("q") || "";
+  const queryKana = hiraganaToKatakana(query);
   const sort    = (sp.get("sort") || "nen") as SortMode;
   const order   = (sp.get("order") || "asc") as "asc" | "desc";
   const era     = sp.get("era") || "";
@@ -95,10 +97,10 @@ export async function GET(request: NextRequest) {
       baseFilter.OR = [
         { familyName:     { contains: query, mode: "insensitive" } },
         { givenName:      { contains: query, mode: "insensitive" } },
-        { familyNameKana: { contains: query, mode: "insensitive" } },
-        { givenNameKana:  { contains: query, mode: "insensitive" } },
+        { familyNameKana: { contains: queryKana, mode: "insensitive" } },
+        { givenNameKana:  { contains: queryKana, mode: "insensitive" } },
         { dharmaName:     { contains: query, mode: "insensitive" } },
-        { dharmaNameKana: { contains: query, mode: "insensitive" } },
+        { dharmaNameKana: { contains: queryKana, mode: "insensitive" } },
         { [relationName]: { familyName: { contains: query, mode: "insensitive" } } },
       ];
     }
