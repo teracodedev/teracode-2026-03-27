@@ -106,7 +106,7 @@ export default function FamilyRegisterDetailPage({ params }: { params: Promise<{
   const [kakochoForm, setKakochoForm] = useState({ deathDate: "", dharmaName: "", dharmaNameKana: "" });
   const [savingKakocho, setSavingKakocho] = useState(false);
 
-  // 別のへ移動 モーダル
+  // 別の世帯へ移動 モーダル
   const [moveModal, setMoveModal] = useState<{ memberId: string; householderId: string; memberName: string } | null>(null);
   const [moveQuery, setMoveQuery] = useState("");
   const [moveResults, setMoveResults] = useState<{ id: string; familyName: string; givenName: string }[]>([]);
@@ -287,7 +287,7 @@ export default function FamilyRegisterDetailPage({ params }: { params: Promise<{
     fetchData();
   };
 
-  // 別のへ移動 - 検索
+  // 別の世帯へ移動 - 検索
   const searchMoveTargets = async (q: string) => {
     if (!q.trim()) { setMoveResults([]); return; }
     const res = await fetchWithAuth(`/api/householder?q=${encodeURIComponent(q)}`);
@@ -295,7 +295,7 @@ export default function FamilyRegisterDetailPage({ params }: { params: Promise<{
     setMoveResults(Array.isArray(rows) ? rows : []);
   };
 
-  // 別のへ移動 - 実行
+  // 別の世帯へ移動 - 実行
   const handleMoveTo = async () => {
     if (!moveModal || !moveTargetId) return;
     setSavingMove(true);
@@ -665,7 +665,7 @@ export default function FamilyRegisterDetailPage({ params }: { params: Promise<{
                                   setMoveModal({ memberId: m.id, householderId: m.householderId, memberName });
                                 }}
                                 className="w-full text-left px-4 py-2 text-sm text-stone-700 hover:bg-stone-50">
-                                別のへ移動
+                                別の世帯へ移動
                               </button>
                               <button
                                 onClick={() => {
@@ -827,11 +827,11 @@ export default function FamilyRegisterDetailPage({ params }: { params: Promise<{
         </div>
       )}
 
-      {/* 別のへ移動 モーダル */}
+      {/* 別の世帯へ移動 モーダル */}
       {moveModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
           <div className="bg-white rounded-xl p-6 w-full max-w-sm space-y-4 shadow-xl mx-4">
-            <h3 className="font-bold text-stone-700">別のへ移動</h3>
+            <h3 className="font-bold text-stone-700">別の世帯へ移動</h3>
             <p className="text-sm text-stone-500">
               <span className="font-medium text-stone-700">{moveModal.memberName}</span> の移動先の戸主を選択してください。
             </p>

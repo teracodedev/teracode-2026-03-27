@@ -545,7 +545,7 @@ export default function HouseholderDetailPage({ params }: { params: Promise<{ id
             href={`/family-register/${householder.familyRegister.id}`}
             className="border border-amber-200 text-amber-700 px-4 py-1.5 rounded-lg hover:bg-amber-50 transition-colors text-sm font-medium"
           >
-            家族・親族台帳へ
+            所属する家族・親族台帳へ
           </Link>
         )}
         <a href={`/api/householder/${id}/export`}
