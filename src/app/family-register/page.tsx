@@ -1,6 +1,7 @@
 "use client";
 import { fetchWithAuth } from "@/lib/fetch-with-auth";
 import { useState, useEffect, useCallback } from "react";
+import { useSharedSearch } from "@/lib/use-shared-search";
 import Link from "next/link";
 
 interface FamilyRegister {
@@ -23,7 +24,7 @@ interface FamilyRegister {
 
 export default function FamilyRegisterPage() {
   const [list, setList] = useState<FamilyRegister[]>([]);
-  const [query, setQuery] = useState("");
+  const { query, setQuery } = useSharedSearch();
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const PAGE_SIZE = 10;

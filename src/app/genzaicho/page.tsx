@@ -2,6 +2,7 @@
 import { fetchWithAuth } from "@/lib/fetch-with-auth";
 
 import { Fragment, useState, useEffect, useCallback } from "react";
+import { useSharedSearch } from "@/lib/use-shared-search";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
@@ -54,7 +55,7 @@ function calcAge(birthDateStr: string | null): string {
 export default function GenzaichoPage() {
   const router = useRouter();
   const [records, setRecords] = useState<GenzaichoRecord[]>([]);
-  const [query, setQuery] = useState("");
+  const { query, setQuery } = useSharedSearch();
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const PAGE_SIZE = 10;

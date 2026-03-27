@@ -2,6 +2,7 @@
 import { fetchWithAuth } from "@/lib/fetch-with-auth";
 
 import { useState, useEffect, useCallback } from "react";
+import { useSharedSearch } from "@/lib/use-shared-search";
 import Link from "next/link";
 
 interface Ceremony {
@@ -45,7 +46,7 @@ function formatDate(dateStr: string) {
 
 export default function CeremoniesPage() {
   const [ceremonies, setCeremonies] = useState<Ceremony[]>([]);
-  const [query, setQuery] = useState("");
+  const { query, setQuery } = useSharedSearch();
   const [filterType, setFilterType] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
   const [loading, setLoading] = useState(true);

@@ -1,6 +1,7 @@
 "use client";
 import { fetchWithAuth } from "@/lib/fetch-with-auth";
 import { useState, useEffect, useCallback, useOptimistic, useTransition } from "react";
+import { useSharedSearch } from "@/lib/use-shared-search";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
@@ -169,7 +170,7 @@ export default function KakochoPage() {
   const [order, setOrder]           = useState<"asc" | "desc">("asc");
   const [filterEra, setFilterEra]   = useState("");
   const [filterYear, setFilterYear] = useState("");
-  const [query, setQuery]           = useState("");
+  const { query, setQuery }         = useSharedSearch();
   const [pageSize, setPageSize]     = useState(20);
   const [currentPage, setCurrentPage] = useState(1);
   const [records, setRecords]       = useState<KakochoRecord[]>([]);
