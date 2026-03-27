@@ -55,28 +55,38 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     const body = await request.json();
     const {
       familyName, givenName, familyNameKana, givenNameKana,
-      relation, birthDate, deathDate,
+      relation, gender, birthDate, deathDate,
       dharmaName, dharmaNameKana, note,
+      annaiFuyo, keijiFuyo, notePrintDisabled, meinichiFusho,
     } = body;
 
     if (!familyName) {
       return NextResponse.json({ error: "姓は必須です" }, { status: 400 });
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const updateData: Record<string, any> = {
+      familyName,
+      givenName: givenName || null,
+      familyNameKana: familyNameKana || null,
+      givenNameKana: givenNameKana || null,
+      relation: relation || null,
+      gender: gender || null,
+      birthDate: birthDate ? new Date(birthDate) : null,
+      deathDate: deathDate ? new Date(deathDate) : null,
+      dharmaName: dharmaName || null,
+      dharmaNameKana: dharmaNameKana || null,
+      note: note || null,
+    };
+
+    if (annaiFuyo         !== undefined) updateData.annaiFuyo         = Boolean(annaiFuyo);
+    if (keijiFuyo         !== undefined) updateData.keijiFuyo         = Boolean(keijiFuyo);
+    if (notePrintDisabled !== undefined) updateData.notePrintDisabled = Boolean(notePrintDisabled);
+    if (meinichiFusho     !== undefined) updateData.meinichiFusho     = Boolean(meinichiFusho);
+
     const member = await memberDelegate.update({
       where: { id },
-      data: {
-        familyName,
-        givenName: givenName || null,
-        familyNameKana: familyNameKana || null,
-        givenNameKana: givenNameKana || null,
-        relation: relation || null,
-        birthDate: birthDate ? new Date(birthDate) : null,
-        deathDate: deathDate ? new Date(deathDate) : null,
-        dharmaName: dharmaName || null,
-        dharmaNameKana: dharmaNameKana || null,
-        note: note || null,
-      },
+      data: updateData,
     });
 
     return NextResponse.json(member);

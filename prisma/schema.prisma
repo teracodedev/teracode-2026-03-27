@@ -117,6 +117,8 @@ model HouseholderMember {
   annaiFuyo          Boolean   @default(false) // 案内不要
   keijiFuyo          Boolean   @default(false) // 掲示不要
   hatsuu             Boolean   @default(false) // 初盂
+  notePrintDisabled  Boolean   @default(false) // 備考印刷不可
+  meinichiFusho      Boolean   @default(false) // 命日不詳
   createdAt      DateTime    @default(now())
   updatedAt      DateTime    @updatedAt
 }
