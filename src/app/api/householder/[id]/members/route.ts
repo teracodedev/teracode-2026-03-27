@@ -23,9 +23,7 @@ export async function POST(request: NextRequest, { params }: Params) {
     const body = await request.json();
     const { familyName, givenName, familyNameKana, givenNameKana, relation,
             postalCode, address1, address2, address3, phone1, phone2, fax, domicile,
-            birthDate, deathDate, dharmaName, dharmaNameKana, note,
-            classification, affiliation, affiliationRole, affiliationNote,
-            templeRole, templeRoleNote, annaiFuyo, keijiFuyo, hatsuu } = body;
+            birthDate, deathDate, dharmaName, dharmaNameKana, note } = body;
 
     if (!familyName) {
       return NextResponse.json({ error: "姓は必須です" }, { status: 400 });
@@ -52,15 +50,6 @@ export async function POST(request: NextRequest, { params }: Params) {
         dharmaName: dharmaName || null,
         dharmaNameKana: dharmaNameKana || null,
         note: note || null,
-        classification: classification || null,
-        affiliation: affiliation || null,
-        affiliationRole: affiliationRole || null,
-        affiliationNote: affiliationNote || null,
-        templeRole: templeRole || null,
-        templeRoleNote: templeRoleNote || null,
-        annaiFuyo: annaiFuyo ?? false,
-        keijiFuyo: keijiFuyo ?? false,
-        hatsuu: hatsuu ?? false,
       },
     });
 

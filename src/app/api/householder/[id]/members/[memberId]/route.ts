@@ -20,9 +20,7 @@ export async function PUT(request: NextRequest, { params }: Params) {
     const body = await request.json();
     const { familyName, givenName, familyNameKana, givenNameKana, relation,
             postalCode, address1, address2, address3, phone1, phone2, fax, domicile,
-            birthDate, deathDate, dharmaName, dharmaNameKana, note,
-            classification, affiliation, affiliationRole, affiliationNote,
-            templeRole, templeRoleNote, annaiFuyo, keijiFuyo, hatsuu } = body;
+            birthDate, deathDate, dharmaName, dharmaNameKana, note } = body;
 
     if (!familyName) {
       return NextResponse.json({ error: "姓は必須です" }, { status: 400 });
@@ -49,46 +47,12 @@ export async function PUT(request: NextRequest, { params }: Params) {
         dharmaName: dharmaName || null,
         dharmaNameKana: dharmaNameKana || null,
         note: note || null,
-        classification: classification || null,
-        affiliation: affiliation || null,
-        affiliationRole: affiliationRole || null,
-        affiliationNote: affiliationNote || null,
-        templeRole: templeRole || null,
-        templeRoleNote: templeRoleNote || null,
-        annaiFuyo: annaiFuyo ?? false,
-        keijiFuyo: keijiFuyo ?? false,
-        hatsuu: hatsuu ?? false,
       },
     });
 
     return NextResponse.json(member);
   } catch (error) {
     console.error(`PUT /api/householder/members/${memberId} error:`, error);
-    return NextResponse.json({ error: (error as Error).message || "更新に失敗しました" }, { status: 500 });
-  }
-}
-
-// 世帯員部分更新（過去帳移動など）
-export async function PATCH(request: NextRequest, { params }: Params) {
-  const unauth = await requireAuth();
-  if (unauth) return unauth;
-
-  const { memberId } = await params;
-
-  try {
-    const memberDelegate = getMemberDelegate() as {
-      update: (args: unknown) => Promise<unknown>;
-    };
-    const body = await request.json();
-    const data: Record<string, unknown> = {};
-    if (body.deathDate !== undefined) data.deathDate = body.deathDate ? new Date(body.deathDate) : null;
-    if (body.dharmaName !== undefined) data.dharmaName = body.dharmaName || null;
-    if (body.dharmaNameKana !== undefined) data.dharmaNameKana = body.dharmaNameKana || null;
-
-    const member = await memberDelegate.update({ where: { id: memberId }, data });
-    return NextResponse.json(member);
-  } catch (error) {
-    console.error(`PATCH /api/householder/members/${memberId} error:`, error);
     return NextResponse.json({ error: (error as Error).message || "更新に失敗しました" }, { status: 500 });
   }
 }
