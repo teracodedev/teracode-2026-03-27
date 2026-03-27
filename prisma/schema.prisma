@@ -53,8 +53,34 @@ model Householder {
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
 
+  kubun              String?   // 区分（門信徒など）
+  isSodai            Boolean   @default(false) // 総代フラグ
+  tantosodai         String?   // 担当総代
+  yago               String?   // 屋号
+  chiku              String?   // 地区
+  motochiku          String?   // 元地区
+  chikuJunjo         Int?      // 地区内順序
+  omairiJunjo        Int?      // お参り順序
+  annaiYohi          String?   // 一般案内要否
+  nenkaiannaIYohi    String?   // 年回案内要否
+  tsukikiYohi        String?   // 月忌参の有無
+  noteNoPrint        Boolean   @default(false) // 備考印刷不可
+  preDharmaName      String?   // 生前法名
+  preDharmaNameKana  String?   // 生前法名かな
+  templeRole         String?   // 寺院の役職
+  templeRoleNote     String?   // 寺院の役職備考
+  classification1    String?   // 台帳の分類1
+  classification2    String?   // 台帳の分類2
+  classification3    String?   // 台帳の分類3
+  classification4    String?   // 台帳の分類4
+  classification5    String?   // 台帳の分類5
+  classification6    String?   // 台帳の分類6
+  classification7    String?   // 台帳の分類7
+  classification8    String?   // 台帳の分類8
+
   members    HouseholderMember[]    // 世帯員
   ceremonies CeremonyParticipant[]  // 法要参加
+  sermons    SermonRecord[]         // 法話記録
 }
 
 // 世帯員（檀家家族）
@@ -82,8 +108,29 @@ model HouseholderMember {
   dharmaName     String?     // 法名
   dharmaNameKana String?     // 法名（カナ）
   note           String?     // 備考
+  classification     String?   // 分類
+  affiliation        String?   // 所属する会
+  affiliationRole    String?   // 会の役職
+  affiliationNote    String?   // 会の備考
+  templeRole         String?   // 寺院の役職
+  templeRoleNote     String?   // 寺院の役職備考
+  annaiFuyo          Boolean   @default(false) // 案内不要
+  keijiFuyo          Boolean   @default(false) // 掲示不要
+  hatsuu             Boolean   @default(false) // 初盂
   createdAt      DateTime    @default(now())
   updatedAt      DateTime    @updatedAt
+}
+
+// 法話記録
+model SermonRecord {
+  id            String      @id @default(uuid())
+  householderId String
+  householder   Householder @relation(fields: [householderId], references: [id], onDelete: Cascade)
+  sermonDate    DateTime?   // 法話の日付
+  memberName    String?     // 俗名/回忌
+  content       String?     // 法話内容（メモ）
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
 }
 
 // 法要・行事
