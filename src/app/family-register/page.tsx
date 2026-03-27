@@ -133,7 +133,11 @@ export default function FamilyRegisterPage() {
                       {nameKana && <div className="text-xs text-stone-400">{nameKana}</div>}
                       <div className="font-medium text-stone-800 text-base">{r.name}</div>
                       <div className="text-sm text-stone-600 mt-0.5">
-                        {hh ? `${hh.familyName} ${hh.givenName}` : <span className="text-stone-300">未設定</span>}
+                        {hh ? (
+                          <Link href={`/householder/${hh.id}`} className="hover:underline hover:text-amber-700">
+                            {hh.familyName} {hh.givenName}
+                          </Link>
+                        ) : <span className="text-stone-300">未設定</span>}
                       </div>
                     </div>
                     <Link
@@ -178,7 +182,11 @@ export default function FamilyRegisterPage() {
                         </Link>
                       </td>
                       <td className="px-4 py-3 text-stone-700">
-                        {hh ? `${hh.familyName} ${hh.givenName}` : <span className="text-stone-300 text-sm">未設定</span>}
+                        {hh ? (
+                          <Link href={`/householder/${hh.id}`} className="hover:underline hover:text-amber-700">
+                            {hh.familyName} {hh.givenName}
+                          </Link>
+                        ) : <span className="text-stone-300 text-sm">未設定</span>}
                       </td>
                       <td className="px-4 py-3">
                         <Link
