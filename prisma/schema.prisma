@@ -42,6 +42,7 @@ model Householder {
   gender           String?
   birthDate        DateTime?
   deathDate        DateTime?
+  ageAtDeath       String?
   dharmaName       String?
   dharmaNameKana   String?
   familyRegisterId String?               @unique
@@ -54,6 +55,7 @@ model HouseholderMember {
   relation          String?
   birthDate         DateTime?
   deathDate         DateTime?
+  ageAtDeath        String?
   dharmaName        String?
   note              String?
   createdAt         DateTime    @default(now())

@@ -39,6 +39,33 @@ function str(v: unknown): string | null {
   return s === "" ? null : s;
 }
 
+function normalizeAgeAtDeath(v: unknown): string | null {
+  if (v === null || v === undefined) return null;
+  const s = String(v).trim();
+  if (!s) return null;
+  if (/^\d+$/.test(s)) return `${s}歳`;
+  if (s.endsWith("才")) return `${s.slice(0, -1)}歳`;
+  if (s.endsWith("歳")) return s;
+  return `${s}歳`;
+}
+
+function pickAgeAtDeath(row: Record<string, unknown>): string | null {
+  const directKeys = ["享年", "行年", "年齢", "享年歳", "享年才"];
+  for (const key of directKeys) {
+    if (key in row) {
+      const age = normalizeAgeAtDeath(row[key]);
+      if (age) return age;
+    }
+  }
+
+  for (const key of Object.keys(row)) {
+    if (!/(享年|行年|年齢)/.test(key)) continue;
+    const age = normalizeAgeAtDeath(row[key]);
+    if (age) return age;
+  }
+  return null;
+}
+
 export async function POST(req: NextRequest) {
   const unauth = await requireAuth();
   if (unauth) return unauth;
@@ -100,6 +127,7 @@ export async function POST(req: NextRequest) {
   // ───── 戸主をインポート ─────
   for (const row of householderRows) {
     try {
+      const ageAtDeath = pickAgeAtDeath(row);
       const daichodId = row["台帳ID"] as number;
       const [familyName, givenName] = splitName(row["氏名"]);
       const [familyNameKanaRaw, givenNameKanaRaw] = splitName(row["ﾌﾘｶﾞﾅ"]);
@@ -120,6 +148,7 @@ export async function POST(req: NextRequest) {
           email: str(row["Email"]),
           gender: toGender(row["性別"]),
           birthDate: toDate(row["生年月日"]),
+          ageAtDeath,
           dharmaName: str(row["戒名"]),
           dharmaNameKana: toFullWidthKatakana(str(row["戒名ｶﾅ"])),
           note: str(row["備考"]),
@@ -147,6 +176,7 @@ export async function POST(req: NextRequest) {
   // ───── 家族員をインポート ─────
   for (const row of familyRows) {
     try {
+      const ageAtDeath = pickAgeAtDeath(row);
       const daichodId = row["台帳ID"] as number;
       const householderId = idMap.get(daichodId);
       if (!householderId) {
@@ -171,6 +201,7 @@ export async function POST(req: NextRequest) {
           gender: toGender(row["性別"]),
           birthDate: toDate(row["生年月日"]),
           deathDate: toDate(row["命日"]),
+          ageAtDeath,
           dharmaName: str(row["戒名"]),
           dharmaNameKana: toFullWidthKatakana(str(row["戒名ｶﾅ"])),
           relation: str(row["続柄"]),

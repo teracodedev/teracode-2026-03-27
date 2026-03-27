@@ -103,6 +103,7 @@ interface MemberWithHouseholder {
   dharmaNameKana: string | null;
   deathDate: Date | null;
   birthDate: Date | null;
+  ageAtDeath: string | null;
   householder?: HouseholderData;
   danka?: HouseholderData;
 }
@@ -120,6 +121,7 @@ function buildVars(
 ): Record<string, string> {
   const deathDate = new Date(member.deathDate!);
   const birthDate = member.birthDate ? new Date(member.birthDate) : null;
+  const ageAtDeath = calcAgeAtDeath(birthDate, deathDate) || member.ageAtDeath || "不詳";
 
   const vars: Record<string, string> = {
     命日: toWareki(deathDate) + "往生",
@@ -129,7 +131,11 @@ function buildVars(
     名: member.givenName ?? "",
     姓ふりがな: toFullWidthHiragana(member.familyNameKana),
     名ふりがな: toFullWidthHiragana(member.givenNameKana),
-    享年: calcAgeAtDeath(birthDate, deathDate),
+    享年: ageAtDeath,
+    行年: ageAtDeath,
+    年齢: ageAtDeath,
+    享年才: ageAtDeath,
+    享年歳: ageAtDeath,
     年回: (type === "nenkai" || type === "nenkai-ingo") ? getNenkaiLabel(deathDate) : getNextMemorialLabel(deathDate),
   };
 

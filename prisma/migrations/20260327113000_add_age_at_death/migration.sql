@@ -1,0 +1,5 @@
+ALTER TABLE "Householder"
+ADD COLUMN IF NOT EXISTS "ageAtDeath" TEXT;
+
+ALTER TABLE "HouseholderMember"
+ADD COLUMN IF NOT EXISTS "ageAtDeath" TEXT;
