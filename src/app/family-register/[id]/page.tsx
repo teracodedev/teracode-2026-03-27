@@ -295,7 +295,13 @@ export default function FamilyRegisterDetailPage({ params }: { params: Promise<{
   const allMembers = data.householders.flatMap((h) =>
     (h.members ?? []).map((m) => ({ ...m, householderName: `${h.familyName}${h.givenName}`, householderId: h.id }))
   );
-  const livingMembers = allMembers.filter((m) => !m.deathDate);
+  const livingMembers = allMembers
+    .filter((m) => !m.deathDate)
+    .sort((a, b) => {
+      const aKey = (a.familyNameKana || a.familyName) + (a.givenName ?? "");
+      const bKey = (b.familyNameKana || b.familyName) + (b.givenName ?? "");
+      return aKey.localeCompare(bKey, "ja");
+    });
   const deceasedMembers = allMembers
     .filter((m) => !!m.deathDate)
     .sort((a, b) => new Date(b.deathDate!).getTime() - new Date(a.deathDate!).getTime());
