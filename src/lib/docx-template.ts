@@ -6,6 +6,19 @@ import fs from "fs";
 // nunjucks 環境（autoescape オフ：docxtemplater 側で XML エスケープを管理）
 const njkEnv = new nunjucks.Environment(null, { autoescape: false });
 
+function normalizeTemplateTag(tag: string): string {
+  return tag
+    // Word の XML 断片が混ざるケースを除去
+    .replace(/<[^>]*>/g, "")
+    // XML エンティティを簡易デコード
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&amp;/g, "&")
+    // 全角・半角スペースや改行を除去
+    .replace(/[\s\u3000]+/g, "")
+    .trim();
+}
+
 /**
  * .docx テンプレートに変数を埋め込んで返す。
  *
@@ -30,8 +43,21 @@ export async function fillDocxTemplate(
       get: (scope: Record<string, string>) => {
         try {
           // {{ 変数名 }} をnunjucksで評価
-          return njkEnv.renderString(`{{ ${tag} }}`, scope) ?? "";
+          const rendered = njkEnv.renderString(`{{ ${tag} }}`, scope) ?? "";
+          if (rendered !== "") return rendered;
+
+          // Word 内部の run 分割で tag に XML 断片が混ざる場合のフォールバック
+          const normalizedTag = normalizeTemplateTag(tag);
+          if (normalizedTag && normalizedTag in scope) {
+            return scope[normalizedTag] ?? "";
+          }
+          return "";
         } catch {
+          // 例: tag が壊れていて nunjucks が解釈できない場合
+          const normalizedTag = normalizeTemplateTag(tag);
+          if (normalizedTag && normalizedTag in scope) {
+            return scope[normalizedTag] ?? "";
+          }
           return "";
         }
       },
