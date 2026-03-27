@@ -70,6 +70,9 @@ function formatGender(g: string | null) {
 
 type TabId = "householders" | "genzaicho" | "kakocho";
 
+const EMPTY_LIVING = { familyName: "", givenName: "", familyNameKana: "", givenNameKana: "", relation: "", birthDate: "" };
+const EMPTY_DECEASED = { familyName: "", givenName: "", familyNameKana: "", givenNameKana: "", relation: "", birthDate: "", deathDate: "", dharmaName: "", dharmaNameKana: "" };
+
 export default function FamilyRegisterDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
@@ -83,6 +86,12 @@ export default function FamilyRegisterDetailPage({ params }: { params: Promise<{
   const [linkQuery, setLinkQuery] = useState("");
   const [linkResults, setLinkResults] = useState<{ id: string; familyName: string; givenName: string; familyRegisterId: string | null }[]>([]);
   const [linking, setLinking] = useState(false);
+  const [showLivingForm, setShowLivingForm] = useState(false);
+  const [livingForm, setLivingForm] = useState(EMPTY_LIVING);
+  const [savingLiving, setSavingLiving] = useState(false);
+  const [showDeceasedForm, setShowDeceasedForm] = useState(false);
+  const [deceasedForm, setDeceasedForm] = useState(EMPTY_DECEASED);
+  const [savingDeceased, setSavingDeceased] = useState(false);
 
   const fetchData = useCallback(async () => {
     try {
@@ -157,6 +166,55 @@ export default function FamilyRegisterDetailPage({ params }: { params: Promise<{
     setLinkQuery("");
     setLinkResults([]);
     setLinking(false);
+    fetchData();
+  };
+
+  const handleAddLiving = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const householderId = data?.householders[0]?.id;
+    if (!householderId) return;
+    setSavingLiving(true);
+    await fetchWithAuth(`/api/householder/${householderId}/members`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        familyName: livingForm.familyName,
+        givenName: livingForm.givenName || null,
+        familyNameKana: livingForm.familyNameKana || null,
+        givenNameKana: livingForm.givenNameKana || null,
+        relation: livingForm.relation || null,
+        birthDate: livingForm.birthDate || null,
+      }),
+    });
+    setSavingLiving(false);
+    setShowLivingForm(false);
+    setLivingForm(EMPTY_LIVING);
+    fetchData();
+  };
+
+  const handleAddDeceased = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const householderId = data?.householders[0]?.id;
+    if (!householderId) return;
+    setSavingDeceased(true);
+    await fetchWithAuth(`/api/householder/${householderId}/members`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        familyName: deceasedForm.familyName,
+        givenName: deceasedForm.givenName || null,
+        familyNameKana: deceasedForm.familyNameKana || null,
+        givenNameKana: deceasedForm.givenNameKana || null,
+        relation: deceasedForm.relation || null,
+        birthDate: deceasedForm.birthDate || null,
+        deathDate: deceasedForm.deathDate || null,
+        dharmaName: deceasedForm.dharmaName || null,
+        dharmaNameKana: deceasedForm.dharmaNameKana || null,
+      }),
+    });
+    setSavingDeceased(false);
+    setShowDeceasedForm(false);
+    setDeceasedForm(EMPTY_DECEASED);
     fetchData();
   };
 
@@ -261,9 +319,15 @@ export default function FamilyRegisterDetailPage({ params }: { params: Promise<{
                       </div>
                     )}
                   </div>
-                  <span className={`text-sm px-3 py-1 rounded-full font-medium ${h.isActive ? "bg-green-100 text-green-700" : "bg-stone-100 text-stone-500"}`}>
-                    {h.isActive ? "在籍" : "離檀"}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <Link href={`/householder/${h.id}/edit`}
+                      className="border border-stone-300 text-stone-600 px-3 py-1 rounded-lg text-sm font-medium hover:bg-stone-50">
+                      編集
+                    </Link>
+                    <span className={`text-sm px-3 py-1 rounded-full font-medium ${h.isActive ? "bg-green-100 text-green-700" : "bg-stone-100 text-stone-500"}`}>
+                      {h.isActive ? "在籍" : "離檀"}
+                    </span>
+                  </div>
                 </div>
 
                 {/* 基本情報 */}
@@ -370,56 +434,177 @@ export default function FamilyRegisterDetailPage({ params }: { params: Promise<{
 
       {/* 現在帳タブ */}
       {activeTab === "genzaicho" && (
-        <div className="bg-white rounded-xl border border-stone-200 p-4">
-          {livingMembers.length === 0 ? (
-            <p className="text-stone-400 text-sm">存命の世帯員が登録されていません</p>
-          ) : (
-            <div className="space-y-2">
-              {livingMembers.map((m) => (
-                <div key={m.id} className="border border-stone-100 rounded-lg overflow-hidden">
-                  <div className="flex items-center gap-2 px-3 py-2.5">
-                    <div className="flex-1 min-w-0">
-                      <span className="font-medium text-stone-800">{m.familyName} {m.givenName || ""}</span>
-                      {m.relation && <span className="ml-2 text-sm text-stone-400">{m.relation}</span>}
-                    </div>
-                    <Link href={`/members/${m.id}`}
-                      className="shrink-0 border border-stone-300 rounded px-2 py-1 text-sm text-stone-600 hover:bg-stone-100 font-medium">
-                      詳細
-                    </Link>
-                  </div>
+        <div className="space-y-3">
+          <div className="flex justify-end">
+            <button onClick={() => setShowLivingForm(true)}
+              className="bg-amber-600 text-white px-4 py-1.5 rounded-lg text-sm font-medium hover:bg-amber-700">
+              ＋ 追加
+            </button>
+          </div>
+          {showLivingForm && (
+            <form onSubmit={handleAddLiving} className="bg-white rounded-xl border border-amber-200 p-4 space-y-3">
+              <h3 className="font-medium text-stone-700 text-sm">現在帳に追加</h3>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs text-stone-500 mb-1">姓 <span className="text-red-500">*</span></label>
+                  <input required value={livingForm.familyName} onChange={e => setLivingForm(f => ({ ...f, familyName: e.target.value }))}
+                    className={inputCls} placeholder="田中" />
                 </div>
-              ))}
-            </div>
+                <div>
+                  <label className="block text-xs text-stone-500 mb-1">名</label>
+                  <input value={livingForm.givenName} onChange={e => setLivingForm(f => ({ ...f, givenName: e.target.value }))}
+                    className={inputCls} placeholder="太郎" />
+                </div>
+                <div>
+                  <label className="block text-xs text-stone-500 mb-1">姓フリガナ</label>
+                  <input value={livingForm.familyNameKana} onChange={e => setLivingForm(f => ({ ...f, familyNameKana: e.target.value }))}
+                    className={inputCls} placeholder="タナカ" />
+                </div>
+                <div>
+                  <label className="block text-xs text-stone-500 mb-1">名フリガナ</label>
+                  <input value={livingForm.givenNameKana} onChange={e => setLivingForm(f => ({ ...f, givenNameKana: e.target.value }))}
+                    className={inputCls} placeholder="タロウ" />
+                </div>
+                <div>
+                  <label className="block text-xs text-stone-500 mb-1">続柄</label>
+                  <input value={livingForm.relation} onChange={e => setLivingForm(f => ({ ...f, relation: e.target.value }))}
+                    className={inputCls} placeholder="長男" />
+                </div>
+                <div>
+                  <label className="block text-xs text-stone-500 mb-1">生年月日</label>
+                  <input type="date" value={livingForm.birthDate} onChange={e => setLivingForm(f => ({ ...f, birthDate: e.target.value }))}
+                    className={inputCls} />
+                </div>
+              </div>
+              <div className="flex gap-2 justify-end pt-1">
+                <button type="button" onClick={() => { setShowLivingForm(false); setLivingForm(EMPTY_LIVING); }}
+                  className="border border-stone-300 text-stone-600 px-4 py-1.5 rounded-lg text-sm">キャンセル</button>
+                <button type="submit" disabled={savingLiving}
+                  className="bg-amber-600 text-white px-4 py-1.5 rounded-lg text-sm font-medium disabled:opacity-50">
+                  {savingLiving ? "保存中..." : "保存"}
+                </button>
+              </div>
+            </form>
           )}
+          <div className="bg-white rounded-xl border border-stone-200 p-4">
+            {livingMembers.length === 0 ? (
+              <p className="text-stone-400 text-sm">存命の世帯員が登録されていません</p>
+            ) : (
+              <div className="space-y-2">
+                {livingMembers.map((m) => (
+                  <div key={m.id} className="border border-stone-100 rounded-lg overflow-hidden">
+                    <div className="flex items-center gap-2 px-3 py-2.5">
+                      <div className="flex-1 min-w-0">
+                        <span className="font-medium text-stone-800">{m.familyName} {m.givenName || ""}</span>
+                        {m.relation && <span className="ml-2 text-sm text-stone-400">{m.relation}</span>}
+                      </div>
+                      <Link href={`/members/${m.id}`}
+                        className="shrink-0 border border-stone-300 rounded px-2 py-1 text-sm text-stone-600 hover:bg-stone-100 font-medium">
+                        詳細
+                      </Link>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       )}
 
       {/* 過去帳タブ */}
       {activeTab === "kakocho" && (
-        <div className="bg-white rounded-xl border border-stone-200 p-4">
-          {deceasedMembers.length === 0 ? (
-            <p className="text-stone-400 text-sm">故人の世帯員が登録されていません</p>
-          ) : (
-            <div className="space-y-2">
-              {deceasedMembers.map((m) => (
-                <div key={m.id} className="border border-stone-100 rounded-lg overflow-hidden">
-                  <div className="flex items-center gap-2 px-3 py-2.5">
-                    <div className="flex-1 min-w-0">
-                      <span className="font-medium text-stone-800">{m.familyName} {m.givenName || ""}</span>
-                      {m.dharmaName && <span className="ml-2 text-sm text-stone-400">{m.dharmaName}</span>}
-                      <div className="text-xs text-stone-400">
-                        命日: {formatDate(m.deathDate)}
-                      </div>
-                    </div>
-                    <Link href={`/members/${m.id}`}
-                      className="shrink-0 border border-stone-300 rounded px-2 py-1 text-sm text-stone-600 hover:bg-stone-100 font-medium">
-                      詳細
-                    </Link>
-                  </div>
+        <div className="space-y-3">
+          <div className="flex justify-end">
+            <button onClick={() => setShowDeceasedForm(true)}
+              className="bg-amber-600 text-white px-4 py-1.5 rounded-lg text-sm font-medium hover:bg-amber-700">
+              ＋ 追加
+            </button>
+          </div>
+          {showDeceasedForm && (
+            <form onSubmit={handleAddDeceased} className="bg-white rounded-xl border border-amber-200 p-4 space-y-3">
+              <h3 className="font-medium text-stone-700 text-sm">過去帳に追加</h3>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs text-stone-500 mb-1">姓 <span className="text-red-500">*</span></label>
+                  <input required value={deceasedForm.familyName} onChange={e => setDeceasedForm(f => ({ ...f, familyName: e.target.value }))}
+                    className={inputCls} placeholder="田中" />
                 </div>
-              ))}
-            </div>
+                <div>
+                  <label className="block text-xs text-stone-500 mb-1">名</label>
+                  <input value={deceasedForm.givenName} onChange={e => setDeceasedForm(f => ({ ...f, givenName: e.target.value }))}
+                    className={inputCls} placeholder="太郎" />
+                </div>
+                <div>
+                  <label className="block text-xs text-stone-500 mb-1">姓フリガナ</label>
+                  <input value={deceasedForm.familyNameKana} onChange={e => setDeceasedForm(f => ({ ...f, familyNameKana: e.target.value }))}
+                    className={inputCls} placeholder="タナカ" />
+                </div>
+                <div>
+                  <label className="block text-xs text-stone-500 mb-1">名フリガナ</label>
+                  <input value={deceasedForm.givenNameKana} onChange={e => setDeceasedForm(f => ({ ...f, givenNameKana: e.target.value }))}
+                    className={inputCls} placeholder="タロウ" />
+                </div>
+                <div>
+                  <label className="block text-xs text-stone-500 mb-1">続柄</label>
+                  <input value={deceasedForm.relation} onChange={e => setDeceasedForm(f => ({ ...f, relation: e.target.value }))}
+                    className={inputCls} placeholder="父" />
+                </div>
+                <div>
+                  <label className="block text-xs text-stone-500 mb-1">生年月日</label>
+                  <input type="date" value={deceasedForm.birthDate} onChange={e => setDeceasedForm(f => ({ ...f, birthDate: e.target.value }))}
+                    className={inputCls} />
+                </div>
+                <div>
+                  <label className="block text-xs text-stone-500 mb-1">命日</label>
+                  <input type="date" value={deceasedForm.deathDate} onChange={e => setDeceasedForm(f => ({ ...f, deathDate: e.target.value }))}
+                    className={inputCls} />
+                </div>
+                <div>
+                  <label className="block text-xs text-stone-500 mb-1">法名</label>
+                  <input value={deceasedForm.dharmaName} onChange={e => setDeceasedForm(f => ({ ...f, dharmaName: e.target.value }))}
+                    className={inputCls} placeholder="○○院○○居士" />
+                </div>
+                <div className="col-span-2">
+                  <label className="block text-xs text-stone-500 mb-1">法名フリガナ</label>
+                  <input value={deceasedForm.dharmaNameKana} onChange={e => setDeceasedForm(f => ({ ...f, dharmaNameKana: e.target.value }))}
+                    className={inputCls} placeholder="○○イン○○コジ" />
+                </div>
+              </div>
+              <div className="flex gap-2 justify-end pt-1">
+                <button type="button" onClick={() => { setShowDeceasedForm(false); setDeceasedForm(EMPTY_DECEASED); }}
+                  className="border border-stone-300 text-stone-600 px-4 py-1.5 rounded-lg text-sm">キャンセル</button>
+                <button type="submit" disabled={savingDeceased}
+                  className="bg-amber-600 text-white px-4 py-1.5 rounded-lg text-sm font-medium disabled:opacity-50">
+                  {savingDeceased ? "保存中..." : "保存"}
+                </button>
+              </div>
+            </form>
           )}
+          <div className="bg-white rounded-xl border border-stone-200 p-4">
+            {deceasedMembers.length === 0 ? (
+              <p className="text-stone-400 text-sm">故人の世帯員が登録されていません</p>
+            ) : (
+              <div className="space-y-2">
+                {deceasedMembers.map((m) => (
+                  <div key={m.id} className="border border-stone-100 rounded-lg overflow-hidden">
+                    <div className="flex items-center gap-2 px-3 py-2.5">
+                      <div className="flex-1 min-w-0">
+                        <span className="font-medium text-stone-800">{m.familyName} {m.givenName || ""}</span>
+                        {m.dharmaName && <span className="ml-2 text-sm text-stone-400">{m.dharmaName}</span>}
+                        <div className="text-xs text-stone-400">
+                          命日: {formatDate(m.deathDate)}
+                        </div>
+                      </div>
+                      <Link href={`/members/${m.id}`}
+                        className="shrink-0 border border-stone-300 rounded px-2 py-1 text-sm text-stone-600 hover:bg-stone-100 font-medium">
+                        詳細
+                      </Link>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>
