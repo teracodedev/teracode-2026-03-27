@@ -54,7 +54,12 @@ interface FamilyRegister {
   registerCode: string;
   name: string;
   note: string | null;
-  householders: Householder[];
+  householders: Householder[] | Householder | null;
+}
+
+function toHouseholderList(value: FamilyRegister["householders"]): Householder[] {
+  if (!value) return [];
+  return Array.isArray(value) ? value : [value];
 }
 
 function formatDate(d: string | null) {
@@ -117,13 +122,13 @@ export default function FamilyRegisterDetailPage({ params }: { params: Promise<{
         setData(null);
         return;
       }
-      const ok =
-        res.ok &&
-        json &&
-        typeof json === "object" &&
-        Array.isArray((json as FamilyRegister).householders);
+      const ok = res.ok && json && typeof json === "object";
       if (ok) {
-        const row = json as FamilyRegister;
+        const raw = json as FamilyRegister;
+        const row: FamilyRegister = {
+          ...raw,
+          householders: toHouseholderList(raw.householders),
+        };
         setData(row);
         setEditName(row.name);
         setEditNote(row.note || "");
@@ -170,7 +175,7 @@ export default function FamilyRegisterDetailPage({ params }: { params: Promise<{
 
   const handleAddLiving = async (e: React.FormEvent) => {
     e.preventDefault();
-    const householderId = data?.householders[0]?.id;
+    const householderId = householders[0]?.id;
     if (!householderId) return;
     setSavingLiving(true);
     await fetchWithAuth(`/api/householder/${householderId}/members`, {
@@ -193,7 +198,7 @@ export default function FamilyRegisterDetailPage({ params }: { params: Promise<{
 
   const handleAddDeceased = async (e: React.FormEvent) => {
     e.preventDefault();
-    const householderId = data?.householders[0]?.id;
+    const householderId = householders[0]?.id;
     if (!householderId) return;
     setSavingDeceased(true);
     await fetchWithAuth(`/api/householder/${householderId}/members`, {
@@ -292,7 +297,9 @@ export default function FamilyRegisterDetailPage({ params }: { params: Promise<{
   if (loading) return <div className="text-center py-12 text-stone-400">読み込み中...</div>;
   if (!data) return <div className="text-center py-12 text-stone-400">台帳が見つかりません</div>;
 
-  const allMembers = data.householders.flatMap((h) =>
+  const householders = toHouseholderList(data.householders);
+
+  const allMembers = householders.flatMap((h) =>
     (h.members ?? []).map((m) => ({ ...m, householderName: `${h.familyName}${h.givenName}`, householderId: h.id }))
   );
   const livingMembers = allMembers
@@ -377,10 +384,10 @@ export default function FamilyRegisterDetailPage({ params }: { params: Promise<{
       {/* 戸主タブ（1:1） */}
       {activeTab === "householders" && (
         <div className="space-y-4">
-          {data.householders.length === 0 ? (
+          {householders.length === 0 ? (
             <p className="text-stone-400 text-sm">戸主が登録されていません</p>
           ) : (() => {
-            const h = data.householders[0];
+            const h = householders[0];
             const address = [h.address1, h.address2, h.address3].filter(Boolean).join(" ");
             return (
               <div className="bg-white rounded-xl border border-stone-200 overflow-hidden">
@@ -571,7 +578,7 @@ export default function FamilyRegisterDetailPage({ params }: { params: Promise<{
                 {livingMembers.map((m) => {
                   const memberName = `${m.familyName}${m.givenName ? " " + m.givenName : ""}`;
                   return (
-                    <div key={m.id} className="border border-stone-100 rounded-lg overflow-hidden">
+                    <div key={m.id} className="border border-stone-100 rounded-lg">
                       <div className="flex items-center gap-2 px-3 py-2.5">
                         <div className="flex-1 min-w-0">
                           <span className="font-medium text-stone-800">{m.familyName} {m.givenName || ""}</span>

@@ -20,15 +20,27 @@ export async function GET(_request: NextRequest, { params }: Params) {
       update: (args: unknown) => Promise<unknown>;
       delete: (args: unknown) => Promise<unknown>;
     };
+    const include =
+      kind === "householder"
+        ? {
+            members: true,
+            familyRegister: { select: { id: true, name: true } },
+            ceremonies: {
+              include: { ceremony: true },
+              orderBy: { ceremony: { scheduledAt: "desc" } },
+            },
+          }
+        : {
+            members: true,
+            ceremonies: {
+              include: { ceremony: true },
+              orderBy: { ceremony: { scheduledAt: "desc" } },
+            },
+          };
+
     const householder = await delegate.findUnique({
       where: { id },
-      include: {
-        members: true,
-        ceremonies: {
-          include: { ceremony: true },
-          orderBy: { ceremony: { scheduledAt: "desc" } },
-        },
-      },
+      include,
     });
 
     if (!householder) {

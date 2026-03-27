@@ -54,6 +54,7 @@ interface HouseholderDetail {
   joinedAt: string | null;
   leftAt: string | null;
   isActive: boolean;
+  familyRegister?: { id: string; name: string } | null;
   members: Member[];
   ceremonies: { ceremony: Ceremony }[];
 }
@@ -539,6 +540,14 @@ export default function HouseholderDetailPage({ params }: { params: Promise<{ id
       </div>
 
       <div className="flex gap-3 justify-end flex-wrap">
+        {householder.familyRegister?.id && (
+          <Link
+            href={`/family-register/${householder.familyRegister.id}`}
+            className="border border-amber-200 text-amber-700 px-4 py-1.5 rounded-lg hover:bg-amber-50 transition-colors text-sm font-medium"
+          >
+            家族・親族台帳へ
+          </Link>
+        )}
         <a href={`/api/householder/${id}/export`}
           className="border border-stone-300 text-stone-600 px-4 py-1.5 rounded-lg hover:bg-stone-50 transition-colors text-sm font-medium">
           ⬇ エクスポート

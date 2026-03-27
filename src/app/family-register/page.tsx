@@ -9,7 +9,8 @@ interface FamilyRegister {
   registerCode: string;
   name: string;
   note: string | null;
-  householders: {
+  householders:
+    | {
     id: string;
     familyName: string;
     givenName: string;
@@ -19,7 +20,25 @@ interface FamilyRegister {
     address1: string | null;
     phone1: string | null;
     _count: { members: number };
-  }[];
+  }
+    | {
+    id: string;
+    familyName: string;
+    givenName: string;
+    familyNameKana: string | null;
+    givenNameKana: string | null;
+    isActive: boolean;
+    address1: string | null;
+    phone1: string | null;
+    _count: { members: number };
+  }[]
+    | null;
+}
+
+function pickHouseholder(row: FamilyRegister) {
+  const h = row.householders;
+  if (!h) return null;
+  return Array.isArray(h) ? (h[0] ?? null) : h;
 }
 
 export default function FamilyRegisterPage() {
@@ -37,8 +56,8 @@ export default function FamilyRegisterPage() {
       const res = await fetchWithAuth(`/api/family-register?${params}`);
       const data = await res.json();
       const sorted = (Array.isArray(data) ? data : []).sort((a, b) => {
-        const hhA = a.householders[0];
-        const hhB = b.householders[0];
+        const hhA = pickHouseholder(a);
+        const hhB = pickHouseholder(b);
         const ka = hhA
           ? (hhA.familyNameKana ?? hhA.familyName) + (hhA.givenNameKana ?? hhA.givenName ?? "")
           : a.name;
@@ -102,7 +121,7 @@ export default function FamilyRegisterPage() {
           {/* モバイル: カード表示 */}
           <div className="md:hidden space-y-2">
             {list.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE).map((r) => {
-              const hh = r.householders[0];
+              const hh = pickHouseholder(r);
               const nameKana = hh ? `${hh.familyNameKana ?? ""}${hh.givenNameKana ? " " + hh.givenNameKana : ""}` : "";
               return (
                 <div
@@ -143,7 +162,7 @@ export default function FamilyRegisterPage() {
               </thead>
               <tbody className="divide-y divide-stone-100">
                 {list.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE).map((r) => {
-                  const hh = r.householders[0];
+                  const hh = pickHouseholder(r);
                   const nameKana = hh
                     ? `${hh.familyNameKana ?? ""}${hh.givenNameKana ? " " + hh.givenNameKana : ""}`
                     : "";
