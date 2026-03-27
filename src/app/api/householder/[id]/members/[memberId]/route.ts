@@ -68,6 +68,31 @@ export async function PUT(request: NextRequest, { params }: Params) {
   }
 }
 
+// 世帯員部分更新（過去帳移動など）
+export async function PATCH(request: NextRequest, { params }: Params) {
+  const unauth = await requireAuth();
+  if (unauth) return unauth;
+
+  const { memberId } = await params;
+
+  try {
+    const memberDelegate = getMemberDelegate() as {
+      update: (args: unknown) => Promise<unknown>;
+    };
+    const body = await request.json();
+    const data: Record<string, unknown> = {};
+    if (body.deathDate !== undefined) data.deathDate = body.deathDate ? new Date(body.deathDate) : null;
+    if (body.dharmaName !== undefined) data.dharmaName = body.dharmaName || null;
+    if (body.dharmaNameKana !== undefined) data.dharmaNameKana = body.dharmaNameKana || null;
+
+    const member = await memberDelegate.update({ where: { id: memberId }, data });
+    return NextResponse.json(member);
+  } catch (error) {
+    console.error(`PATCH /api/householder/members/${memberId} error:`, error);
+    return NextResponse.json({ error: (error as Error).message || "更新に失敗しました" }, { status: 500 });
+  }
+}
+
 // 世帯員削除
 export async function DELETE(_request: NextRequest, { params }: Params) {
   const unauth = await requireAuth();

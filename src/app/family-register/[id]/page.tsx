@@ -1,6 +1,6 @@
 "use client";
 import { fetchWithAuth } from "@/lib/fetch-with-auth";
-import { useState, useEffect, use, useCallback } from "react";
+import { useState, useEffect, use, useCallback, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
@@ -13,6 +13,7 @@ interface Member {
   birthDate: string | null;
   deathDate: string | null;
   dharmaName: string | null;
+  dharmaNameKana: string | null;
   phone1: string | null;
   address1: string | null;
   address2: string | null;
@@ -83,15 +84,28 @@ export default function FamilyRegisterDetailPage({ params }: { params: Promise<{
   const [editing, setEditing] = useState(false);
   const [editName, setEditName] = useState("");
   const [editNote, setEditNote] = useState("");
-  const [linkQuery, setLinkQuery] = useState("");
-  const [linkResults, setLinkResults] = useState<{ id: string; familyName: string; givenName: string; familyRegisterId: string | null }[]>([]);
-  const [linking, setLinking] = useState(false);
   const [showLivingForm, setShowLivingForm] = useState(false);
   const [livingForm, setLivingForm] = useState(EMPTY_LIVING);
   const [savingLiving, setSavingLiving] = useState(false);
   const [showDeceasedForm, setShowDeceasedForm] = useState(false);
   const [deceasedForm, setDeceasedForm] = useState(EMPTY_DECEASED);
   const [savingDeceased, setSavingDeceased] = useState(false);
+
+  // 操作メニュー
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  // 過去帳へ移動 モーダル
+  const [kakochoModal, setKakochoModal] = useState<{ memberId: string; householderId: string; memberName: string } | null>(null);
+  const [kakochoForm, setKakochoForm] = useState({ deathDate: "", dharmaName: "", dharmaNameKana: "" });
+  const [savingKakocho, setSavingKakocho] = useState(false);
+
+  // 別のへ移動 モーダル
+  const [moveModal, setMoveModal] = useState<{ memberId: string; householderId: string; memberName: string } | null>(null);
+  const [moveQuery, setMoveQuery] = useState("");
+  const [moveResults, setMoveResults] = useState<{ id: string; familyName: string; givenName: string }[]>([]);
+  const [moveTargetId, setMoveTargetId] = useState<string | null>(null);
+  const [savingMove, setSavingMove] = useState(false);
 
   const fetchData = useCallback(async () => {
     try {
@@ -125,6 +139,17 @@ export default function FamilyRegisterDetailPage({ params }: { params: Promise<{
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
+  // メニュー外クリックで閉じる
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setOpenMenuId(null);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
   const handleDelete = async () => {
     if (!confirm("この台帳を削除しますか？（戸主データは削除されません）")) return;
     setDeleting(true);
@@ -140,32 +165,6 @@ export default function FamilyRegisterDetailPage({ params }: { params: Promise<{
       body: JSON.stringify({ name: editName, note: editNote }),
     });
     setEditing(false);
-    fetchData();
-  };
-
-  const handleUnlink = async (householderId: string) => {
-    if (!confirm("この戸主の紐付けを解除しますか？")) return;
-    await fetchWithAuth(`/api/family-register/${id}/householders?householderId=${householderId}`, { method: "DELETE" });
-    fetchData();
-  };
-
-  const searchHouseholders = async (q: string) => {
-    if (!q.trim()) { setLinkResults([]); return; }
-    const res = await fetchWithAuth(`/api/householder?q=${encodeURIComponent(q)}`);
-    const rows = await res.json();
-    setLinkResults(Array.isArray(rows) ? rows : []);
-  };
-
-  const handleLink = async (householderId: string) => {
-    setLinking(true);
-    await fetchWithAuth(`/api/family-register/${id}/householders`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ householderId }),
-    });
-    setLinkQuery("");
-    setLinkResults([]);
-    setLinking(false);
     fetchData();
   };
 
@@ -215,6 +214,78 @@ export default function FamilyRegisterDetailPage({ params }: { params: Promise<{
     setSavingDeceased(false);
     setShowDeceasedForm(false);
     setDeceasedForm(EMPTY_DECEASED);
+    fetchData();
+  };
+
+  // 過去帳へ移動
+  const handleKakochoMove = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!kakochoModal) return;
+    setSavingKakocho(true);
+    await fetchWithAuth(`/api/householder/${kakochoModal.householderId}/members/${kakochoModal.memberId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        deathDate: kakochoForm.deathDate,
+        dharmaName: kakochoForm.dharmaName || null,
+        dharmaNameKana: kakochoForm.dharmaNameKana || null,
+      }),
+    });
+    setSavingKakocho(false);
+    setKakochoModal(null);
+    setKakochoForm({ deathDate: "", dharmaName: "", dharmaNameKana: "" });
+    fetchData();
+  };
+
+  // 戸主の交代
+  const handleTransfer = async (memberId: string, householderId: string, memberName: string) => {
+    if (!confirm(`${memberName} を新しい戸主に交代しますか？\n現在の戸主は世帯員（元戸主）になります。`)) return;
+    await fetchWithAuth(`/api/householder/${householderId}/transfer`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ memberId }),
+    });
+    fetchData();
+  };
+
+  // 世帯の独立
+  const handleIndependence = async (memberId: string, householderId: string, memberName: string) => {
+    if (!confirm(`${memberName} を新しい世帯として独立させますか？\n新しい家族・親族台帳と戸主が作成されます。`)) return;
+    await fetchWithAuth(`/api/householder/${householderId}/members/${memberId}/independence`, {
+      method: "POST",
+    });
+    fetchData();
+  };
+
+  // 別のへ移動 - 検索
+  const searchMoveTargets = async (q: string) => {
+    if (!q.trim()) { setMoveResults([]); return; }
+    const res = await fetchWithAuth(`/api/householder?q=${encodeURIComponent(q)}`);
+    const rows = await res.json();
+    setMoveResults(Array.isArray(rows) ? rows : []);
+  };
+
+  // 別のへ移動 - 実行
+  const handleMoveTo = async () => {
+    if (!moveModal || !moveTargetId) return;
+    setSavingMove(true);
+    await fetchWithAuth(`/api/householder/${moveModal.householderId}/members/${moveModal.memberId}/move`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ targetHouseholderId: moveTargetId }),
+    });
+    setSavingMove(false);
+    setMoveModal(null);
+    setMoveQuery("");
+    setMoveResults([]);
+    setMoveTargetId(null);
+    fetchData();
+  };
+
+  // 家族明細削除
+  const handleDeleteMember = async (memberId: string, householderId: string, memberName: string) => {
+    if (!confirm(`${memberName} を削除しますか？この操作は元に戻せません。`)) return;
+    await fetchWithAuth(`/api/householder/${householderId}/members/${memberId}`, { method: "DELETE" });
     fetchData();
   };
 
@@ -490,21 +561,76 @@ export default function FamilyRegisterDetailPage({ params }: { params: Promise<{
             {livingMembers.length === 0 ? (
               <p className="text-stone-400 text-sm">存命の世帯員が登録されていません</p>
             ) : (
-              <div className="space-y-2">
-                {livingMembers.map((m) => (
-                  <div key={m.id} className="border border-stone-100 rounded-lg overflow-hidden">
-                    <div className="flex items-center gap-2 px-3 py-2.5">
-                      <div className="flex-1 min-w-0">
-                        <span className="font-medium text-stone-800">{m.familyName} {m.givenName || ""}</span>
-                        {m.relation && <span className="ml-2 text-sm text-stone-400">{m.relation}</span>}
+              <div className="space-y-2" ref={menuRef}>
+                {livingMembers.map((m) => {
+                  const memberName = `${m.familyName}${m.givenName ? " " + m.givenName : ""}`;
+                  return (
+                    <div key={m.id} className="border border-stone-100 rounded-lg overflow-hidden">
+                      <div className="flex items-center gap-2 px-3 py-2.5">
+                        <div className="flex-1 min-w-0">
+                          <span className="font-medium text-stone-800">{m.familyName} {m.givenName || ""}</span>
+                          {m.relation && <span className="ml-2 text-sm text-stone-400">{m.relation}</span>}
+                        </div>
+                        {/* 操作ボタン */}
+                        <div className="relative shrink-0">
+                          <button
+                            onClick={() => setOpenMenuId(openMenuId === m.id ? null : m.id)}
+                            className="border border-stone-300 rounded px-2 py-1 text-sm text-stone-600 hover:bg-stone-100 font-medium">
+                            操作
+                          </button>
+                          {openMenuId === m.id && (
+                            <div className="absolute right-0 top-full mt-1 z-20 bg-white rounded-lg shadow-lg border border-stone-200 py-1 min-w-[148px]">
+                              <button
+                                onClick={() => {
+                                  setOpenMenuId(null);
+                                  setKakochoModal({ memberId: m.id, householderId: m.householderId, memberName });
+                                }}
+                                className="w-full text-left px-4 py-2 text-sm text-stone-700 hover:bg-stone-50">
+                                過去帳へ移動
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setOpenMenuId(null);
+                                  handleTransfer(m.id, m.householderId, memberName);
+                                }}
+                                className="w-full text-left px-4 py-2 text-sm text-stone-700 hover:bg-stone-50">
+                                戸主の交代
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setOpenMenuId(null);
+                                  handleIndependence(m.id, m.householderId, memberName);
+                                }}
+                                className="w-full text-left px-4 py-2 text-sm text-stone-700 hover:bg-stone-50">
+                                世帯の独立
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setOpenMenuId(null);
+                                  setMoveModal({ memberId: m.id, householderId: m.householderId, memberName });
+                                }}
+                                className="w-full text-left px-4 py-2 text-sm text-stone-700 hover:bg-stone-50">
+                                別のへ移動
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setOpenMenuId(null);
+                                  handleDeleteMember(m.id, m.householderId, memberName);
+                                }}
+                                className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50">
+                                家族明細削除
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                        <Link href={`/members/${m.id}`}
+                          className="shrink-0 border border-stone-300 rounded px-2 py-1 text-sm text-stone-600 hover:bg-stone-100 font-medium">
+                          詳細
+                        </Link>
                       </div>
-                      <Link href={`/members/${m.id}`}
-                        className="shrink-0 border border-stone-300 rounded px-2 py-1 text-sm text-stone-600 hover:bg-stone-100 font-medium">
-                        詳細
-                      </Link>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
@@ -604,6 +730,85 @@ export default function FamilyRegisterDetailPage({ params }: { params: Promise<{
                 ))}
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* 過去帳へ移動 モーダル */}
+      {kakochoModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <form onSubmit={handleKakochoMove} className="bg-white rounded-xl p-6 w-full max-w-sm space-y-4 shadow-xl mx-4">
+            <h3 className="font-bold text-stone-700">過去帳へ移動</h3>
+            <p className="text-sm text-stone-500">
+              <span className="font-medium text-stone-700">{kakochoModal.memberName}</span> を過去帳に移動します。
+            </p>
+            <div>
+              <label className="block text-xs text-stone-500 mb-1">命日 <span className="text-red-500">*</span></label>
+              <input required type="date" value={kakochoForm.deathDate}
+                onChange={e => setKakochoForm(f => ({ ...f, deathDate: e.target.value }))}
+                className={inputCls} />
+            </div>
+            <div>
+              <label className="block text-xs text-stone-500 mb-1">法名</label>
+              <input value={kakochoForm.dharmaName}
+                onChange={e => setKakochoForm(f => ({ ...f, dharmaName: e.target.value }))}
+                className={inputCls} placeholder="○○院○○居士" />
+            </div>
+            <div>
+              <label className="block text-xs text-stone-500 mb-1">法名フリガナ</label>
+              <input value={kakochoForm.dharmaNameKana}
+                onChange={e => setKakochoForm(f => ({ ...f, dharmaNameKana: e.target.value }))}
+                className={inputCls} />
+            </div>
+            <div className="flex gap-2 justify-end pt-1">
+              <button type="button" onClick={() => { setKakochoModal(null); setKakochoForm({ deathDate: "", dharmaName: "", dharmaNameKana: "" }); }}
+                className="border border-stone-300 text-stone-600 px-4 py-1.5 rounded-lg text-sm">キャンセル</button>
+              <button type="submit" disabled={savingKakocho}
+                className="bg-amber-600 text-white px-4 py-1.5 rounded-lg text-sm font-medium disabled:opacity-50">
+                {savingKakocho ? "移動中..." : "移動"}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* 別のへ移動 モーダル */}
+      {moveModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-xl p-6 w-full max-w-sm space-y-4 shadow-xl mx-4">
+            <h3 className="font-bold text-stone-700">別のへ移動</h3>
+            <p className="text-sm text-stone-500">
+              <span className="font-medium text-stone-700">{moveModal.memberName}</span> の移動先の戸主を選択してください。
+            </p>
+            <input
+              value={moveQuery}
+              onChange={e => { setMoveQuery(e.target.value); searchMoveTargets(e.target.value); setMoveTargetId(null); }}
+              className={inputCls}
+              placeholder="戸主名で検索..."
+            />
+            {moveResults.length > 0 && (
+              <div className="border border-stone-200 rounded-lg max-h-48 overflow-y-auto">
+                {moveResults.map(r => (
+                  <button key={r.id} onClick={() => setMoveTargetId(r.id)}
+                    className={`w-full text-left px-3 py-2 text-sm border-b border-stone-100 last:border-0 ${
+                      moveTargetId === r.id ? "bg-amber-50 text-amber-700 font-medium" : "text-stone-700 hover:bg-stone-50"
+                    }`}>
+                    {r.familyName} {r.givenName}
+                  </button>
+                ))}
+              </div>
+            )}
+            {moveQuery && moveResults.length === 0 && (
+              <p className="text-sm text-stone-400">該当する戸主が見つかりません</p>
+            )}
+            <div className="flex gap-2 justify-end pt-1">
+              <button type="button" onClick={() => { setMoveModal(null); setMoveQuery(""); setMoveResults([]); setMoveTargetId(null); }}
+                className="border border-stone-300 text-stone-600 px-4 py-1.5 rounded-lg text-sm">キャンセル</button>
+              <button onClick={handleMoveTo} disabled={!moveTargetId || savingMove}
+                className="bg-amber-600 text-white px-4 py-1.5 rounded-lg text-sm font-medium disabled:opacity-50">
+                {savingMove ? "移動中..." : "移動"}
+              </button>
+            </div>
           </div>
         </div>
       )}
