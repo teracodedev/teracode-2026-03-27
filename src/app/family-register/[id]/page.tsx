@@ -15,6 +15,7 @@ interface Member {
   dharmaName: string | null;
   dharmaNameKana: string | null;
   phone1: string | null;
+  postalCode: string | null;
   address1: string | null;
   address2: string | null;
   address3: string | null;
@@ -243,13 +244,37 @@ export default function FamilyRegisterDetailPage({ params }: { params: Promise<{
   };
 
   // 戸主の交代
-  const handleTransfer = async (memberId: string, householderId: string, memberName: string) => {
+  const handleTransfer = async (
+    memberId: string,
+    householderId: string,
+    memberName: string,
+    options?: { willInheritAddress?: boolean; oldAddressLabel?: string }
+  ) => {
     if (!confirm(`${memberName} を新しい戸主に交代しますか？\n現在の戸主は世帯員（元戸主）になります。`)) return;
-    await fetchWithAuth(`/api/householder/${householderId}/transfer`, {
+    if (options?.willInheritAddress) {
+      const addressText = options.oldAddressLabel || "（住所未設定）";
+      if (!confirm(`${memberName} は住所が未設定のため、旧戸主の住所を引き継ぎます。\n引き継ぎ住所: ${addressText}\nこの内容で実行しますか？`)) {
+        return;
+      }
+    }
+    const res = await fetchWithAuth(`/api/householder/${householderId}/transfer`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ memberId }),
     });
+    if (!res.ok) {
+      let message = "戸主の交代に失敗しました";
+      try {
+        const body = await res.json();
+        if (body && typeof body.error === "string" && body.error) {
+          message = body.error;
+        }
+      } catch {
+        // ignore parse error
+      }
+      alert(message);
+      return;
+    }
     fetchData();
   };
 
@@ -604,7 +629,24 @@ export default function FamilyRegisterDetailPage({ params }: { params: Promise<{
                               <button
                                 onClick={() => {
                                   setOpenMenuId(null);
-                                  handleTransfer(m.id, m.householderId, memberName);
+                                  const hasOwnAddress =
+                                    Boolean(m.postalCode?.trim()) ||
+                                    Boolean(m.address1?.trim()) ||
+                                    Boolean(m.address2?.trim()) ||
+                                    Boolean(m.address3?.trim());
+                                  const oldHouseholder = householders.find((h) => h.id === m.householderId);
+                                  const oldAddressLabel = [
+                                    oldHouseholder?.postalCode ? `〒${oldHouseholder.postalCode}` : null,
+                                    oldHouseholder?.address1,
+                                    oldHouseholder?.address2,
+                                    oldHouseholder?.address3,
+                                  ]
+                                    .filter(Boolean)
+                                    .join(" ");
+                                  handleTransfer(m.id, m.householderId, memberName, {
+                                    willInheritAddress: !hasOwnAddress,
+                                    oldAddressLabel,
+                                  });
                                 }}
                                 className="w-full text-left px-4 py-2 text-sm text-stone-700 hover:bg-stone-50">
                                 戸主の交代
