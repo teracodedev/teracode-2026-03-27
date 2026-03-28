@@ -169,12 +169,9 @@ export default function FamilyRegisterPage() {
               <tbody className="divide-y divide-stone-100">
                 {list.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE).map((r) => {
                   const hh = pickHouseholder(r);
-                  const nameKana = hh
-                    ? `${hh.familyNameKana ?? ""}${hh.givenNameKana ? " " + hh.givenNameKana : ""}`
-                    : "";
                   return (
                     <tr key={r.id} className="hover:bg-stone-50">
-                      <td className="px-4 py-3 text-stone-700">{nameKana}</td>
+                      <td className="px-4 py-3 text-stone-700">{r.nameKana ?? ""}</td>
                       <td className="px-4 py-3">
                         <Link
                           href={`/family-register/${r.id}`}
