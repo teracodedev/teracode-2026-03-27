@@ -9,9 +9,11 @@ interface Member {
   familyName: string;
   givenName: string | null;
   familyNameKana: string | null;
+  givenNameKana: string | null;
   relation: string | null;
   birthDate: string | null;
   deathDate: string | null;
+  ageAtDeath: string | null;
   dharmaName: string | null;
   dharmaNameKana: string | null;
   phone1: string | null;
@@ -67,6 +69,22 @@ function toHouseholderList(value: FamilyRegister["householders"]): Householder[]
 function formatDate(d: string | null) {
   if (!d) return "-";
   return new Date(d).toLocaleDateString("ja-JP");
+}
+
+function calcAge(birth: string | null, death: string | null): number | null {
+  if (!birth || !death) return null;
+  const b = new Date(birth);
+  const d = new Date(death);
+  let age = d.getFullYear() - b.getFullYear();
+  const monthDiff = d.getMonth() - b.getMonth();
+  if (monthDiff < 0 || (monthDiff === 0 && d.getDate() < b.getDate())) age--;
+  return age >= 0 ? age : null;
+}
+
+function formatAge(member: { ageAtDeath: string | null; birthDate: string | null; deathDate: string | null }): string {
+  if (member.ageAtDeath) return member.ageAtDeath;
+  const age = calcAge(member.birthDate, member.deathDate);
+  return age !== null ? `${age}歳` : "-";
 }
 
 function formatGender(g: string | null) {
@@ -813,28 +831,44 @@ export default function FamilyRegisterDetailPage({ params }: { params: Promise<{
               </div>
             </form>
           )}
-          <div className="bg-white rounded-xl border border-stone-200 p-4">
+          <div className="bg-white rounded-xl border border-stone-200 overflow-hidden">
             {deceasedMembers.length === 0 ? (
-              <p className="text-stone-400 text-sm">故人の世帯員が登録されていません</p>
+              <p className="text-stone-400 text-sm p-4">故人の世帯員が登録されていません</p>
             ) : (
-              <div className="space-y-2">
-                {deceasedMembers.map((m) => (
-                  <div key={m.id} className="border border-stone-100 rounded-lg overflow-hidden">
-                    <div className="flex items-center gap-2 px-3 py-2.5">
-                      <div className="flex-1 min-w-0">
-                        <span className="font-medium text-stone-800">{m.familyName} {m.givenName || ""}</span>
-                        {m.dharmaName && <span className="ml-2 text-sm text-stone-400">{m.dharmaName}</span>}
-                        <div className="text-xs text-stone-400">
-                          命日: {formatDate(m.deathDate)}
-                        </div>
-                      </div>
-                      <Link href={`/members/${m.id}`}
-                        className="shrink-0 border border-stone-300 rounded px-2 py-1 text-sm text-stone-600 hover:bg-stone-100 font-medium">
-                        詳細
-                      </Link>
-                    </div>
-                  </div>
-                ))}
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="bg-stone-50 border-b border-stone-200">
+                      <th className="text-left px-3 py-2 font-medium text-stone-600 whitespace-nowrap">俗名</th>
+                      <th className="text-left px-3 py-2 font-medium text-stone-600 whitespace-nowrap">俗名フリガナ</th>
+                      <th className="text-left px-3 py-2 font-medium text-stone-600 whitespace-nowrap">法名</th>
+                      <th className="text-left px-3 py-2 font-medium text-stone-600 whitespace-nowrap">法名フリガナ</th>
+                      <th className="text-left px-3 py-2 font-medium text-stone-600 whitespace-nowrap">命日</th>
+                      <th className="text-left px-3 py-2 font-medium text-stone-600 whitespace-nowrap">享年</th>
+                      <th className="text-left px-3 py-2 font-medium text-stone-600 whitespace-nowrap">続柄</th>
+                      <th className="px-3 py-2"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {deceasedMembers.map((m) => (
+                      <tr key={m.id} className="border-b border-stone-100 last:border-0 hover:bg-stone-50">
+                        <td className="px-3 py-2.5 text-stone-800 whitespace-nowrap">{m.familyName}{m.givenName ? ` ${m.givenName}` : ""}</td>
+                        <td className="px-3 py-2.5 text-stone-500 whitespace-nowrap">{[m.familyNameKana, m.givenNameKana].filter(Boolean).join(" ") || "-"}</td>
+                        <td className="px-3 py-2.5 text-stone-700 whitespace-nowrap">{m.dharmaName || "-"}</td>
+                        <td className="px-3 py-2.5 text-stone-500 whitespace-nowrap">{m.dharmaNameKana || "-"}</td>
+                        <td className="px-3 py-2.5 text-stone-500 whitespace-nowrap">{formatDate(m.deathDate)}</td>
+                        <td className="px-3 py-2.5 text-stone-500 whitespace-nowrap">{formatAge(m)}</td>
+                        <td className="px-3 py-2.5 text-stone-500 whitespace-nowrap">{m.relation || "-"}</td>
+                        <td className="px-3 py-2.5">
+                          <Link href={`/members/${m.id}`}
+                            className="border border-stone-300 rounded px-2 py-1 text-xs text-stone-600 hover:bg-stone-100">
+                            詳細
+                          </Link>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             )}
           </div>
