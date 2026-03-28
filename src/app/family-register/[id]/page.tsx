@@ -81,10 +81,31 @@ function calcAge(birth: string | null, death: string | null): number | null {
   return age >= 0 ? age : null;
 }
 
+function kanjiAgeToNumber(s: string): number | null {
+  const arabic = s.replace(/[０-９]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFEE0));
+  const direct = arabic.match(/(\d+)/);
+  if (direct) return parseInt(direct[1], 10);
+  const map: Record<string, number> = { 一:1,二:2,三:3,四:4,五:5,六:6,七:7,八:8,九:9 };
+  let n = 0;
+  let cur = 0;
+  for (const c of arabic.replace(/[歳才]/, "")) {
+    if (map[c] !== undefined) { cur = map[c]; continue; }
+    if (c === "百") { n += (cur || 1) * 100; cur = 0; }
+    else if (c === "十") { n += (cur || 1) * 10; cur = 0; }
+  }
+  n += cur;
+  return n > 0 ? n : null;
+}
+
 function formatAge(member: { ageAtDeath: string | null; birthDate: string | null; deathDate: string | null }): string {
-  if (member.ageAtDeath) return member.ageAtDeath;
-  const age = calcAge(member.birthDate, member.deathDate);
-  return age !== null ? `${age}歳` : "-";
+  const fromDates = calcAge(member.birthDate, member.deathDate);
+  if (fromDates !== null) return `${fromDates}歳`;
+  if (member.ageAtDeath) {
+    const n = kanjiAgeToNumber(member.ageAtDeath);
+    if (n !== null) return `${n}歳`;
+    return member.ageAtDeath;
+  }
+  return "-";
 }
 
 function formatGender(g: string | null) {
