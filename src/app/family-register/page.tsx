@@ -8,6 +8,7 @@ interface FamilyRegister {
   id: string;
   registerCode: string;
   name: string;
+  nameKana: string | null;
   note: string | null;
   householders:
     | {
@@ -122,7 +123,6 @@ export default function FamilyRegisterPage() {
           <div className="md:hidden space-y-2">
             {list.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE).map((r) => {
               const hh = pickHouseholder(r);
-              const nameKana = hh ? `${hh.familyNameKana ?? ""}${hh.givenNameKana ? " " + hh.givenNameKana : ""}` : "";
               return (
                 <div
                   key={r.id}
@@ -130,7 +130,7 @@ export default function FamilyRegisterPage() {
                 >
                   <div className="flex items-center justify-between gap-2">
                     <div className="min-w-0">
-                      {nameKana && <div className="text-xs text-stone-400">{nameKana}</div>}
+                      {r.nameKana && <div className="text-xs text-stone-400">{r.nameKana}</div>}
                       <Link href={`/family-register/${r.id}`} className="font-medium text-amber-700 text-base hover:underline">
                         {r.name}
                       </Link>
