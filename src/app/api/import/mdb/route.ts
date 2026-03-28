@@ -49,7 +49,7 @@ function normalizeAgeAtDeath(v: unknown): string | null {
   const match = unified.match(/^(\d+)\s*歳$/);
   if (!match) return unified;
   const n = Number(match[1]);
-  if (!Number.isFinite(n) || n <= 0 || n >= 1000) return unified;
+  if (!Number.isFinite(n) || n <= 0 || n >= 1000) return null;
 
   const digits = ["", "一", "二", "三", "四", "五", "六", "七", "八", "九"];
   const hundreds = Math.floor(n / 100);
@@ -60,6 +60,18 @@ function normalizeAgeAtDeath(v: unknown): string | null {
   if (tens > 0) kanji += (tens === 1 ? "" : digits[tens]) + "十";
   if (ones > 0) kanji += digits[ones];
   return `${kanji}歳`;
+}
+
+// birthDate と deathDate から享年を計算するフォールバック
+function calcAgeAtDeathFromDates(birthDate: Date | null, deathDate: Date | null): string | null {
+  if (!birthDate || !deathDate) return null;
+  let age = deathDate.getFullYear() - birthDate.getFullYear();
+  const monthDiff = deathDate.getMonth() - birthDate.getMonth();
+  if (monthDiff < 0 || (monthDiff === 0 && deathDate.getDate() < birthDate.getDate())) {
+    age--;
+  }
+  if (age <= 0 || age >= 200) return null;
+  return normalizeAgeAtDeath(age);
 }
 
 function pickAgeAtDeath(row: Record<string, unknown>): string | null {
@@ -140,10 +152,12 @@ export async function POST(req: NextRequest) {
   // ───── 戸主をインポート ─────
   for (const row of householderRows) {
     try {
-      const ageAtDeath = pickAgeAtDeath(row);
       const daichodId = row["台帳ID"] as number;
       const [familyName, givenName] = splitName(row["氏名"]);
       const [familyNameKanaRaw, givenNameKanaRaw] = splitName(row["ﾌﾘｶﾞﾅ"]);
+      const birthDate = toDate(row["生年月日"]);
+      const deathDate = toDate(row["命日"]);
+      const ageAtDeath = pickAgeAtDeath(row) ?? calcAgeAtDeathFromDates(birthDate, deathDate);
 
       const householder = await prisma.householder.create({
         data: {
@@ -160,7 +174,8 @@ export async function POST(req: NextRequest) {
           fax: str(row["ＦＡＸ"]),
           email: str(row["Email"]),
           gender: toGender(row["性別"]),
-          birthDate: toDate(row["生年月日"]),
+          birthDate,
+          deathDate,
           ageAtDeath,
           dharmaName: str(row["戒名"]),
           dharmaNameKana: toFullWidthKatakana(str(row["戒名ｶﾅ"])),
@@ -196,7 +211,6 @@ export async function POST(req: NextRequest) {
   // ───── 家族員をインポート ─────
   for (const row of familyRows) {
     try {
-      const ageAtDeath = pickAgeAtDeath(row);
       const daichodId = row["台帳ID"] as number;
       const householderId = idMap.get(daichodId);
       if (!householderId) {
@@ -210,6 +224,9 @@ export async function POST(req: NextRequest) {
       // UTB003_家族住所 から住所データを取得
       const familyId = row["家族ID"] as number;
       const addr = familyId ? addressByFamilyId.get(familyId) : undefined;
+      const memberBirthDate = toDate(row["生年月日"]);
+      const memberDeathDate = toDate(row["命日"]);
+      const ageAtDeath = pickAgeAtDeath(row) ?? calcAgeAtDeathFromDates(memberBirthDate, memberDeathDate);
 
       await prisma.householderMember.create({
         data: {
@@ -219,8 +236,8 @@ export async function POST(req: NextRequest) {
           familyNameKana: toFullWidthKatakana(familyNameKanaRaw),
           givenNameKana: toFullWidthKatakana(givenNameKanaRaw),
           gender: toGender(row["性別"]),
-          birthDate: toDate(row["生年月日"]),
-          deathDate: toDate(row["命日"]),
+          birthDate: memberBirthDate,
+          deathDate: memberDeathDate,
           ageAtDeath,
           dharmaName: str(row["戒名"]),
           dharmaNameKana: toFullWidthKatakana(str(row["戒名ｶﾅ"])),
