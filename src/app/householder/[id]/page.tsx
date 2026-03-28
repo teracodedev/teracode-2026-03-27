@@ -41,6 +41,7 @@ interface HouseholderDetail {
   givenName: string;
   familyNameKana: string | null;
   givenNameKana: string | null;
+  relation: string | null;
   postalCode: string | null;
   address1: string | null;
   address2: string | null;
@@ -76,6 +77,7 @@ interface HouseholderEditForm {
   givenName: string;
   familyNameKana: string;
   givenNameKana: string;
+  relation: string;
   postalCode: string;
   address1: string;
   address2: string;

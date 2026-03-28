@@ -86,6 +86,7 @@ export async function PUT(request: NextRequest, { params }: Params) {
       joinedAt,
       leftAt,
       isActive,
+      relation,
     } = body;
 
     const data: Record<string, unknown> = {
@@ -104,6 +105,7 @@ export async function PUT(request: NextRequest, { params }: Params) {
         joinedAt: joinedAt ? new Date(joinedAt) : null,
         leftAt: leftAt ? new Date(leftAt) : null,
         isActive: isActive ?? true,
+        relation: relation || null,
       };
 
     if (fields.phoneSub) {

@@ -133,7 +133,7 @@ export async function POST(req: NextRequest, { params }: Params) {
           email: oldHouseholder.email || null,
           domicile: oldHouseholder.domicile || null,
           note: oldHouseholder.note || null,
-          relation: "元戸主",
+          relation: oldHouseholder.relation || null,
         },
       });
 

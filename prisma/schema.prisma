@@ -45,6 +45,7 @@ model Householder {
   ageAtDeath       String?
   dharmaName       String?
   dharmaNameKana   String?
+  relation         String?
   familyRegisterId String?               @unique
   ceremonies       CeremonyParticipant[]
   familyRegister   FamilyRegister?       @relation(fields: [familyRegisterId], references: [id])
