@@ -250,7 +250,7 @@ export default function FamilyRegisterDetailPage({ params }: { params: Promise<{
     memberName: string,
     options?: { willInheritAddress?: boolean; oldAddressLabel?: string }
   ) => {
-    if (!confirm(`${memberName} を新しい戸主に交代しますか？\n現在の戸主は世帯員になります。`)) return;
+    if (!confirm(`${memberName} を新しい戸主に交代しますか？\n現在の戸主は現在帳に移ります。`)) return;
     if (options?.willInheritAddress) {
       const addressText = options.oldAddressLabel || "（住所未設定）";
       if (!confirm(`${memberName} は住所が未設定のため、旧戸主の住所を引き継ぎます。\n引き継ぎ住所: ${addressText}\nこの内容で実行しますか？`)) {

@@ -421,7 +421,7 @@ export default function HouseholderDetailPage({ params }: { params: Promise<{ id
   };
 
   const handleTransfer = async (memberId: string, memberName: string) => {
-    if (!confirm(`「${memberName}」を新しい戸主にしますか？\n現在の戸主は世帯員に移ります。`)) return;
+    if (!confirm(`「${memberName}」を新しい戸主にしますか？\n現在の戸主は現在帳に移ります。`)) return;
     setTransferring(true);
     try {
       const res = await fetchWithAuth(`/api/householder/${id}/transfer`, {
