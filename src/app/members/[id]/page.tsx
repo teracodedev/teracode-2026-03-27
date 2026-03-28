@@ -495,7 +495,7 @@ export default function MemberDetailPage({ params }: { params: Promise<{ id: str
                     <input type="text" value={editForm.address1} onChange={e => setEditForm(f => ({ ...f, address1: e.target.value }))}
                       className="w-full border border-stone-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-stone-300" />
                   </div>
-                  <div className="col-span-3">
+                  <div className="col-span-2">
                     <PostalCodeSearch
                       size="sm"
                       onSelect={(zip, addr) => setEditForm(f => ({ ...f, postalCode: zip, address1: addr }))}
