@@ -4,6 +4,7 @@ import { fetchWithAuth } from "@/lib/fetch-with-auth";
 import { useState, useEffect, use } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { PostalCodeSearch } from "@/components/PostalCodeSearch";
 
 interface Member {
   id: string;
@@ -153,6 +154,9 @@ function MemberFormFields({ form, onChange }: { form: MemberForm; onChange: (f: 
       <div className="col-span-2">
         <label className="block text-sm text-stone-500 mb-1">住所1（都道府県・市区町村）</label>
         <input type="text" value={form.address1} onChange={(e) => set("address1", e.target.value)} placeholder="東京都渋谷区" className={cls} />
+      </div>
+      <div className="col-span-2">
+        <PostalCodeSearch size="sm" onSelect={(zip, addr) => onChange({ ...form, postalCode: zip, address1: addr })} />
       </div>
       <div>
         <label className="block text-sm text-stone-500 mb-1">住所2（丁目・番地）</label>
@@ -620,6 +624,9 @@ export default function HouseholderDetailPage({ params }: { params: Promise<{ id
                 <label className="block text-sm font-medium text-stone-600 mb-1">住所1（都道府県・市区町村）</label>
                 <input type="text" value={householderEditForm.address1} onChange={(e) => setHouseholderEditForm({ ...householderEditForm, address1: e.target.value })}
                   className="w-full border border-stone-300 rounded-lg px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-stone-400" />
+              </div>
+              <div className="col-span-3">
+                <PostalCodeSearch onSelect={(zip, addr) => setHouseholderEditForm(f => ({ ...f, postalCode: zip, address1: addr }))} />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
