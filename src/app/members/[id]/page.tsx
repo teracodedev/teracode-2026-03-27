@@ -24,6 +24,7 @@ interface MemberDetail {
   email: string | null;
   birthDate: string | null;
   deathDate: string | null;
+  ageAtDeath: string | null;
   dharmaName: string | null;
   dharmaNameKana: string | null;
   note: string | null;
@@ -777,7 +778,7 @@ export default function MemberDetailPage({ params }: { params: Promise<{ id: str
           </div>
           <div>
             <div className="text-xs text-stone-500 font-medium whitespace-nowrap">享年</div>
-            <div className="text-stone-600 whitespace-nowrap">{calcAgeAtDeath(member.birthDate, member.deathDate)}</div>
+            <div className="text-stone-600 whitespace-nowrap">{member.ageAtDeath || calcAgeAtDeath(member.birthDate, member.deathDate)}</div>
           </div>
           <div>
             <div className="text-xs text-stone-500 font-medium whitespace-nowrap">続柄</div>
