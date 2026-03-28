@@ -5,6 +5,20 @@ import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
+async function lookupPostalCode(zip: string): Promise<string | null> {
+  const code = zip.replace(/-/g, "");
+  if (code.length !== 7 || !/^\d{7}$/.test(code)) return null;
+  try {
+    const res = await fetch(`https://zipcloud.ibsnet.co.jp/api/search?zipcode=${code}`);
+    const data = await res.json();
+    if (data.results && data.results.length > 0) {
+      const r = data.results[0];
+      return (r.address1 || "") + (r.address2 || "") + (r.address3 || "");
+    }
+  } catch { /* 検索失敗時は無視 */ }
+  return null;
+}
+
 interface HouseholderForm {
   familyName: string;
   givenName: string;
@@ -97,12 +111,14 @@ export default function EditHouseholderPage({ params }: { params: Promise<{ id: 
       });
   }, [id]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = async (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const target = e.target as HTMLInputElement;
-    setForm({
-      ...form,
-      [target.name]: target.type === "checkbox" ? target.checked : target.value,
-    });
+    const value = target.type === "checkbox" ? target.checked : target.value;
+    setForm(f => ({ ...f, [target.name]: value }));
+    if (target.name === "postalCode" && typeof value === "string") {
+      const address = await lookupPostalCode(value);
+      if (address) setForm(f => ({ ...f, address1: address }));
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {

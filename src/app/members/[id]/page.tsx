@@ -230,6 +230,20 @@ export default function MemberDetailPage({ params }: { params: Promise<{ id: str
   }
 
   // 編集モーダル
+  async function lookupPostalCode(zip: string): Promise<string | null> {
+    const code = zip.replace(/-/g, "");
+    if (code.length !== 7 || !/^\d{7}$/.test(code)) return null;
+    try {
+      const res = await fetch(`https://zipcloud.ibsnet.co.jp/api/search?zipcode=${code}`);
+      const data = await res.json();
+      if (data.results && data.results.length > 0) {
+        const r = data.results[0];
+        return (r.address1 || "") + (r.address2 || "") + (r.address3 || "");
+      }
+    } catch { /* 検索失敗時は無視 */ }
+    return null;
+  }
+
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState({
     familyName: "", givenName: "", familyNameKana: "", givenNameKana: "",
@@ -467,7 +481,12 @@ export default function MemberDetailPage({ params }: { params: Promise<{ id: str
                   </div>
                   <div>
                     <label className="block text-xs text-stone-500 mb-1">郵便番号</label>
-                    <input type="text" value={editForm.postalCode} onChange={e => setEditForm(f => ({ ...f, postalCode: e.target.value }))}
+                    <input type="text" value={editForm.postalCode} onChange={async e => {
+                      const value = e.target.value;
+                      setEditForm(f => ({ ...f, postalCode: value }));
+                      const address = await lookupPostalCode(value);
+                      if (address) setEditForm(f => ({ ...f, address1: address }));
+                    }}
                       className="w-full border border-stone-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-stone-300" />
                   </div>
                   <div className="col-span-2">
