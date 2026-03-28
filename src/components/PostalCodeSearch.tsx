@@ -26,39 +26,69 @@ interface Props {
 
 export function PostalCodeSearch({ onSelect, size = "base" }: Props) {
   const [open, setOpen] = useState(false);
+
+  // Step 1: 都道府県
   const [pref, setPref] = useState("");
+  // Step 2: 市区町村
+  const [cities, setCities] = useState<string[]>([]);
+  const [loadingCities, setLoadingCities] = useState(false);
   const [city, setCity] = useState("");
-  const [results, setResults] = useState<ZipcodeResult[]>([]);
-  const [searching, setSearching] = useState(false);
-  const [searched, setSearched] = useState(false);
+  // Step 3: 町域
+  const [towns, setTowns] = useState<ZipcodeResult[]>([]);
+  const [loadingTowns, setLoadingTowns] = useState(false);
 
   const inputCls = size === "sm"
-    ? "border border-stone-300 rounded px-2 py-1.5 text-sm"
-    : "border border-stone-300 rounded-lg px-3 py-2 text-base";
+    ? "border border-stone-300 rounded px-2 py-1.5 text-sm bg-white"
+    : "border border-stone-300 rounded-lg px-3 py-2 text-base bg-white";
 
-  const search = async () => {
-    if (!pref) return;
-    setSearching(true);
-    setSearched(false);
-    setResults([]);
+  const handlePrefChange = async (selected: string) => {
+    setPref(selected);
+    setCity("");
+    setCities([]);
+    setTowns([]);
+    if (!selected) return;
+    setLoadingCities(true);
     try {
-      const query = encodeURIComponent(pref + city);
-      const res = await fetch(`https://zipcloud.ibsnet.co.jp/api/search?address=${query}&limit=100`);
+      const res = await fetch(
+        `https://geolonia.github.io/japanese-addresses/api/ja/${encodeURIComponent(selected)}.json`
+      );
       const data = await res.json();
-      setResults(data.results || []);
+      // レスポンスは { "市区町村名": { ... } } の形式
+      setCities(Object.keys(data).sort());
     } catch { /* 無視 */ }
-    setSearched(true);
-    setSearching(false);
+    setLoadingCities(false);
   };
 
-  const handleSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
+  const handleCityChange = async (selected: string) => {
+    setCity(selected);
+    setTowns([]);
+    if (!selected) return;
+    setLoadingTowns(true);
+    try {
+      const query = encodeURIComponent(pref + selected);
+      const res = await fetch(
+        `https://zipcloud.ibsnet.co.jp/api/search?address=${query}&limit=100`
+      );
+      const data = await res.json();
+      setTowns(data.results || []);
+    } catch { /* 無視 */ }
+    setLoadingTowns(false);
+  };
+
+  const handleTownChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const idx = parseInt(e.target.value);
     if (isNaN(idx)) return;
-    const r = results[idx];
+    const r = towns[idx];
     const address = r.address1 + r.address2 + (r.address3 || "");
     const zip = r.zipcode.replace(/^(\d{3})(\d{4})$/, "$1-$2");
     onSelect(zip, address);
     setOpen(false);
+  };
+
+  const reset = () => {
+    setOpen(false);
+    setPref(""); setCity("");
+    setCities([]); setTowns([]);
   };
 
   if (!open) {
@@ -77,55 +107,57 @@ export function PostalCodeSearch({ onSelect, size = "base" }: Props) {
     <div className="mt-2 p-3 bg-stone-50 border border-stone-200 rounded-lg space-y-2">
       <div className="flex items-center justify-between mb-1">
         <span className="text-xs font-medium text-stone-600">住所から郵便番号を検索</span>
-        <button
-          type="button"
-          onClick={() => { setOpen(false); setResults([]); setSearched(false); }}
-          className="text-xs text-stone-400 hover:text-stone-600"
-        >
+        <button type="button" onClick={reset} className="text-xs text-stone-400 hover:text-stone-600">
           閉じる
         </button>
       </div>
-      <div className="flex gap-2 flex-wrap items-center">
-        <select
-          value={pref}
-          onChange={e => { setPref(e.target.value); setResults([]); setSearched(false); }}
-          className={inputCls}
-        >
-          <option value="">都道府県</option>
-          {PREFECTURES.map(p => <option key={p} value={p}>{p}</option>)}
-        </select>
-        <input
-          value={city}
-          onChange={e => setCity(e.target.value)}
-          onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); search(); } }}
-          placeholder="市区町村（例：渋谷区）"
-          className={`flex-1 min-w-0 ${inputCls}`}
-        />
-        <button
-          type="button"
-          onClick={search}
-          disabled={!pref || searching}
-          className="border border-stone-300 text-stone-600 px-3 py-1.5 rounded text-sm hover:bg-stone-100 disabled:opacity-40 whitespace-nowrap"
-        >
-          {searching ? "検索中…" : "検索"}
-        </button>
-      </div>
-      {searched && results.length === 0 && (
-        <p className="text-xs text-stone-400">該当する住所が見つかりませんでした</p>
+
+      {/* 都道府県 */}
+      <select
+        value={pref}
+        onChange={e => handlePrefChange(e.target.value)}
+        className={`w-full ${inputCls}`}
+      >
+        <option value="">都道府県を選択</option>
+        {PREFECTURES.map(p => <option key={p} value={p}>{p}</option>)}
+      </select>
+
+      {/* 市区町村 */}
+      {pref && (
+        loadingCities ? (
+          <p className="text-xs text-stone-400">市区町村を読み込み中…</p>
+        ) : (
+          <select
+            value={city}
+            onChange={e => handleCityChange(e.target.value)}
+            className={`w-full ${inputCls}`}
+          >
+            <option value="">市区町村を選択</option>
+            {cities.map(c => <option key={c} value={c}>{c}</option>)}
+          </select>
+        )
       )}
-      {results.length > 0 && (
-        <select
-          onChange={handleSelect}
-          defaultValue=""
-          className={`w-full ${inputCls}`}
-        >
-          <option value="" disabled>町域を選択してください</option>
-          {results.map((r, i) => (
-            <option key={i} value={i}>
-              〒{r.zipcode.replace(/^(\d{3})(\d{4})$/, "$1-$2")}　{r.address2}{r.address3 ? `　${r.address3}` : ""}
-            </option>
-          ))}
-        </select>
+
+      {/* 町域 */}
+      {city && (
+        loadingTowns ? (
+          <p className="text-xs text-stone-400">町域を読み込み中…</p>
+        ) : towns.length === 0 ? (
+          <p className="text-xs text-stone-400">該当する町域が見つかりませんでした</p>
+        ) : (
+          <select
+            onChange={handleTownChange}
+            defaultValue=""
+            className={`w-full ${inputCls}`}
+          >
+            <option value="" disabled>町域を選択（郵便番号が自動入力されます）</option>
+            {towns.map((r, i) => (
+              <option key={i} value={i}>
+                {r.address3 || "（町域なし）"}　〒{r.zipcode.replace(/^(\d{3})(\d{4})$/, "$1-$2")}
+              </option>
+            ))}
+          </select>
+        )
       )}
     </div>
   );
