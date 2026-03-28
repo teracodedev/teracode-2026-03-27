@@ -42,6 +42,7 @@ export default function NewHouseholderPage() {
     givenName: "",
     familyNameKana: "",
     givenNameKana: "",
+    relation: "",
     postalCode: "",
     address1: "",
     address2: "",
@@ -180,6 +181,20 @@ export default function NewHouseholderPage() {
                 value={form.givenNameKana}
                 onChange={handleChange}
                 placeholder="タロウ"
+                className="w-full border border-stone-300 rounded-lg px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-stone-400"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-stone-600 mb-1">続柄</label>
+              <input
+                type="text"
+                name="relation"
+                value={form.relation}
+                onChange={handleChange}
+                placeholder="父・祖父など"
                 className="w-full border border-stone-300 rounded-lg px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-stone-400"
               />
             </div>

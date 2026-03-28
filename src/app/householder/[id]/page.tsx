@@ -302,6 +302,7 @@ export default function HouseholderDetailPage({ params }: { params: Promise<{ id
   const [isEditing, setIsEditing] = useState(false);
   const [householderEditForm, setHouseholderEditForm] = useState<HouseholderEditForm>({
     familyName: "", givenName: "", familyNameKana: "", givenNameKana: "",
+    relation: "",
     postalCode: "", address1: "", address2: "", address3: "",
     phone1: "", phone2: "", email: "", domicile: "", note: "",
     joinedAt: "", leftAt: "", isActive: true,
@@ -420,7 +421,7 @@ export default function HouseholderDetailPage({ params }: { params: Promise<{ id
   };
 
   const handleTransfer = async (memberId: string, memberName: string) => {
-    if (!confirm(`「${memberName}」を新しい戸主にしますか？\n現在の戸主は世帯員（元戸主）に移ります。`)) return;
+    if (!confirm(`「${memberName}」を新しい戸主にしますか？\n現在の戸主は世帯員に移ります。`)) return;
     setTransferring(true);
     try {
       const res = await fetchWithAuth(`/api/householder/${id}/transfer`, {
@@ -459,6 +460,7 @@ export default function HouseholderDetailPage({ params }: { params: Promise<{ id
       givenName: householder.givenName,
       familyNameKana: householder.familyNameKana || "",
       givenNameKana: householder.givenNameKana || "",
+      relation: householder.relation || "",
       postalCode: householder.postalCode || "",
       address1: householder.address1 || "",
       address2: householder.address2 || "",
@@ -600,6 +602,14 @@ export default function HouseholderDetailPage({ params }: { params: Promise<{ id
                   className="w-full border border-stone-300 rounded-lg px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-stone-400" />
               </div>
             </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-stone-600 mb-1">続柄</label>
+                <input type="text" value={householderEditForm.relation} onChange={(e) => setHouseholderEditForm({ ...householderEditForm, relation: e.target.value })}
+                  placeholder="父・祖父など"
+                  className="w-full border border-stone-300 rounded-lg px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-stone-400" />
+              </div>
+            </div>
             <div className="grid grid-cols-3 gap-4">
               <div>
                 <label className="block text-sm font-medium text-stone-600 mb-1">郵便番号</label>
@@ -733,6 +743,10 @@ export default function HouseholderDetailPage({ params }: { params: Promise<{ id
               <tr className="border-b border-stone-100">
                 <td className="px-4 py-2.5 text-stone-500">氏名</td>
                 <td className="px-4 py-2.5 text-stone-700">{householder.familyName} {householder.givenName}</td>
+              </tr>
+              <tr className="border-b border-stone-100">
+                <td className="px-4 py-2.5 text-stone-500">続柄</td>
+                <td className="px-4 py-2.5 text-stone-700">{householder.relation || ""}</td>
               </tr>
               <tr className="border-b border-stone-100">
                 <td className="px-4 py-2.5 text-stone-500">郵便番号</td>
