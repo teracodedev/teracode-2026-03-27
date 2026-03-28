@@ -160,7 +160,7 @@ export default function FamilyRegisterPage() {
             <table className="w-full text-base">
               <thead className="bg-stone-50 border-b border-stone-200">
                 <tr>
-                  <th className="text-left px-4 py-3 text-stone-600 font-medium">家族名フリガナ</th>
+                  <th className="text-left px-4 py-3 text-stone-600 font-medium">所属グループフリガナ</th>
                   <th className="text-left px-4 py-3 text-stone-600 font-medium">所属グループ</th>
                   <th className="text-left px-4 py-3 text-stone-600 font-medium">戸主</th>
                   <th className="text-left px-4 py-3 text-stone-600 font-medium">編集</th>
