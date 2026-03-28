@@ -46,7 +46,7 @@ function calcAge(birthDate: string | null, deathDate: string | null): string {
   ) {
     age--;
   }
-  return age + "才";
+  return age + "歳";
 }
 
 const PAGE_SIZE = 10;
@@ -135,7 +135,7 @@ export default function KakochoPage() {
                       <div className="text-sm text-stone-500 mt-1 flex flex-wrap gap-x-2">
                         {record.relation && <span>{record.relation}</span>}
                         {record.deathDate && <span>命日: {formatDate(record.deathDate)}</span>}
-                        <span>享年: {record.ageAtDeath || calcAge(record.birthDate, record.deathDate)}</span>
+                        <span>享年: {(record.ageAtDeath ? record.ageAtDeath + "歳" : calcAge(record.birthDate, record.deathDate))}</span>
                       </div>
                       {record.dharmaName && (
                         <div className="text-sm text-stone-600 mt-0.5">法名: {record.dharmaName}</div>
@@ -192,7 +192,7 @@ export default function KakochoPage() {
                         {record.dharmaName || <span className="text-stone-300">未登録</span>}
                       </td>
                       <td className="px-4 py-3 text-stone-600 text-sm">{formatDate(record.deathDate)}</td>
-                      <td className="px-4 py-3 text-stone-600 text-sm">{record.ageAtDeath || calcAge(record.birthDate, record.deathDate)}</td>
+                      <td className="px-4 py-3 text-stone-600 text-sm">{(record.ageAtDeath ? record.ageAtDeath + "歳" : calcAge(record.birthDate, record.deathDate))}</td>
                       <td className="px-4 py-3 text-stone-600 text-sm">{record.relation || "-"}</td>
                       <td className="px-4 py-3 text-sm whitespace-nowrap">
                         <Link href={"/members/" + record.id} className="text-amber-700 hover:text-amber-800 hover:underline">
