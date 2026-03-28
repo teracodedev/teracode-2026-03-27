@@ -43,10 +43,23 @@ function normalizeAgeAtDeath(v: unknown): string | null {
   if (v === null || v === undefined) return null;
   const s = String(v).trim();
   if (!s) return null;
-  if (/^\d+$/.test(s)) return `${s}歳`;
-  if (s.endsWith("才")) return `${s.slice(0, -1)}歳`;
-  if (s.endsWith("歳")) return s;
-  return `${s}歳`;
+  const unified = s.endsWith("才") ? `${s.slice(0, -1)}歳` : s.endsWith("歳") ? s : `${s}歳`;
+
+  // 享年を「九十二歳」のような漢数字表記で統一
+  const match = unified.match(/^(\d+)\s*歳$/);
+  if (!match) return unified;
+  const n = Number(match[1]);
+  if (!Number.isFinite(n) || n <= 0 || n >= 1000) return unified;
+
+  const digits = ["", "一", "二", "三", "四", "五", "六", "七", "八", "九"];
+  const hundreds = Math.floor(n / 100);
+  const tens = Math.floor((n % 100) / 10);
+  const ones = n % 10;
+  let kanji = "";
+  if (hundreds > 0) kanji += (hundreds === 1 ? "" : digits[hundreds]) + "百";
+  if (tens > 0) kanji += (tens === 1 ? "" : digits[tens]) + "十";
+  if (ones > 0) kanji += digits[ones];
+  return `${kanji}歳`;
 }
 
 function pickAgeAtDeath(row: Record<string, unknown>): string | null {
