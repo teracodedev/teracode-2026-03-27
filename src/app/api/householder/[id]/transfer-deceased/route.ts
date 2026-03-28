@@ -28,9 +28,6 @@ export async function POST(req: NextRequest, { params }: Params) {
   if (!memberId) {
     return NextResponse.json({ error: "memberIdは必須です" }, { status: 400 });
   }
-  if (!deathDate) {
-    return NextResponse.json({ error: "命日は必須です" }, { status: 400 });
-  }
 
   const [oldHouseholder, member] = await Promise.all([
     prisma.householder.findUnique({
@@ -119,7 +116,7 @@ export async function POST(req: NextRequest, { params }: Params) {
           givenNameKana:  oldHouseholder.givenNameKana  || null,
           gender:         oldHouseholder.gender         || null,
           birthDate:      oldHouseholder.birthDate      || null,
-          deathDate:      new Date(deathDate),
+          deathDate:      deathDate ? new Date(deathDate) : null,
           dharmaName:     dharmaName     || null,
           dharmaNameKana: dharmaNameKana || null,
           postalCode:     oldHouseholder.postalCode || null,

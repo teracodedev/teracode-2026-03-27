@@ -57,6 +57,36 @@ export async function PUT(request: NextRequest, { params }: Params) {
   }
 }
 
+// 世帯員の過去帳関連フィールド部分更新（命日・法名など）
+export async function PATCH(request: NextRequest, { params }: Params) {
+  const unauth = await requireAuth();
+  if (unauth) return unauth;
+
+  const { memberId } = await params;
+
+  try {
+    const memberDelegate = getMemberDelegate() as {
+      update: (args: unknown) => Promise<unknown>;
+    };
+    const body = await request.json();
+    const { deathDate, dharmaName, dharmaNameKana } = body;
+
+    const member = await memberDelegate.update({
+      where: { id: memberId },
+      data: {
+        deathDate: deathDate ? new Date(deathDate) : null,
+        dharmaName: dharmaName || null,
+        dharmaNameKana: dharmaNameKana || null,
+      },
+    });
+
+    return NextResponse.json(member);
+  } catch (error) {
+    console.error(`PATCH /api/householder/members/${memberId} error:`, error);
+    return NextResponse.json({ error: (error as Error).message || "更新に失敗しました" }, { status: 500 });
+  }
+}
+
 // 世帯員削除
 export async function DELETE(_request: NextRequest, { params }: Params) {
   const unauth = await requireAuth();

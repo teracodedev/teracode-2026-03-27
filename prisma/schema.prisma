@@ -11,6 +11,7 @@ model FamilyRegister {
   id           String       @id @default(uuid())
   registerCode String       @unique @default(uuid())
   name         String
+  nameKana     String?
   note         String?
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt

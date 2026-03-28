@@ -54,6 +54,7 @@ interface FamilyRegister {
   id: string;
   registerCode: string;
   name: string;
+  nameKana: string | null;
   note: string | null;
   householders: Householder[] | Householder | null;
 }
@@ -89,6 +90,7 @@ export default function FamilyRegisterDetailPage({ params }: { params: Promise<{
   const [deleting, setDeleting] = useState(false);
   const [editing, setEditing] = useState(false);
   const [editName, setEditName] = useState("");
+  const [editNameKana, setEditNameKana] = useState("");
   const [editNote, setEditNote] = useState("");
   const [showLivingForm, setShowLivingForm] = useState(false);
   const [livingForm, setLivingForm] = useState(EMPTY_LIVING);
@@ -139,6 +141,7 @@ export default function FamilyRegisterDetailPage({ params }: { params: Promise<{
         };
         setData(row);
         setEditName(row.name);
+        setEditNameKana(row.nameKana || "");
         setEditNote(row.note || "");
       } else {
         setData(null);
@@ -175,7 +178,7 @@ export default function FamilyRegisterDetailPage({ params }: { params: Promise<{
     await fetchWithAuth(`/api/family-register/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: editName, note: editNote }),
+      body: JSON.stringify({ name: editName, nameKana: editNameKana, note: editNote }),
     });
     setEditing(false);
     fetchData();
@@ -394,7 +397,10 @@ export default function FamilyRegisterDetailPage({ params }: { params: Promise<{
             <button type="button" onClick={() => setEditing(false)} className="text-stone-400 text-sm">キャンセル</button>
           </form>
         ) : (
-          <h1 className="text-2xl font-bold text-stone-700">{data.name}</h1>
+          <div className="flex flex-col">
+            {data.nameKana && <span className="text-sm text-stone-400 tracking-wider">{data.nameKana}</span>}
+            <h1 className="text-2xl font-bold text-stone-700">{data.name}</h1>
+          </div>
         )}
       </div>
 
@@ -410,9 +416,15 @@ export default function FamilyRegisterDetailPage({ params }: { params: Promise<{
       </div>
 
       {editing && (
-        <div className="bg-white rounded-xl border border-stone-200 p-4">
-          <label className="block text-sm text-stone-500 mb-1">備考</label>
-          <textarea value={editNote} onChange={(e) => setEditNote(e.target.value)} rows={2} className={inputCls} />
+        <div className="bg-white rounded-xl border border-stone-200 p-4 space-y-3">
+          <div>
+            <label className="block text-sm text-stone-500 mb-1">フリガナ</label>
+            <input value={editNameKana} onChange={(e) => setEditNameKana(e.target.value)} className={inputCls} placeholder="ヤマダタロウノカゾク・シンゾク" />
+          </div>
+          <div>
+            <label className="block text-sm text-stone-500 mb-1">備考</label>
+            <textarea value={editNote} onChange={(e) => setEditNote(e.target.value)} rows={2} className={inputCls} />
+          </div>
         </div>
       )}
 
@@ -847,8 +859,8 @@ export default function FamilyRegisterDetailPage({ params }: { params: Promise<{
                   <span className="font-medium text-stone-700">{h.familyName} {h.givenName}</span> を過去帳へ移動し、現在帳から新しい戸主を選択してください。
                 </p>
                 <div>
-                  <label className="block text-xs text-stone-500 mb-1">命日 <span className="text-red-500">*</span></label>
-                  <input required type="date" value={householderKakochoForm.deathDate}
+                  <label className="block text-xs text-stone-500 mb-1">命日</label>
+                  <input type="date" value={householderKakochoForm.deathDate}
                     onChange={e => setHouseholderKakochoForm(f => ({ ...f, deathDate: e.target.value }))}
                     className={inputCls} />
                 </div>
@@ -908,8 +920,8 @@ export default function FamilyRegisterDetailPage({ params }: { params: Promise<{
               <span className="font-medium text-stone-700">{kakochoModal.memberName}</span> を過去帳に移動します。
             </p>
             <div>
-              <label className="block text-xs text-stone-500 mb-1">命日 <span className="text-red-500">*</span></label>
-              <input required type="date" value={kakochoForm.deathDate}
+              <label className="block text-xs text-stone-500 mb-1">命日</label>
+              <input type="date" value={kakochoForm.deathDate}
                 onChange={e => setKakochoForm(f => ({ ...f, deathDate: e.target.value }))}
                 className={inputCls} />
             </div>

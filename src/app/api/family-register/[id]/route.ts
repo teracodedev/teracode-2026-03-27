@@ -33,12 +33,12 @@ export async function PUT(req: NextRequest, { params }: Params) {
   if (unauth) return unauth;
 
   const { id } = await params;
-  const { name, note } = await req.json();
+  const { name, nameKana, note } = await req.json();
   if (!name) return NextResponse.json({ error: "台帳名は必須です" }, { status: 400 });
 
   const register = await prisma.familyRegister.update({
     where: { id },
-    data: { name, note: note || null },
+    data: { name, nameKana: nameKana || null, note: note || null },
   });
   return NextResponse.json(register);
 }
