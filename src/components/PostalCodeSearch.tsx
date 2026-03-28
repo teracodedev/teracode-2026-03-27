@@ -27,9 +27,11 @@ interface Props {
 export function PostalCodeSearch({ onSelect, size = "base" }: Props) {
   const [open, setOpen] = useState(false);
 
+  const [allData, setAllData] = useState<Record<string, string[]> | null>(null);
+  const [loadingAll, setLoadingAll] = useState(false);
+
   const [pref, setPref] = useState("");
   const [cities, setCities] = useState<string[]>([]);
-  const [loadingCities, setLoadingCities] = useState(false);
 
   const [city, setCity] = useState("");
   const [towns, setTowns] = useState<ZipcodeResult[]>([]);
@@ -39,20 +41,30 @@ export function PostalCodeSearch({ onSelect, size = "base" }: Props) {
     ? "w-full border border-stone-300 rounded px-2 py-1.5 text-sm bg-white"
     : "w-full border border-stone-300 rounded-lg px-3 py-2 text-base bg-white";
 
+  // パネルを開いたときに全市区町村データを1回だけ取得
+  const loadAllData = async () => {
+    if (allData) return allData;
+    setLoadingAll(true);
+    try {
+      const res = await fetch("https://geolonia.github.io/japanese-addresses/api/ja.json");
+      const data: Record<string, string[]> = await res.json();
+      setAllData(data);
+      setLoadingAll(false);
+      return data;
+    } catch { /* 無視 */ }
+    setLoadingAll(false);
+    return null;
+  };
+
   const handlePrefChange = async (selected: string) => {
     setPref(selected);
     setCity(""); setCities([]);
     setTowns([]);
     if (!selected) return;
-    setLoadingCities(true);
-    try {
-      const res = await fetch(
-        `https://geolonia.github.io/japanese-addresses/api/ja/${encodeURIComponent(selected)}.json`
-      );
-      const data = await res.json();
-      setCities(Object.keys(data).sort());
-    } catch { /* 無視 */ }
-    setLoadingCities(false);
+    const data = await loadAllData();
+    if (data && data[selected]) {
+      setCities(data[selected]);
+    }
   };
 
   const handleCityChange = async (selected: string) => {
@@ -90,7 +102,7 @@ export function PostalCodeSearch({ onSelect, size = "base" }: Props) {
     return (
       <button
         type="button"
-        onClick={() => setOpen(true)}
+        onClick={() => { setOpen(true); loadAllData(); }}
         className="text-xs text-stone-400 hover:text-stone-600 underline mt-1 block"
       >
         住所から郵便番号を検索
@@ -115,7 +127,7 @@ export function PostalCodeSearch({ onSelect, size = "base" }: Props) {
 
       {/* Step 2: 市区町村（都道府県選択後に表示） */}
       {pref && (
-        loadingCities ? (
+        loadingAll ? (
           <p className="text-xs text-stone-400 pl-1">市区町村を読み込み中…</p>
         ) : (
           <select value={city} onChange={e => handleCityChange(e.target.value)} className={selectCls}>
