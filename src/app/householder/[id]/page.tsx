@@ -744,21 +744,9 @@ export default function HouseholderDetailPage({ params }: { params: Promise<{ id
                 <td className="px-4 py-2.5 text-stone-500">電話番号1</td>
                 <td className="px-4 py-2.5 text-stone-700">{householder.phone1 || ""}</td>
               </tr>
-              <tr className="border-b border-stone-100">
+              <tr>
                 <td className="px-4 py-2.5 text-stone-500">電話番号2</td>
                 <td className="px-4 py-2.5 text-stone-700">{householder.phone2 || ""}</td>
-              </tr>
-              <tr className="border-b border-stone-100">
-                <td className="px-4 py-2.5 text-stone-500">移動時間(単位：分)</td>
-                <td className="px-4 py-2.5 text-stone-700"></td>
-              </tr>
-              <tr className="border-b border-stone-100">
-                <td className="px-4 py-2.5 text-stone-500">駐車場</td>
-                <td className="px-4 py-2.5 text-stone-700"></td>
-              </tr>
-              <tr>
-                <td className="px-4 py-2.5 text-stone-500">本籍地</td>
-                <td className="px-4 py-2.5 text-stone-700">{householder.domicile || ""}</td>
               </tr>
             </tbody>
           </table>
@@ -790,13 +778,29 @@ export default function HouseholderDetailPage({ params }: { params: Promise<{ id
 
       {/* 戸主詳細タブ */}
       {activeTab === "detail" && (
-        <div className="bg-white rounded-xl shadow-sm border border-stone-200 p-6">
-          <dl className="grid grid-cols-2 gap-x-8 gap-y-3 text-sm">
-            <div className="col-span-2">
-              <dt className="text-stone-400 mb-1">本籍地</dt>
-              <dd className="text-stone-700">{householder.domicile || "-"}</dd>
-            </div>
-          </dl>
+        <div className="bg-white rounded-xl shadow-sm border border-stone-200 overflow-hidden">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="bg-stone-50 border-b border-stone-200">
+                <th className="text-left px-4 py-2 font-medium text-stone-600 w-2/5">項目</th>
+                <th className="text-left px-4 py-2 font-medium text-stone-600">内容</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr className="border-b border-stone-100">
+                <td className="px-4 py-2.5 text-stone-500">移動時間(単位：分)</td>
+                <td className="px-4 py-2.5 text-stone-700"></td>
+              </tr>
+              <tr className="border-b border-stone-100">
+                <td className="px-4 py-2.5 text-stone-500">駐車場</td>
+                <td className="px-4 py-2.5 text-stone-700"></td>
+              </tr>
+              <tr>
+                <td className="px-4 py-2.5 text-stone-500">本籍地</td>
+                <td className="px-4 py-2.5 text-stone-700">{householder.domicile || ""}</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       )}
 
