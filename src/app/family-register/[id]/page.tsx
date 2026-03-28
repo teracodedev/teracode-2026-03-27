@@ -106,6 +106,13 @@ export default function FamilyRegisterDetailPage({ params }: { params: Promise<{
   const [kakochoForm, setKakochoForm] = useState({ deathDate: "", dharmaName: "", dharmaNameKana: "" });
   const [savingKakocho, setSavingKakocho] = useState(false);
 
+  // 戸主を過去帳へ移動 モーダル
+  const [householderKakochoModal, setHouseholderKakochoModal] = useState(false);
+  const [householderKakochoForm, setHouseholderKakochoForm] = useState({
+    deathDate: "", dharmaName: "", dharmaNameKana: "", newMemberId: null as string | null,
+  });
+  const [savingHouseholderKakocho, setSavingHouseholderKakocho] = useState(false);
+
   // 別の世帯へ移動 モーダル
   const [moveModal, setMoveModal] = useState<{ memberId: string; householderId: string; memberName: string } | null>(null);
   const [moveQuery, setMoveQuery] = useState("");
@@ -240,6 +247,34 @@ export default function FamilyRegisterDetailPage({ params }: { params: Promise<{
     setSavingKakocho(false);
     setKakochoModal(null);
     setKakochoForm({ deathDate: "", dharmaName: "", dharmaNameKana: "" });
+    fetchData();
+  };
+
+  // 戸主を過去帳へ移動
+  const handleHouseholderKakochoMove = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!householderKakochoForm.newMemberId) return;
+    const h = householders[0];
+    if (!h) return;
+    setSavingHouseholderKakocho(true);
+    const res = await fetchWithAuth(`/api/householder/${h.id}/transfer-deceased`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        memberId:       householderKakochoForm.newMemberId,
+        deathDate:      householderKakochoForm.deathDate,
+        dharmaName:     householderKakochoForm.dharmaName || null,
+        dharmaNameKana: householderKakochoForm.dharmaNameKana || null,
+      }),
+    });
+    setSavingHouseholderKakocho(false);
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      alert((body as { error?: string }).error || "操作に失敗しました");
+      return;
+    }
+    setHouseholderKakochoModal(false);
+    setHouseholderKakochoForm({ deathDate: "", dharmaName: "", dharmaNameKana: "", newMemberId: null });
     fetchData();
   };
 
@@ -429,6 +464,11 @@ export default function FamilyRegisterDetailPage({ params }: { params: Promise<{
                     )}
                   </div>
                   <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setHouseholderKakochoModal(true)}
+                      className="border border-amber-300 text-amber-700 px-3 py-1 rounded-lg text-sm font-medium hover:bg-amber-50">
+                      操作
+                    </button>
                     <Link href={`/householder/${h.id}/edit`}
                       className="border border-stone-300 text-stone-600 px-3 py-1 rounded-lg text-sm font-medium hover:bg-stone-50">
                       編集
@@ -788,6 +828,76 @@ export default function FamilyRegisterDetailPage({ params }: { params: Promise<{
           </div>
         </div>
       )}
+
+      {/* 戸主を過去帳へ移動 モーダル */}
+      {householderKakochoModal && (() => {
+        const h = householders[0];
+        if (!h) return null;
+        const candidates = livingMembers.filter(m => m.householderId === h.id);
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+            <form onSubmit={handleHouseholderKakochoMove} className="bg-white rounded-xl w-full max-w-md shadow-xl space-y-4 overflow-y-auto max-h-[90vh]">
+              <div className="px-6 py-4 border-b border-stone-200 flex items-center justify-between">
+                <h3 className="font-bold text-stone-700">戸主を過去帳へ移動</h3>
+                <button type="button" onClick={() => { setHouseholderKakochoModal(false); setHouseholderKakochoForm({ deathDate: "", dharmaName: "", dharmaNameKana: "", newMemberId: null }); }}
+                  className="text-stone-400 hover:text-stone-600 text-xl leading-none">✕</button>
+              </div>
+              <div className="px-6 space-y-4">
+                <p className="text-sm text-stone-500">
+                  <span className="font-medium text-stone-700">{h.familyName} {h.givenName}</span> を過去帳へ移動し、現在帳から新しい戸主を選択してください。
+                </p>
+                <div>
+                  <label className="block text-xs text-stone-500 mb-1">命日 <span className="text-red-500">*</span></label>
+                  <input required type="date" value={householderKakochoForm.deathDate}
+                    onChange={e => setHouseholderKakochoForm(f => ({ ...f, deathDate: e.target.value }))}
+                    className={inputCls} />
+                </div>
+                <div>
+                  <label className="block text-xs text-stone-500 mb-1">法名</label>
+                  <input value={householderKakochoForm.dharmaName}
+                    onChange={e => setHouseholderKakochoForm(f => ({ ...f, dharmaName: e.target.value }))}
+                    className={inputCls} placeholder="釋○○" />
+                </div>
+                <div>
+                  <label className="block text-xs text-stone-500 mb-1">法名フリガナ</label>
+                  <input value={householderKakochoForm.dharmaNameKana}
+                    onChange={e => setHouseholderKakochoForm(f => ({ ...f, dharmaNameKana: e.target.value }))}
+                    className={inputCls} />
+                </div>
+                <div>
+                  <label className="block text-xs text-stone-500 mb-1">新しい戸主を選択 <span className="text-red-500">*</span></label>
+                  {candidates.length === 0 ? (
+                    <p className="text-sm text-stone-400 py-2">現在帳に世帯員がいません</p>
+                  ) : (
+                    <div className="border border-stone-200 rounded-lg overflow-hidden">
+                      {candidates.map(m => (
+                        <button key={m.id} type="button"
+                          onClick={() => setHouseholderKakochoForm(f => ({ ...f, newMemberId: m.id }))}
+                          className={`w-full text-left px-4 py-2.5 text-sm border-b border-stone-100 last:border-0 transition-colors ${
+                            householderKakochoForm.newMemberId === m.id
+                              ? "bg-amber-50 text-amber-700 font-medium"
+                              : "text-stone-700 hover:bg-stone-50"
+                          }`}>
+                          {m.familyName} {m.givenName || ""}
+                          {m.relation && <span className="ml-2 text-xs text-stone-400">{m.relation}</span>}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div className="px-6 py-4 border-t border-stone-200 flex gap-2 justify-end">
+                <button type="button" onClick={() => { setHouseholderKakochoModal(false); setHouseholderKakochoForm({ deathDate: "", dharmaName: "", dharmaNameKana: "", newMemberId: null }); }}
+                  className="border border-stone-300 text-stone-600 px-4 py-1.5 rounded-lg text-sm">キャンセル</button>
+                <button type="submit" disabled={savingHouseholderKakocho || !householderKakochoForm.newMemberId}
+                  className="bg-amber-600 text-white px-4 py-1.5 rounded-lg text-sm font-medium disabled:opacity-50">
+                  {savingHouseholderKakocho ? "処理中..." : "実行"}
+                </button>
+              </div>
+            </form>
+          </div>
+        );
+      })()}
 
       {/* 過去帳へ移動 モーダル */}
       {kakochoModal && (
