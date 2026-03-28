@@ -455,15 +455,9 @@ export default function FamilyRegisterDetailPage({ params }: { params: Promise<{
       </div>
 
       {editing && (
-        <div className="bg-white rounded-xl border border-stone-200 p-4 space-y-3">
-          <div>
-            <label className="block text-sm text-stone-500 mb-1">フリガナ</label>
-            <input value={editNameKana} onChange={(e) => setEditNameKana(e.target.value)} className={inputCls} placeholder="ヤマダタロウノカゾク・シンゾク" />
-          </div>
-          <div>
-            <label className="block text-sm text-stone-500 mb-1">備考</label>
-            <textarea value={editNote} onChange={(e) => setEditNote(e.target.value)} rows={2} className={inputCls} />
-          </div>
+        <div className="bg-white rounded-xl border border-stone-200 p-4">
+          <label className="block text-sm text-stone-500 mb-1">フリガナ</label>
+          <input value={editNameKana} onChange={(e) => setEditNameKana(e.target.value)} className={inputCls} placeholder="ヤマダタロウノカゾク・シンゾク" />
         </div>
       )}
 
