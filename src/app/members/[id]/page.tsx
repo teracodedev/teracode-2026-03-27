@@ -12,6 +12,15 @@ interface MemberDetail {
   familyNameKana: string | null;
   givenNameKana: string | null;
   relation: string | null;
+  postalCode: string | null;
+  address1: string | null;
+  address2: string | null;
+  address3: string | null;
+  phone1: string | null;
+  phone2: string | null;
+  fax: string | null;
+  domicile: string | null;
+  email: string | null;
   birthDate: string | null;
   deathDate: string | null;
   dharmaName: string | null;
@@ -227,6 +236,8 @@ export default function MemberDetailPage({ params }: { params: Promise<{ id: str
     dharmaName: "", dharmaNameKana: "",
     deathDate: "", birthDate: "",
     relation: "", note: "",
+    postalCode: "", address1: "", address2: "", address3: "",
+    phone1: "", phone2: "", fax: "", domicile: "", email: "",
   });
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -256,6 +267,15 @@ export default function MemberDetailPage({ params }: { params: Promise<{ id: str
       birthDate: toDateInputValue(member.birthDate),
       relation: member.relation || "",
       note: member.note || "",
+      postalCode: member.postalCode || "",
+      address1: member.address1 || "",
+      address2: member.address2 || "",
+      address3: member.address3 || "",
+      phone1: member.phone1 || "",
+      phone2: member.phone2 || "",
+      fax: member.fax || "",
+      domicile: member.domicile || "",
+      email: member.email || "",
     });
     setSaveError(null);
     setIsEditing(true);
@@ -279,6 +299,15 @@ export default function MemberDetailPage({ params }: { params: Promise<{ id: str
           birthDate: editForm.birthDate || null,
           relation: editForm.relation || null,
           note: editForm.note || null,
+          postalCode: editForm.postalCode || null,
+          address1: editForm.address1 || null,
+          address2: editForm.address2 || null,
+          address3: editForm.address3 || null,
+          phone1: editForm.phone1 || null,
+          phone2: editForm.phone2 || null,
+          fax: editForm.fax || null,
+          domicile: editForm.domicile || null,
+          email: editForm.email || null,
         }),
       });
       if (!res.ok) {
@@ -306,19 +335,207 @@ export default function MemberDetailPage({ params }: { params: Promise<{ id: str
   const fullNameKana = [member.familyNameKana, member.givenNameKana].filter(Boolean).join(" ") || null;
 
   if (!isDeceased) {
-    // 生存者は簡易表示
     return (
-      <div className="max-w-2xl space-y-6">
-        <div className="flex items-center gap-4">
-          <Link href="/genzaicho" className="text-stone-400 hover:text-stone-600 text-sm">← 現在帳一覧へ</Link>
+      <div className="max-w-3xl space-y-4">
+        {/* 上部ナビ */}
+        <div className="flex gap-2 flex-wrap">
+          <Link href="/genzaicho" className="text-xs px-3 py-1.5 bg-stone-100 hover:bg-stone-200 text-stone-600 rounded border border-stone-300">
+            ← 現在帳一覧へ
+          </Link>
+          {member.householder.familyRegister ? (
+            <Link href={`/family-register/${member.householder.familyRegister.id}`} className="text-xs px-3 py-1.5 bg-stone-100 hover:bg-stone-200 text-stone-600 rounded border border-stone-300">
+              所属する家族台帳へ
+            </Link>
+          ) : (
+            <Link href={`/householder/${member.householder.id}`} className="text-xs px-3 py-1.5 bg-stone-100 hover:bg-stone-200 text-stone-600 rounded border border-stone-300">
+              所属する戸主台帳へ
+            </Link>
+          )}
+        </div>
+
+        {/* タイトルと編集ボタン */}
+        <div className="flex items-center justify-between flex-wrap gap-2">
           <h1 className="text-2xl font-bold text-stone-800">{fullName}</h1>
+          <button
+            onClick={openEdit}
+            className="border border-stone-300 text-stone-600 px-4 py-1.5 rounded-lg hover:bg-stone-50 transition-colors text-sm font-medium"
+          >
+            編集
+          </button>
         </div>
-        <div className="bg-white rounded-xl shadow-sm border border-stone-200 p-6">
-          <dl className="grid grid-cols-2 gap-x-8 gap-y-4 text-sm">
-            <div><dt className="text-stone-400 text-xs mb-0.5">氏名</dt><dd className="font-medium text-stone-800">{fullName}</dd></div>
-            {member.relation && <div><dt className="text-stone-400 text-xs mb-0.5">続柄</dt><dd className="text-stone-700">{member.relation}</dd></div>}
-          </dl>
+
+        {/* 基本情報テーブル */}
+        <div className="bg-white rounded-xl shadow-sm border border-stone-200 overflow-hidden">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="bg-stone-50 border-b border-stone-200">
+                <th className="text-left px-4 py-2 font-medium text-stone-600 w-2/5">項目</th>
+                <th className="text-left px-4 py-2 font-medium text-stone-600">内容</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr className="border-b border-stone-100">
+                <td className="px-4 py-2.5 text-stone-500">氏名フリガナ</td>
+                <td className="px-4 py-2.5 text-stone-700">{fullNameKana || ""}</td>
+              </tr>
+              <tr className="border-b border-stone-100">
+                <td className="px-4 py-2.5 text-stone-500">氏名</td>
+                <td className="px-4 py-2.5 text-stone-700 font-medium">{fullName}</td>
+              </tr>
+              <tr className="border-b border-stone-100">
+                <td className="px-4 py-2.5 text-stone-500">続柄</td>
+                <td className="px-4 py-2.5 text-stone-700">{member.relation || ""}</td>
+              </tr>
+              <tr className="border-b border-stone-100">
+                <td className="px-4 py-2.5 text-stone-500">郵便番号</td>
+                <td className="px-4 py-2.5 text-stone-700">{member.postalCode ? `〒${member.postalCode}` : ""}</td>
+              </tr>
+              <tr className="border-b border-stone-100">
+                <td className="px-4 py-2.5 text-stone-500">住所</td>
+                <td className="px-4 py-2.5 text-stone-700">{[member.address1, member.address2, member.address3].filter(Boolean).join("")}</td>
+              </tr>
+              <tr className="border-b border-stone-100">
+                <td className="px-4 py-2.5 text-stone-500">電話番号1</td>
+                <td className="px-4 py-2.5 text-stone-700">{member.phone1 || ""}</td>
+              </tr>
+              <tr className="border-b border-stone-100">
+                <td className="px-4 py-2.5 text-stone-500">電話番号2</td>
+                <td className="px-4 py-2.5 text-stone-700">{member.phone2 || ""}</td>
+              </tr>
+              <tr className="border-b border-stone-100">
+                <td className="px-4 py-2.5 text-stone-500">FAX</td>
+                <td className="px-4 py-2.5 text-stone-700">{member.fax || ""}</td>
+              </tr>
+              <tr className="border-b border-stone-100">
+                <td className="px-4 py-2.5 text-stone-500">本籍地</td>
+                <td className="px-4 py-2.5 text-stone-700">{member.domicile || ""}</td>
+              </tr>
+              <tr className="border-b border-stone-100">
+                <td className="px-4 py-2.5 text-stone-500">メールアドレス</td>
+                <td className="px-4 py-2.5 text-stone-700">{member.email || ""}</td>
+              </tr>
+              {member.birthDate && (
+                <tr className="border-b border-stone-100">
+                  <td className="px-4 py-2.5 text-stone-500">生年月日</td>
+                  <td className="px-4 py-2.5 text-stone-700">{formatDate(member.birthDate)}</td>
+                </tr>
+              )}
+              {member.note && (
+                <tr>
+                  <td className="px-4 py-2.5 text-stone-500">備考</td>
+                  <td className="px-4 py-2.5 text-stone-700">{member.note}</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
+
+        {/* 編集モーダル */}
+        {isEditing && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+            <div className="bg-white rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+              <div className="px-6 py-4 border-b border-stone-200 flex items-center justify-between">
+                <h2 className="font-semibold text-stone-800">現在帳情報を編集</h2>
+                <button onClick={() => setIsEditing(false)} className="text-stone-400 hover:text-stone-600 text-xl leading-none">✕</button>
+              </div>
+              <div className="px-6 py-4 space-y-4">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs text-stone-500 mb-1">姓 <span className="text-red-500">*</span></label>
+                    <input type="text" value={editForm.familyName} onChange={e => setEditForm(f => ({ ...f, familyName: e.target.value }))}
+                      className="w-full border border-stone-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-stone-300" />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-stone-500 mb-1">名</label>
+                    <input type="text" value={editForm.givenName} onChange={e => setEditForm(f => ({ ...f, givenName: e.target.value }))}
+                      className="w-full border border-stone-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-stone-300" />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-stone-500 mb-1">姓フリガナ</label>
+                    <input type="text" value={editForm.familyNameKana} onChange={e => setEditForm(f => ({ ...f, familyNameKana: e.target.value }))}
+                      className="w-full border border-stone-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-stone-300" />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-stone-500 mb-1">名フリガナ</label>
+                    <input type="text" value={editForm.givenNameKana} onChange={e => setEditForm(f => ({ ...f, givenNameKana: e.target.value }))}
+                      className="w-full border border-stone-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-stone-300" />
+                  </div>
+                  <div className="col-span-2">
+                    <label className="block text-xs text-stone-500 mb-1">続柄</label>
+                    <input type="text" value={editForm.relation} onChange={e => setEditForm(f => ({ ...f, relation: e.target.value }))}
+                      className="w-full border border-stone-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-stone-300" />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-stone-500 mb-1">郵便番号</label>
+                    <input type="text" value={editForm.postalCode} onChange={e => setEditForm(f => ({ ...f, postalCode: e.target.value }))}
+                      className="w-full border border-stone-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-stone-300" />
+                  </div>
+                  <div className="col-span-2">
+                    <label className="block text-xs text-stone-500 mb-1">住所1（都道府県・市区町村）</label>
+                    <input type="text" value={editForm.address1} onChange={e => setEditForm(f => ({ ...f, address1: e.target.value }))}
+                      className="w-full border border-stone-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-stone-300" />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-stone-500 mb-1">住所2（丁目・番地）</label>
+                    <input type="text" value={editForm.address2} onChange={e => setEditForm(f => ({ ...f, address2: e.target.value }))}
+                      className="w-full border border-stone-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-stone-300" />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-stone-500 mb-1">住所3（建物名等）</label>
+                    <input type="text" value={editForm.address3} onChange={e => setEditForm(f => ({ ...f, address3: e.target.value }))}
+                      className="w-full border border-stone-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-stone-300" />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-stone-500 mb-1">電話番号1</label>
+                    <input type="tel" value={editForm.phone1} onChange={e => setEditForm(f => ({ ...f, phone1: e.target.value }))}
+                      className="w-full border border-stone-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-stone-300" />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-stone-500 mb-1">電話番号2</label>
+                    <input type="tel" value={editForm.phone2} onChange={e => setEditForm(f => ({ ...f, phone2: e.target.value }))}
+                      className="w-full border border-stone-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-stone-300" />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-stone-500 mb-1">FAX</label>
+                    <input type="tel" value={editForm.fax} onChange={e => setEditForm(f => ({ ...f, fax: e.target.value }))}
+                      className="w-full border border-stone-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-stone-300" />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-stone-500 mb-1">本籍地</label>
+                    <input type="text" value={editForm.domicile} onChange={e => setEditForm(f => ({ ...f, domicile: e.target.value }))}
+                      className="w-full border border-stone-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-stone-300" />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-stone-500 mb-1">メールアドレス</label>
+                    <input type="email" value={editForm.email} onChange={e => setEditForm(f => ({ ...f, email: e.target.value }))}
+                      className="w-full border border-stone-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-stone-300" />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-stone-500 mb-1">生年月日</label>
+                    <input type="date" value={editForm.birthDate} onChange={e => setEditForm(f => ({ ...f, birthDate: e.target.value }))}
+                      className="w-full border border-stone-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-stone-300" />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs text-stone-500 mb-1">備考</label>
+                  <textarea value={editForm.note} onChange={e => setEditForm(f => ({ ...f, note: e.target.value }))} rows={3}
+                    className="w-full border border-stone-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-stone-300 resize-none" />
+                </div>
+                {saveError && <p className="text-sm text-red-600">{saveError}</p>}
+              </div>
+              <div className="px-6 py-4 border-t border-stone-200 flex justify-end gap-2">
+                <button onClick={() => setIsEditing(false)} disabled={saving}
+                  className="px-4 py-2 text-sm border border-stone-300 rounded-lg hover:bg-stone-50 disabled:opacity-40">
+                  キャンセル
+                </button>
+                <button onClick={handleSave} disabled={saving || !editForm.familyName}
+                  className="px-4 py-2 text-sm bg-stone-700 hover:bg-stone-800 text-white rounded-lg disabled:opacity-40">
+                  {saving ? "保存中..." : "保存"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   }

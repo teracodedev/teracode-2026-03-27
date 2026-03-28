@@ -57,6 +57,8 @@ export async function PATCH(request: NextRequest, { params }: Params) {
       familyName, givenName, familyNameKana, givenNameKana,
       relation, gender, birthDate, deathDate,
       dharmaName, dharmaNameKana, note,
+      postalCode, address1, address2, address3,
+      phone1, phone2, fax, domicile, email,
       annaiFuyo, keijiFuyo, notePrintDisabled, meinichiFusho,
     } = body;
 
@@ -77,6 +79,15 @@ export async function PATCH(request: NextRequest, { params }: Params) {
       dharmaName: dharmaName || null,
       dharmaNameKana: dharmaNameKana || null,
       note: note || null,
+      postalCode: postalCode || null,
+      address1: address1 || null,
+      address2: address2 || null,
+      address3: address3 || null,
+      phone1: phone1 || null,
+      phone2: phone2 || null,
+      fax: fax || null,
+      domicile: domicile || null,
+      email: email || null,
     };
 
     if (annaiFuyo         !== undefined) updateData.annaiFuyo         = Boolean(annaiFuyo);
