@@ -131,7 +131,9 @@ export default function FamilyRegisterPage() {
                   <div className="flex items-center justify-between gap-2">
                     <div className="min-w-0">
                       {nameKana && <div className="text-xs text-stone-400">{nameKana}</div>}
-                      <div className="font-medium text-stone-800 text-base">{r.name}</div>
+                      <Link href={`/family-register/${r.id}`} className="font-medium text-amber-700 text-base hover:underline">
+                        {r.name}
+                      </Link>
                       <div className="text-sm text-stone-600 mt-0.5">
                         {hh ? (
                           <Link href={`/householder/${hh.id}`} className="hover:underline hover:text-amber-700">
