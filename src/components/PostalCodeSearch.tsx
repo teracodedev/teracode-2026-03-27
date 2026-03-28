@@ -30,20 +30,19 @@ export function PostalCodeSearch({ onSelect, size = "base" }: Props) {
   const [pref, setPref] = useState("");
   const [cities, setCities] = useState<string[]>([]);
   const [loadingCities, setLoadingCities] = useState(false);
-  const [city, setCity] = useState("");
 
+  const [city, setCity] = useState("");
   const [towns, setTowns] = useState<ZipcodeResult[]>([]);
   const [loadingTowns, setLoadingTowns] = useState(false);
-  const [town, setTown] = useState("");
 
-  const inputCls = size === "sm"
-    ? "border border-stone-300 rounded px-2 py-1.5 text-sm bg-white w-full"
-    : "border border-stone-300 rounded-lg px-3 py-2 text-base bg-white w-full";
+  const selectCls = size === "sm"
+    ? "w-full border border-stone-300 rounded px-2 py-1.5 text-sm bg-white"
+    : "w-full border border-stone-300 rounded-lg px-3 py-2 text-base bg-white";
 
   const handlePrefChange = async (selected: string) => {
     setPref(selected);
     setCity(""); setCities([]);
-    setTown(""); setTowns([]);
+    setTowns([]);
     if (!selected) return;
     setLoadingCities(true);
     try {
@@ -56,12 +55,13 @@ export function PostalCodeSearch({ onSelect, size = "base" }: Props) {
     setLoadingCities(false);
   };
 
-  const fetchTowns = async (cityValue: string) => {
-    if (!pref || !cityValue) return;
-    setTown(""); setTowns([]);
+  const handleCityChange = async (selected: string) => {
+    setCity(selected);
+    setTowns([]);
+    if (!selected) return;
     setLoadingTowns(true);
     try {
-      const query = encodeURIComponent(pref + cityValue);
+      const query = encodeURIComponent(pref + selected);
       const res = await fetch(
         `https://zipcloud.ibsnet.co.jp/api/search?address=${query}&limit=100`
       );
@@ -71,26 +71,18 @@ export function PostalCodeSearch({ onSelect, size = "base" }: Props) {
     setLoadingTowns(false);
   };
 
-  const handleCityChange = (value: string) => {
-    setCity(value);
-    setTown(""); setTowns([]);
-    // 候補リストから選択されたとき（完全一致）は即座に町域を取得
-    if (cities.includes(value)) fetchTowns(value);
-  };
-
-  const handleTownChange = (value: string) => {
-    setTown(value);
-    const match = towns.find(r => r.address3 === value);
-    if (match) {
-      const zip = match.zipcode.replace(/^(\d{3})(\d{4})$/, "$1-$2");
-      onSelect(zip, match.address1 + match.address2 + (match.address3 || ""));
-      setOpen(false);
-    }
+  const handleTownChange = (idx: string) => {
+    const i = parseInt(idx);
+    if (isNaN(i)) return;
+    const r = towns[i];
+    const zip = r.zipcode.replace(/^(\d{3})(\d{4})$/, "$1-$2");
+    onSelect(zip, r.address1 + r.address2 + (r.address3 || ""));
+    setOpen(false);
   };
 
   const reset = () => {
     setOpen(false);
-    setPref(""); setCity(""); setTown("");
+    setPref(""); setCity("");
     setCities([]); setTowns([]);
   };
 
@@ -115,71 +107,40 @@ export function PostalCodeSearch({ onSelect, size = "base" }: Props) {
         </button>
       </div>
 
-      {/* 都道府県 */}
-      <select
-        value={pref}
-        onChange={e => handlePrefChange(e.target.value)}
-        className={inputCls}
-      >
-        <option value="">都道府県を選択</option>
+      {/* Step 1: 都道府県 */}
+      <select value={pref} onChange={e => handlePrefChange(e.target.value)} className={selectCls}>
+        <option value="">① 都道府県を選択</option>
         {PREFECTURES.map(p => <option key={p} value={p}>{p}</option>)}
       </select>
 
-      {/* 市区町村：datalist でドロップダウン選択 + 自由入力の両方に対応 */}
+      {/* Step 2: 市区町村（都道府県選択後に表示） */}
       {pref && (
         loadingCities ? (
-          <p className="text-xs text-stone-400">市区町村を読み込み中…</p>
+          <p className="text-xs text-stone-400 pl-1">市区町村を読み込み中…</p>
         ) : (
-          <div className="flex gap-2">
-            <input
-              list="postal-search-cities"
-              value={city}
-              onChange={e => handleCityChange(e.target.value)}
-              placeholder="市区町村（選択または入力）"
-              className={inputCls}
-            />
-            <datalist id="postal-search-cities">
-              {cities.map(c => <option key={c} value={c} />)}
-            </datalist>
-            {/* 自由入力時は候補一致しないため手動で検索 */}
-            {city && !cities.includes(city) && (
-              <button
-                type="button"
-                onClick={() => fetchTowns(city)}
-                disabled={loadingTowns}
-                className="border border-stone-300 text-stone-600 px-3 py-1.5 rounded text-sm hover:bg-stone-100 disabled:opacity-40 whitespace-nowrap"
-              >
-                検索
-              </button>
-            )}
-          </div>
+          <select value={city} onChange={e => handleCityChange(e.target.value)} className={selectCls}>
+            <option value="">② 市区町村を選択</option>
+            {cities.map(c => <option key={c} value={c}>{c}</option>)}
+          </select>
         )
       )}
 
-      {/* 町域：datalist でドロップダウン選択 + 自由入力の両方に対応 */}
+      {/* Step 3: 町域（市区町村選択後に表示） */}
       {city && (
         loadingTowns ? (
-          <p className="text-xs text-stone-400">町域を読み込み中…</p>
-        ) : towns.length > 0 ? (
-          <div>
-            <input
-              list="postal-search-towns"
-              value={town}
-              onChange={e => handleTownChange(e.target.value)}
-              placeholder="町域を選択または入力すると郵便番号が入ります"
-              className={inputCls}
-            />
-            <datalist id="postal-search-towns">
-              {towns.map((r, i) => (
-                <option key={i} value={r.address3 || ""}>
-                  〒{r.zipcode.replace(/^(\d{3})(\d{4})$/, "$1-$2")}
-                </option>
-              ))}
-            </datalist>
-          </div>
-        ) : city && towns.length === 0 && !loadingTowns && cities.includes(city) ? (
-          <p className="text-xs text-stone-400">該当する町域が見つかりませんでした</p>
-        ) : null
+          <p className="text-xs text-stone-400 pl-1">町域を読み込み中…</p>
+        ) : towns.length === 0 ? (
+          <p className="text-xs text-stone-400 pl-1">該当する町域が見つかりませんでした</p>
+        ) : (
+          <select defaultValue="" onChange={e => handleTownChange(e.target.value)} className={selectCls}>
+            <option value="" disabled>③ 町域を選択（郵便番号が自動入力されます）</option>
+            {towns.map((r, i) => (
+              <option key={i} value={i}>
+                {r.address3 || "（町域なし）"}　〒{r.zipcode.replace(/^(\d{3})(\d{4})$/, "$1-$2")}
+              </option>
+            ))}
+          </select>
+        )
       )}
     </div>
   );
