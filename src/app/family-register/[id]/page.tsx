@@ -743,7 +743,7 @@ export default function FamilyRegisterDetailPage({ params }: { params: Promise<{
                 <div>
                   <label className="block text-xs text-stone-500 mb-1">法名</label>
                   <input value={deceasedForm.dharmaName} onChange={e => setDeceasedForm(f => ({ ...f, dharmaName: e.target.value }))}
-                    className={inputCls} placeholder="○○院○○居士" />
+                    className={inputCls} placeholder="釋○○" />
                 </div>
                 <div className="col-span-2">
                   <label className="block text-xs text-stone-500 mb-1">法名フリガナ</label>
@@ -807,7 +807,7 @@ export default function FamilyRegisterDetailPage({ params }: { params: Promise<{
               <label className="block text-xs text-stone-500 mb-1">法名</label>
               <input value={kakochoForm.dharmaName}
                 onChange={e => setKakochoForm(f => ({ ...f, dharmaName: e.target.value }))}
-                className={inputCls} placeholder="○○院○○居士" />
+                className={inputCls} placeholder="釋○○" />
             </div>
             <div>
               <label className="block text-xs text-stone-500 mb-1">法名フリガナ</label>
