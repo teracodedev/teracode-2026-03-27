@@ -41,25 +41,23 @@ function str(v: unknown): string | null {
 
 function normalizeAgeAtDeath(v: unknown): string | null {
   if (v === null || v === undefined) return null;
-  const s = String(v).trim();
+  const s = String(v).trim().replace(/[才歳]/g, "");
   if (!s) return null;
-  const unified = s.endsWith("才") ? `${s.slice(0, -1)}歳` : s.endsWith("歳") ? s : `${s}歳`;
-
-  // 享年を「九十二歳」のような漢数字表記で統一
-  const match = unified.match(/^(\d+)\s*歳$/);
-  if (!match) return unified;
-  const n = Number(match[1]);
-  if (!Number.isFinite(n) || n <= 0 || n >= 1000) return null;
-
-  const digits = ["", "一", "二", "三", "四", "五", "六", "七", "八", "九"];
-  const hundreds = Math.floor(n / 100);
-  const tens = Math.floor((n % 100) / 10);
-  const ones = n % 10;
-  let kanji = "";
-  if (hundreds > 0) kanji += (hundreds === 1 ? "" : digits[hundreds]) + "百";
-  if (tens > 0) kanji += (tens === 1 ? "" : digits[tens]) + "十";
-  if (ones > 0) kanji += digits[ones];
-  return `${kanji}歳`;
+  // 漢数字を算用数字に変換
+  const directMatch = s.match(/^(\d+)$/);
+  if (directMatch) {
+    const n = Number(directMatch[1]);
+    return (Number.isFinite(n) && n > 0 && n < 1000) ? String(n) : null;
+  }
+  const map: Record<string, number> = { 一:1,二:2,三:3,四:4,五:5,六:6,七:7,八:8,九:9 };
+  let n = 0; let cur = 0;
+  for (const c of s) {
+    if (map[c] !== undefined) { cur = map[c]; continue; }
+    if (c === "百") { n += (cur || 1) * 100; cur = 0; }
+    else if (c === "十") { n += (cur || 1) * 10; cur = 0; }
+  }
+  n += cur;
+  return (n > 0 && n < 1000) ? String(n) : null;
 }
 
 // birthDate と deathDate から享年を計算するフォールバック
@@ -71,7 +69,7 @@ function calcAgeAtDeathFromDates(birthDate: Date | null, deathDate: Date | null)
     age--;
   }
   if (age <= 0 || age >= 200) return null;
-  return normalizeAgeAtDeath(age);
+  return String(age);
 }
 
 function pickAgeAtDeath(row: Record<string, unknown>): string | null {

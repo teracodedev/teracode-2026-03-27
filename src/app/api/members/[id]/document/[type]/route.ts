@@ -156,7 +156,7 @@ function toKanjiAgeString(value: string | null | undefined): string {
   if (!value) return "";
   const s = value.trim().replace(/才$/, "歳");
   if (!s) return "";
-  const match = s.match(/^(\d+)\s*歳$/);
+  const match = s.match(/^(\d+)\s*歳?$/);
   if (!match) return s;
   const n = Number(match[1]);
   if (!Number.isFinite(n) || n <= 0 || n >= 1000) return s;

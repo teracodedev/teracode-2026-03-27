@@ -103,7 +103,7 @@ function formatAge(member: { ageAtDeath: string | null; birthDate: string | null
   if (member.ageAtDeath) {
     const n = kanjiAgeToNumber(member.ageAtDeath);
     if (n !== null) return `${n}歳`;
-    return member.ageAtDeath.replace(/才/g, "歳");
+    return member.ageAtDeath.replace(/[才歳]/g, "") + "歳";
   }
   return "-";
 }
