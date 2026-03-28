@@ -4,6 +4,7 @@ import { fetchWithAuth } from "@/lib/fetch-with-auth";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { PostalCodeSearch } from "@/components/PostalCodeSearch";
 
 async function lookupPostalCode(zip: string): Promise<string | null> {
   const code = zip.replace(/-/g, "");
@@ -205,6 +206,11 @@ export default function NewHouseholderPage() {
                 onChange={handleChange}
                 placeholder="東京都渋谷区"
                 className="w-full border border-stone-300 rounded-lg px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-stone-400"
+              />
+            </div>
+            <div className="col-span-3">
+              <PostalCodeSearch
+                onSelect={(zip, addr) => setForm(f => ({ ...f, postalCode: zip, address1: addr }))}
               />
             </div>
           </div>

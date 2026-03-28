@@ -3,6 +3,7 @@
 import { useState, useEffect, use } from "react";
 import Link from "next/link";
 import { fetchWithAuth } from "@/lib/fetch-with-auth";
+import { PostalCodeSearch } from "@/components/PostalCodeSearch";
 
 interface MemberDetail {
   id: string;
@@ -493,6 +494,12 @@ export default function MemberDetailPage({ params }: { params: Promise<{ id: str
                     <label className="block text-xs text-stone-500 mb-1">住所1（都道府県・市区町村）</label>
                     <input type="text" value={editForm.address1} onChange={e => setEditForm(f => ({ ...f, address1: e.target.value }))}
                       className="w-full border border-stone-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-stone-300" />
+                  </div>
+                  <div className="col-span-3">
+                    <PostalCodeSearch
+                      size="sm"
+                      onSelect={(zip, addr) => setEditForm(f => ({ ...f, postalCode: zip, address1: addr }))}
+                    />
                   </div>
                   <div>
                     <label className="block text-xs text-stone-500 mb-1">住所2（丁目・番地）</label>
