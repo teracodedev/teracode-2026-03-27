@@ -46,19 +46,19 @@ export function RelationInput({ value, onChange, referencePersonName, className,
   };
 
   return (
-    <div ref={containerRef} className="relative w-full flex">
+    <div ref={containerRef} className="relative">
       <input
         type="text"
         value={value}
         onChange={e => onChange(e.target.value)}
         placeholder={placeholder}
         className={className}
-        style={{ flex: "1 1 0%", minWidth: 0, borderTopRightRadius: 0, borderBottomRightRadius: 0 }}
+        style={{ paddingRight: "2rem" }}
       />
       <button
         type="button"
         onClick={() => setOpen(o => !o)}
-        className="border border-l-0 border-stone-300 rounded-r-lg px-2 bg-stone-50 hover:bg-stone-100 text-stone-500 text-xs shrink-0 focus:outline-none"
+        className="absolute right-1 top-1/2 -translate-y-1/2 px-1.5 py-0.5 text-stone-400 hover:text-stone-600 text-xs focus:outline-none"
         title="続柄を選択"
       >
         ▾
