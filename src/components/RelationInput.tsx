@@ -46,13 +46,14 @@ export function RelationInput({ value, onChange, referencePersonName, className,
   };
 
   return (
-    <div ref={containerRef} className="relative flex">
+    <div ref={containerRef} className="relative w-full flex">
       <input
         type="text"
         value={value}
         onChange={e => onChange(e.target.value)}
         placeholder={placeholder}
-        className={className ? `${className} rounded-r-none` : undefined}
+        className={className}
+        style={{ flex: "1 1 0%", minWidth: 0, borderTopRightRadius: 0, borderBottomRightRadius: 0 }}
       />
       <button
         type="button"
