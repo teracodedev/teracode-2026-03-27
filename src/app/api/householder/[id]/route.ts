@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getHouseholderDelegate, getHouseholderFieldMap, getHouseholderModelKind } from "@/lib/prisma-models";
 import { requireAuth } from "@/lib/require-auth";
+import { prisma } from "@/lib/prisma";
 
 export const runtime = "nodejs";
 
@@ -121,6 +122,25 @@ export async function PUT(request: NextRequest, { params }: Params) {
       data,
       include: { members: true },
     });
+
+    // 家族・親族台帳の名称・フリガナを戸主名に合わせて更新
+    if (kind === "householder" && familyName && givenName) {
+      const current = await prisma.householder.findUnique({
+        where: { id },
+        select: { familyRegisterId: true },
+      });
+      if (current?.familyRegisterId) {
+        await prisma.familyRegister.update({
+          where: { id: current.familyRegisterId },
+          data: {
+            name: `${familyName}${givenName}の家族・親族台帳`,
+            nameKana: (familyNameKana || givenNameKana)
+              ? `${familyNameKana ?? ""}${givenNameKana ?? ""}の家族・親族台帳`
+              : null,
+          },
+        });
+      }
+    }
 
     return NextResponse.json(householder);
   } catch (error) {
