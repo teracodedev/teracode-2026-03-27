@@ -34,7 +34,7 @@ export function PostalCodeSearch({ onSelect, size = "base" }: Props) {
   const [cities, setCities] = useState<string[]>([]);
 
   const [city, setCity] = useState("");
-  const [towns, setTowns] = useState<ZipcodeResult[]>([]);
+  const [towns, setTowns] = useState<{ town: string; zipcode: string }[]>([]);
   const [loadingTowns, setLoadingTowns] = useState(false);
 
   const selectCls = size === "sm"
@@ -73,12 +73,11 @@ export function PostalCodeSearch({ onSelect, size = "base" }: Props) {
     if (!selected) return;
     setLoadingTowns(true);
     try {
-      const query = encodeURIComponent(pref + selected);
       const res = await fetch(
-        `https://zipcloud.ibsnet.co.jp/api/search?address=${query}&limit=100`
+        `/api/zip-search?pref=${encodeURIComponent(pref)}&city=${encodeURIComponent(selected)}`
       );
       const data = await res.json();
-      setTowns(data.results || []);
+      setTowns(Array.isArray(data) ? data : []);
     } catch { /* 無視 */ }
     setLoadingTowns(false);
   };
@@ -87,8 +86,7 @@ export function PostalCodeSearch({ onSelect, size = "base" }: Props) {
     const i = parseInt(idx);
     if (isNaN(i)) return;
     const r = towns[i];
-    const zip = r.zipcode.replace(/^(\d{3})(\d{4})$/, "$1-$2");
-    onSelect(zip, r.address1 + r.address2 + (r.address3 || ""));
+    onSelect(r.zipcode, pref + city + r.town);
     setOpen(false);
   };
 
@@ -148,7 +146,7 @@ export function PostalCodeSearch({ onSelect, size = "base" }: Props) {
             <option value="" disabled>③ 町域を選択（郵便番号が自動入力されます）</option>
             {towns.map((r, i) => (
               <option key={i} value={i}>
-                {r.address3 || "（町域なし）"}　〒{r.zipcode.replace(/^(\d{3})(\d{4})$/, "$1-$2")}
+                {r.town}　〒{r.zipcode}
               </option>
             ))}
           </select>
