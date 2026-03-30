@@ -64,7 +64,7 @@ export function RelationInput({ value, onChange, referencePersonName, className,
         ▾
       </button>
       {open && (
-        <div className="absolute top-full left-0 z-20 mt-1 w-full min-w-max bg-white border border-stone-200 rounded-lg shadow-lg p-2 flex flex-wrap gap-1">
+        <div className="absolute top-full left-0 z-20 mt-1 w-full min-w-max bg-white border border-stone-200 rounded-lg shadow-lg py-1 flex flex-col max-h-[10rem] overflow-y-auto">
           {RELATION_OPTIONS.map(r => {
             const label = referencePersonName ? `${referencePersonName}の${r}` : r;
             return (
@@ -72,7 +72,7 @@ export function RelationInput({ value, onChange, referencePersonName, className,
                 key={r}
                 type="button"
                 onClick={() => handleSelect(r)}
-                className="px-2 py-1 text-xs rounded-md border border-stone-200 hover:bg-amber-50 hover:border-amber-300 hover:text-amber-700 text-stone-600 whitespace-nowrap"
+                className="px-3 py-1.5 text-xs text-left hover:bg-amber-50 hover:text-amber-700 text-stone-600 whitespace-nowrap"
               >
                 {label}
               </button>
