@@ -4,6 +4,7 @@ import { useState, useEffect, use } from "react";
 import Link from "next/link";
 import { fetchWithAuth } from "@/lib/fetch-with-auth";
 import { PostalCodeSearch } from "@/components/PostalCodeSearch";
+import { RelationInput } from "@/components/RelationInput";
 
 interface MemberDetail {
   id: string;
@@ -478,8 +479,9 @@ export default function MemberDetailPage({ params }: { params: Promise<{ id: str
                   </div>
                   <div className="col-span-2">
                     <label className="block text-xs text-stone-500 mb-1">続柄</label>
-                    <input type="text" value={editForm.relation} onChange={e => setEditForm(f => ({ ...f, relation: e.target.value }))}
-                      className="w-full border border-stone-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-stone-300" />
+                    <RelationInput value={editForm.relation} onChange={v => setEditForm(f => ({ ...f, relation: v }))}
+                      className="w-full border border-stone-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-stone-300"
+                      referencePersonName={member ? `${member.householder.familyName}${member.householder.givenName}` : undefined} />
                   </div>
                   <div>
                     <label className="block text-xs text-stone-500 mb-1">郵便番号</label>
@@ -950,11 +952,11 @@ export default function MemberDetailPage({ params }: { params: Promise<{ id: str
               </div>
               <div>
                 <label className="block text-xs text-stone-500 mb-1">続柄</label>
-                <input
-                  type="text"
+                <RelationInput
                   value={editForm.relation}
-                  onChange={e => setEditForm(f => ({ ...f, relation: e.target.value }))}
+                  onChange={v => setEditForm(f => ({ ...f, relation: v }))}
                   className="w-full border border-stone-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
+                  referencePersonName={member ? `${member.householder.familyName}${member.householder.givenName}` : undefined}
                 />
               </div>
               <div>

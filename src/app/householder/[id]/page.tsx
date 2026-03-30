@@ -5,6 +5,7 @@ import { useState, useEffect, use } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { PostalCodeSearch } from "@/components/PostalCodeSearch";
+import { RelationInput } from "@/components/RelationInput";
 
 interface Member {
   id: string;
@@ -122,7 +123,7 @@ const emptyMemberForm = {
 type MemberForm = typeof emptyMemberForm;
 type TabId = "info" | "detail";
 
-function MemberFormFields({ form, onChange }: { form: MemberForm; onChange: (f: MemberForm) => void }) {
+function MemberFormFields({ form, onChange, householderName }: { form: MemberForm; onChange: (f: MemberForm) => void; householderName?: string }) {
   const set = (k: keyof MemberForm, v: string) => onChange({ ...form, [k]: v });
   const cls = "w-full border border-stone-300 rounded px-3 py-1.5 text-base focus:outline-none focus:ring-2 focus:ring-stone-400";
   return (
@@ -145,7 +146,7 @@ function MemberFormFields({ form, onChange }: { form: MemberForm; onChange: (f: 
       </div>
       <div>
         <label className="block text-sm text-stone-500 mb-1">続柄</label>
-        <input type="text" value={form.relation} onChange={(e) => set("relation", e.target.value)} placeholder="妻・子など" className={cls} />
+        <RelationInput value={form.relation} onChange={v => set("relation", v)} placeholder="妻・子など" className={cls} referencePersonName={householderName} />
       </div>
       <div>
         <label className="block text-sm text-stone-500 mb-1">郵便番号</label>
@@ -208,7 +209,7 @@ function MemberFormFields({ form, onChange }: { form: MemberForm; onChange: (f: 
 
 function MemberCard({
   member, isEditing, editForm, editError, editSubmitting,
-  onStartEdit, onCancelEdit, onEditChange, onEditSubmit, onDelete,
+  onStartEdit, onCancelEdit, onEditChange, onEditSubmit, onDelete, householderName,
 }: {
   member: Member;
   isEditing: boolean;
@@ -220,6 +221,7 @@ function MemberCard({
   onEditChange: (f: MemberForm) => void;
   onEditSubmit: (e: React.FormEvent) => void;
   onDelete: () => void;
+  householderName?: string;
 }) {
   const displayName = [member.familyName, member.givenName].filter(Boolean).join(" ");
   const displayKana = [member.familyNameKana, member.givenNameKana].filter(Boolean).join(" ");
@@ -234,7 +236,7 @@ function MemberCard({
               className="text-xs text-stone-400 hover:text-stone-600">キャンセル</button>
           </div>
           {editError && <p className="text-red-600 text-xs mt-1">{editError}</p>}
-          <MemberFormFields form={editForm} onChange={onEditChange} />
+          <MemberFormFields form={editForm} onChange={onEditChange} householderName={householderName} />
           <div className="flex gap-2 mt-3">
             <button type="submit" disabled={editSubmitting}
               className="bg-stone-700 text-white px-4 py-1.5 rounded-lg text-sm hover:bg-stone-800 disabled:opacity-50">
@@ -609,7 +611,7 @@ export default function HouseholderDetailPage({ params }: { params: Promise<{ id
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-stone-600 mb-1">続柄</label>
-                <input type="text" value={householderEditForm.relation} onChange={(e) => setHouseholderEditForm({ ...householderEditForm, relation: e.target.value })}
+                <RelationInput value={householderEditForm.relation} onChange={v => setHouseholderEditForm({ ...householderEditForm, relation: v })}
                   placeholder="父・祖父など"
                   className="w-full border border-stone-300 rounded-lg px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-stone-400" />
               </div>

@@ -3,6 +3,7 @@ import { fetchWithAuth } from "@/lib/fetch-with-auth";
 import { useState, useEffect, use, useCallback, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { RelationInput } from "@/components/RelationInput";
 
 interface Member {
   id: string;
@@ -661,8 +662,9 @@ export default function FamilyRegisterDetailPage({ params }: { params: Promise<{
                 </div>
                 <div>
                   <label className="block text-xs text-stone-500 mb-1">続柄</label>
-                  <input value={livingForm.relation} onChange={e => setLivingForm(f => ({ ...f, relation: e.target.value }))}
-                    className={inputCls} placeholder="長男" />
+                  <RelationInput value={livingForm.relation} onChange={v => setLivingForm(f => ({ ...f, relation: v }))}
+                    className={inputCls} placeholder="長男"
+                    referencePersonName={householders[0] ? `${householders[0].familyName}${householders[0].givenName}` : undefined} />
                 </div>
                 <div>
                   <label className="block text-xs text-stone-500 mb-1">生年月日</label>
@@ -812,8 +814,9 @@ export default function FamilyRegisterDetailPage({ params }: { params: Promise<{
                 </div>
                 <div>
                   <label className="block text-xs text-stone-500 mb-1">続柄</label>
-                  <input value={deceasedForm.relation} onChange={e => setDeceasedForm(f => ({ ...f, relation: e.target.value }))}
-                    className={inputCls} placeholder="父" />
+                  <RelationInput value={deceasedForm.relation} onChange={v => setDeceasedForm(f => ({ ...f, relation: v }))}
+                    className={inputCls} placeholder="父"
+                    referencePersonName={householders[0] ? `${householders[0].familyName}${householders[0].givenName}` : undefined} />
                 </div>
                 <div>
                   <label className="block text-xs text-stone-500 mb-1">生年月日</label>
