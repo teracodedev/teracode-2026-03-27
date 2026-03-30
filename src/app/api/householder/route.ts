@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getHouseholderDelegate, getHouseholderFieldMap, getHouseholderModelKind } from "@/lib/prisma-models";
 import { requireAuth } from "@/lib/require-auth";
 import { prisma } from "@/lib/prisma";
-import { toFullWidthKatakana } from "@/lib/yaml-utils";
+import { toFullWidthKatakana, buildFullNameOrConditions } from "@/lib/yaml-utils";
 
 export const runtime = "nodejs";
 
@@ -44,6 +44,7 @@ export async function GET(request: NextRequest) {
               { address1: { contains: query, mode: "insensitive" } },
               { address2: { contains: query, mode: "insensitive" } },
               { address3: { contains: query, mode: "insensitive" } },
+              ...buildFullNameOrConditions(query, queryKana),
             ]
           : undefined,
       },

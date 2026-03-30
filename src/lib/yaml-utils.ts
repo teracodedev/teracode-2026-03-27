@@ -47,6 +47,85 @@ export function toFullWidthKatakana(s: string | null | undefined): string | null
   return result.trim() || null;
 }
 
+/**
+ * フルネーム検索用の OR 条件を生成する。
+ * - スペース区切り「青井 秀夫」→ familyName AND givenName の AND 条件
+ * - スペースなし「青井秀夫」→ すべての分割パターンで AND 条件を試みる
+ * 返り値は Prisma の OR 配列に spread して使う。
+ */
+export function buildFullNameOrConditions(
+  query: string,
+  queryKana: string | null,
+): object[] {
+  const extra: object[] = [];
+  const q = query.trim();
+  const qk = queryKana?.trim() || null;
+
+  const parts = q.split(/[\s　]+/).filter(Boolean);
+  const kParts = qk ? qk.split(/[\s　]+/).filter(Boolean) : [];
+
+  if (parts.length >= 2) {
+    // スペース区切り: 姓+名 の AND 条件
+    extra.push({ AND: [
+      { familyName: { contains: parts[0], mode: "insensitive" } },
+      { givenName:  { contains: parts[1], mode: "insensitive" } },
+    ]});
+    if (kParts.length >= 2) {
+      extra.push({ AND: [
+        { familyNameKana: { contains: kParts[0], mode: "insensitive" } },
+        { givenNameKana:  { contains: kParts[1], mode: "insensitive" } },
+      ]});
+    }
+  } else if (q.length >= 2) {
+    // スペースなし: すべての分割位置を試みる
+    for (let i = 1; i < q.length; i++) {
+      extra.push({ AND: [
+        { familyName: { contains: q.slice(0, i), mode: "insensitive" } },
+        { givenName:  { contains: q.slice(i),    mode: "insensitive" } },
+      ]});
+    }
+    if (qk && qk !== q) {
+      for (let i = 1; i < qk.length; i++) {
+        extra.push({ AND: [
+          { familyNameKana: { contains: qk.slice(0, i), mode: "insensitive" } },
+          { givenNameKana:  { contains: qk.slice(i),    mode: "insensitive" } },
+        ]});
+      }
+    }
+  }
+
+  return extra;
+}
+
+/**
+ * ネストされたリレーション経由のフルネーム OR 条件を生成する。
+ * prefix には Prisma のリレーション名（例: "householder"）を渡す。
+ */
+export function buildNestedFullNameOrConditions(
+  query: string,
+  prefix: string,
+): object[] {
+  const extra: object[] = [];
+  const q = query.trim();
+  const parts = q.split(/[\s　]+/).filter(Boolean);
+
+  if (parts.length >= 2) {
+    extra.push({ AND: [
+      { [prefix]: { familyName: { contains: parts[0], mode: "insensitive" } } },
+      { [prefix]: { givenName:  { contains: parts[1], mode: "insensitive" } } },
+    ]});
+  } else if (q.length >= 2) {
+    for (let i = 1; i < q.length; i++) {
+      extra.push({ AND: [
+        { [prefix]: { familyName: { contains: q.slice(0, i), mode: "insensitive" } } },
+        { [prefix]: { givenName:  { contains: q.slice(i),    mode: "insensitive" } } },
+      ]});
+    }
+  }
+
+  return extra;
+}
+
 const NULL_DATE = "0001-01-01";
 const UNKNOWN_AGE = 999;
 

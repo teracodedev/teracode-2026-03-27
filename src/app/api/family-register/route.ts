@@ -12,6 +12,29 @@ export async function GET(req: NextRequest) {
   const q = req.nextUrl.searchParams.get("q")?.trim() || "";
   const qKana = toFullWidthKatakana(q) || q;
 
+  // フルネーム検索用の AND 条件（例: "青井秀夫" → 姓+名の組み合わせ）
+  const fullNameOrConditions: object[] = [];
+  if (q.length >= 2) {
+    const parts = q.split(/[\s　]+/).filter(Boolean);
+    const kParts = qKana.split(/[\s　]+/).filter(Boolean);
+    if (parts.length >= 2) {
+      fullNameOrConditions.push(
+        { AND: [{ familyName: { contains: parts[0], mode: "insensitive" } }, { givenName: { contains: parts[1], mode: "insensitive" } }] },
+      );
+      if (kParts.length >= 2) {
+        fullNameOrConditions.push(
+          { AND: [{ familyNameKana: { contains: kParts[0], mode: "insensitive" } }, { givenNameKana: { contains: kParts[1], mode: "insensitive" } }] },
+        );
+      }
+    } else {
+      for (let i = 1; i < q.length; i++) {
+        fullNameOrConditions.push(
+          { AND: [{ familyName: { contains: q.slice(0, i), mode: "insensitive" } }, { givenName: { contains: q.slice(i), mode: "insensitive" } }] },
+        );
+      }
+    }
+  }
+
   try {
     const registers = await prisma.familyRegister.findMany({
       where: q
@@ -23,6 +46,7 @@ export async function GET(req: NextRequest) {
                 { givenName:  { contains: q } },
                 { familyNameKana: { contains: qKana, mode: "insensitive" } },
                 { givenNameKana:  { contains: qKana, mode: "insensitive" } },
+                ...fullNameOrConditions,
               ] } } },
             ],
           }
