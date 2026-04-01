@@ -348,7 +348,7 @@ export default function MemberDetailPage({ params }: { params: Promise<{ id: str
   if (notFound || !member) return <div className="text-center py-12 text-stone-400">記録が見つかりません</div>;
 
   const isDeceased = !!member.deathDate;
-  const fullName = member.familyName + (member.givenName ? " " + member.givenName : "");
+  const fullName = member.familyName + (member.givenName || "");
   const fullNameKana = [member.familyNameKana, member.givenNameKana].filter(Boolean).join(" ") || null;
 
   if (!isDeceased) {
