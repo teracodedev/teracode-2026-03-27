@@ -51,6 +51,19 @@ model Householder {
   ceremonies       CeremonyParticipant[]
   familyRegister   FamilyRegister?       @relation(fields: [familyRegisterId], references: [id])
   members          HouseholderMember[]
+  addressHistories HouseholderAddressHistory[]
+}
+
+model HouseholderAddressHistory {
+  id            String      @id @default(uuid())
+  householderId String
+  postalCode    String?
+  address1      String?
+  address2      String?
+  address3      String?
+  movedAt       DateTime    @default(now())
+  note          String?
+  householder   Householder @relation(fields: [householderId], references: [id], onDelete: Cascade)
 }
 
 model HouseholderMember {
