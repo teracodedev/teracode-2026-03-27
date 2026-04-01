@@ -39,6 +39,16 @@ interface HouseholderForm {
   isActive: boolean;
 }
 
+interface AddressHistory {
+  id: string;
+  postalCode: string | null;
+  address1: string | null;
+  address2: string | null;
+  address3: string | null;
+  movedAt: string;
+  note: string | null;
+}
+
 function toDateInput(dateStr: string | null) {
   if (!dateStr) return "";
   return new Date(dateStr).toISOString().split("T")[0];
@@ -51,6 +61,9 @@ export default function EditHouseholderPage({ params }: { params: Promise<{ id: 
   const [error, setError] = useState("");
   const [loadError, setLoadError] = useState("");
   const [loading, setLoading] = useState(true);
+  const [addressHistories, setAddressHistories] = useState<AddressHistory[]>([]);
+  const [movingAddress, setMovingAddress] = useState(false);
+  const [moveError, setMoveError] = useState("");
 
   const [form, setForm] = useState<HouseholderForm>({
     familyName: "",
@@ -111,6 +124,47 @@ export default function EditHouseholderPage({ params }: { params: Promise<{ id: 
         setLoading(false);
       });
   }, [id]);
+
+  useEffect(() => {
+    fetch(`/api/householder/${id}/address-history`)
+      .then(async (res) => {
+        if (res.ok) setAddressHistories(await res.json());
+      })
+      .catch(() => {});
+  }, [id]);
+
+  const handleMoveAddressToHistory = async () => {
+    if (!form.postalCode && !form.address1 && !form.address2 && !form.address3) {
+      setMoveError("保存する住所がありません");
+      return;
+    }
+    setMovingAddress(true);
+    setMoveError("");
+    try {
+      const res = await fetchWithAuth(`/api/householder/${id}/address-history`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          postalCode: form.postalCode,
+          address1: form.address1,
+          address2: form.address2,
+          address3: form.address3,
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        setMoveError(data.error || "履歴への保存に失敗しました");
+        return;
+      }
+      const newHistory: AddressHistory = await res.json();
+      setForm(f => ({ ...f, postalCode: "", address1: "", address2: "", address3: "" }));
+      setAddressHistories(prev => [newHistory, ...prev]);
+    } catch {
+      setMoveError("ネットワークエラーが発生しました");
+    } finally {
+      setMovingAddress(false);
+    }
+  };
 
   const handleChange = async (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const target = e.target as HTMLInputElement;
@@ -277,6 +331,38 @@ export default function EditHouseholderPage({ params }: { params: Promise<{ id: 
                 className="w-full border border-stone-300 rounded-lg px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-stone-400"
               />
             </div>
+          </div>
+
+          {/* 住所を履歴に移動 */}
+          <div className="space-y-2">
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={handleMoveAddressToHistory}
+                disabled={movingAddress}
+                className="border border-stone-400 text-stone-600 px-4 py-1.5 rounded-lg hover:bg-stone-50 transition-colors text-sm font-medium disabled:opacity-50"
+              >
+                {movingAddress ? "保存中..." : "住所を履歴に移動"}
+              </button>
+              {moveError && <span className="text-red-600 text-sm">{moveError}</span>}
+            </div>
+            {addressHistories.length > 0 && (
+              <div className="space-y-1">
+                <p className="text-xs font-medium text-stone-500">過去の住所履歴</p>
+                <ul className="divide-y divide-stone-100 border border-stone-200 rounded-lg overflow-hidden">
+                  {addressHistories.map((h) => (
+                    <li key={h.id} className="px-3 py-2 bg-stone-50 text-sm text-stone-600">
+                      <span className="text-xs text-stone-400 mr-2">
+                        {new Date(h.movedAt).toLocaleDateString("ja-JP")}
+                      </span>
+                      {[h.postalCode ? `〒${h.postalCode}` : null, h.address1, h.address2, h.address3]
+                        .filter(Boolean)
+                        .join(" ")}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-4">
