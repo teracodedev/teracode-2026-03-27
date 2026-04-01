@@ -1,35 +1,42 @@
 "use client";
 
 import { useState } from "react";
-import { signIn } from "next-auth/react";
 
 export function LoginForm({ callbackUrl }: { callbackUrl: string }) {
-  const [error, setError] = useState<"credentials" | null>(null);
+  const [error, setError] = useState<boolean>(false);
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setLoading(true);
-    setError(null);
+    setError(false);
 
     const data = new FormData(e.currentTarget);
-    const result = await signIn("credentials", {
-      email: data.get("email") as string,
-      password: data.get("password") as string,
-      redirect: false,
-    });
+    try {
+      const res = await fetch("/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: data.get("email"),
+          password: data.get("password"),
+        }),
+      });
 
-    if (!result || result.error) {
-      setError("credentials");
+      if (res.ok) {
+        window.location.href = callbackUrl;
+      } else {
+        setError(true);
+        setLoading(false);
+      }
+    } catch {
+      setError(true);
       setLoading(false);
-    } else {
-      window.location.href = callbackUrl;
     }
   }
 
   return (
     <>
-      {error === "credentials" && (
+      {error && (
         <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
           メールアドレスまたはパスワードが正しくありません
         </div>
