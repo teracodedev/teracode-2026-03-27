@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { loginAction } from "./actions";
+import { CsrfPrefetch } from "./csrf-prefetch";
 
 function normalizeCallbackUrl(
   raw: string | string[] | undefined
@@ -30,6 +31,7 @@ export default async function LoginPage({
 
   return (
     <div className="min-h-screen bg-stone-50 flex items-center justify-center">
+      <CsrfPrefetch />
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <div className="text-4xl mb-2" suppressHydrationWarning>

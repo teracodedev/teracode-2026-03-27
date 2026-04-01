@@ -37,8 +37,6 @@ export async function loginAction(formData: FormData) {
       redirectTo: callbackUrl,
     });
 
-    console.log("[login] signIn result:", result);
-
     if (typeof result === "string") {
       let hasError = result.includes("error=");
       if (!hasError) {
@@ -49,16 +47,13 @@ export async function loginAction(formData: FormData) {
         }
       }
       if (hasError) {
-        console.log("[login] signIn returned error URL:", result);
         redirectToLoginWithError("credentials", callbackUrl);
       }
     }
   } catch (error) {
     if (error instanceof AuthError) {
-      console.error("[login] AuthError type:", (error as AuthError).type, "message:", error.message);
       redirectToLoginWithError("credentials", callbackUrl);
     }
-    console.log("[login] non-AuthError (likely redirect):", (error as Error)?.message);
     throw error;
   }
 
