@@ -1,29 +1,13 @@
 import type { NextAuthConfig } from "next-auth";
 
-// __Host- プレフィックスなしの cookie 名を使用。
-// __Host- は Secure フラグ必須だが、Nginx リバースプロキシ経由だと
-// Next.js が http://localhost:3000 で動作しているため Secure フラグが
-// 付かず、ブラウザが cookie を拒否して CSRF 検証が常に失敗する。
-const useSecure = process.env.AUTH_URL?.startsWith("https:") ?? false;
-
 // Edge Runtime で動作する軽量な設定（Prisma・bcrypt 不使用）
 export const authConfig: NextAuthConfig = {
   trustHost: true,
+  // Nginx リバースプロキシ経由で Next.js が http://localhost:3000 で動くため、
+  // useSecureCookies を明示的に true にしないと __Host- プレフィックス cookie に
+  // Secure フラグが付かず、ブラウザが cookie を拒否して CSRF 検証が失敗する。
+  useSecureCookies: process.env.AUTH_URL?.startsWith("https:") ?? false,
   providers: [],
-  cookies: {
-    sessionToken: {
-      name: "authjs.session-token",
-      options: { httpOnly: true, sameSite: "lax", path: "/", secure: useSecure },
-    },
-    csrfToken: {
-      name: "authjs.csrf-token",
-      options: { httpOnly: true, sameSite: "lax", path: "/", secure: useSecure },
-    },
-    callbackUrl: {
-      name: "authjs.callback-url",
-      options: { httpOnly: true, sameSite: "lax", path: "/", secure: useSecure },
-    },
-  },
   callbacks: {
     jwt({ token, user }) {
       if (user) {
