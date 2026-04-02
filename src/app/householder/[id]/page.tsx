@@ -104,7 +104,8 @@ const CEREMONY_TYPE_LABELS: Record<string, string> = {
 
 function formatDate(dateStr: string | null) {
   if (!dateStr) return "-";
-  return new Date(dateStr).toLocaleDateString("ja-JP");
+  const d = new Date(dateStr);
+  return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日`;
 }
 
 function toInputDate(dateStr: string | null): string {

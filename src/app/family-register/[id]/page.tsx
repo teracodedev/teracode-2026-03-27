@@ -69,7 +69,8 @@ function toHouseholderList(value: FamilyRegister["householders"]): Householder[]
 
 function formatDate(d: string | null) {
   if (!d) return "-";
-  return new Date(d).toLocaleDateString("ja-JP");
+  const dt = new Date(d);
+  return `${dt.getFullYear()}年${dt.getMonth() + 1}月${dt.getDate()}日`;
 }
 
 function calcAge(birth: string | null, death: string | null): number | null {
