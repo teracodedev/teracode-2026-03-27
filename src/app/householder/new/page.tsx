@@ -7,6 +7,11 @@ import Link from "next/link";
 import { PostalCodeSearch } from "@/components/PostalCodeSearch";
 import { RelationInput } from "@/components/RelationInput";
 
+function formatPostalCode(value: string): string {
+  const digits = value.replace(/\D/g, "").slice(0, 7);
+  return digits.length > 3 ? digits.slice(0, 3) + "-" + digits.slice(3) : digits;
+}
+
 async function lookupPostalCode(zip: string): Promise<string | null> {
   const code = zip.replace(/-/g, "");
   if (code.length !== 7 || !/^\d{7}$/.test(code)) return null;
@@ -60,9 +65,10 @@ export default function NewHouseholderPage() {
 
   const handleChange = async (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setForm(f => ({ ...f, [name]: value }));
+    const formatted = name === "postalCode" ? formatPostalCode(value) : value;
+    setForm(f => ({ ...f, [name]: formatted }));
     if (name === "postalCode") {
-      const address = await lookupPostalCode(value);
+      const address = await lookupPostalCode(formatted);
       if (address) setForm(f => ({ ...f, address1: address }));
     }
   };
@@ -224,7 +230,7 @@ export default function NewHouseholderPage() {
             </div>
             <div className="col-span-3">
               <PostalCodeSearch
-                onSelect={(zip, addr) => setForm(f => ({ ...f, postalCode: zip, address1: addr }))}
+                onSelect={(zip, addr) => setForm(f => ({ ...f, postalCode: formatPostalCode(zip), address1: addr }))}
               />
             </div>
           </div>

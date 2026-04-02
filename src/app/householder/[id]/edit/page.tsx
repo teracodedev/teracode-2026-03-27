@@ -6,6 +6,11 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { PostalCodeSearch } from "@/components/PostalCodeSearch";
 
+function formatPostalCode(value: string): string {
+  const digits = value.replace(/\D/g, "").slice(0, 7);
+  return digits.length > 3 ? digits.slice(0, 3) + "-" + digits.slice(3) : digits;
+}
+
 async function lookupPostalCode(zip: string): Promise<string | null> {
   const code = zip.replace(/-/g, "");
   if (code.length !== 7 || !/^\d{7}$/.test(code)) return null;
@@ -168,7 +173,8 @@ export default function EditHouseholderPage({ params }: { params: Promise<{ id: 
 
   const handleChange = async (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const target = e.target as HTMLInputElement;
-    const value = target.type === "checkbox" ? target.checked : target.value;
+    const rawValue = target.type === "checkbox" ? target.checked : target.value;
+    const value = target.name === "postalCode" && typeof rawValue === "string" ? formatPostalCode(rawValue) : rawValue;
     setForm(f => ({ ...f, [target.name]: value }));
     if (target.name === "postalCode" && typeof value === "string") {
       const address = await lookupPostalCode(value);
@@ -306,7 +312,7 @@ export default function EditHouseholderPage({ params }: { params: Promise<{ id: 
             </div>
             <div className="col-span-3">
               <PostalCodeSearch
-                onSelect={(zip, addr) => setForm(f => ({ ...f, postalCode: zip, address1: addr }))}
+                onSelect={(zip, addr) => setForm(f => ({ ...f, postalCode: formatPostalCode(zip), address1: addr }))}
               />
             </div>
           </div>

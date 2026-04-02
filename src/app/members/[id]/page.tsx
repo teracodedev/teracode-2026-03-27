@@ -232,6 +232,11 @@ export default function MemberDetailPage({ params }: { params: Promise<{ id: str
     });
   }
 
+  function formatPostalCode(value: string): string {
+    const digits = value.replace(/\D/g, "").slice(0, 7);
+    return digits.length > 3 ? digits.slice(0, 3) + "-" + digits.slice(3) : digits;
+  }
+
   // 編集モーダル
   async function lookupPostalCode(zip: string): Promise<string | null> {
     const code = zip.replace(/-/g, "");
@@ -486,7 +491,7 @@ export default function MemberDetailPage({ params }: { params: Promise<{ id: str
                   <div>
                     <label className="block text-xs text-stone-500 mb-1">郵便番号</label>
                     <input type="text" value={editForm.postalCode} onChange={async e => {
-                      const value = e.target.value;
+                      const value = formatPostalCode(e.target.value);
                       setEditForm(f => ({ ...f, postalCode: value }));
                       const address = await lookupPostalCode(value);
                       if (address) setEditForm(f => ({ ...f, address1: address }));
@@ -501,7 +506,7 @@ export default function MemberDetailPage({ params }: { params: Promise<{ id: str
                   <div className="col-span-2">
                     <PostalCodeSearch
                       size="sm"
-                      onSelect={(zip, addr) => setEditForm(f => ({ ...f, postalCode: zip, address1: addr }))}
+                      onSelect={(zip, addr) => setEditForm(f => ({ ...f, postalCode: formatPostalCode(zip), address1: addr }))}
                     />
                   </div>
                   <div>
