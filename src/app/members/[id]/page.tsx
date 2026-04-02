@@ -614,9 +614,7 @@ export default function MemberDetailPage({ params }: { params: Promise<{ id: str
         {nextCeremony ? (() => {
           const householderName = member.householder.familyName + member.householder.givenName;
           const rel = member.relation || "";
-          const relationPart = rel
-            ? ` （${rel.startsWith(householderName) ? rel : `${householderName}の${rel}`}）`
-            : "";
+          const relationPart = rel ? ` （${rel}）` : "";
           const ceremonyLabel = `${fullName}の${nextCeremony.label}`;
           const addr = [member.householder.address1, member.householder.address2, member.householder.address3].filter(Boolean).join("");
           const phone = member.householder.phone1 || "";
