@@ -13,6 +13,7 @@ export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const query = searchParams.get("q") || "";
   const queryKana = toFullWidthKatakana(query) || query;
+  const tagIds = searchParams.get("tags")?.split(",").filter(Boolean) || [];
 
   try {
     const kind = getHouseholderModelKind();
@@ -25,8 +26,14 @@ export async function GET(request: NextRequest) {
       [relationName]: { [fields.code]: { contains: query, mode: "insensitive" } },
     };
 
+    // タグフィルター: 指定された全タグを持つレコードのみ (AND条件)
+    const tagFilter = tagIds.length > 0
+      ? { AND: tagIds.map((tagId: string) => ({ tags: { some: { tagId } } })) }
+      : {};
+
     const records = await memberDelegate.findMany({
       where: {
+        ...tagFilter,
         deathDate: null,
         [relationName]: { isActive: true },
         OR: query
@@ -66,6 +73,7 @@ export async function GET(request: NextRequest) {
             familyRegister: { select: { id: true, name: true } },
           },
         },
+        tags: { include: { tag: true } },
       },
       orderBy: [{ familyNameKana: "asc" }, { givenNameKana: "asc" }, { familyName: "asc" }],
     });

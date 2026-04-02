@@ -57,6 +57,7 @@ export async function GET(request: NextRequest) {
   const sp = request.nextUrl.searchParams;
   const query   = sp.get("q") || "";
   const queryKana = toFullWidthKatakana(query) || query;
+  const tagIds  = sp.get("tags")?.split(",").filter(Boolean) || [];
   const sort    = (sp.get("sort") || "nen") as SortMode;
   const order   = (sp.get("order") || "asc") as "asc" | "desc";
   const era     = sp.get("era") || "";
@@ -72,6 +73,11 @@ export async function GET(request: NextRequest) {
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const baseFilter: any = {};
+
+    // タグフィルター: 指定された全タグを持つレコードのみ (AND条件)
+    if (tagIds.length > 0) {
+      baseFilter.AND = tagIds.map((tagId: string) => ({ tags: { some: { tagId } } }));
+    }
 
     if (sort === "fusho") {
       baseFilter.meinichiFusho = true;
@@ -118,6 +124,7 @@ export async function GET(request: NextRequest) {
             familyRegister: { select: { id: true, name: true } },
           },
         },
+        tags: { include: { tag: true } },
       },
       orderBy:
         sort === "nen" || sort === "fusho" || sort === "fumei"

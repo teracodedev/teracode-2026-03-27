@@ -5,6 +5,8 @@ import { Fragment, useState, useEffect, useCallback } from "react";
 import { useSharedSearch } from "@/lib/use-shared-search";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { TagFilter } from "@/components/TagFilter";
+import { TagBadge, type Tag } from "@/components/TagBadge";
 
 interface GenzaichoRecord {
   id: string;
@@ -18,6 +20,7 @@ interface GenzaichoRecord {
   dharmaName: string | null;
   dharmaNameKana: string | null;
   note: string | null;
+  tags?: { tag: Tag }[];
   householder: {
     id: string;
     householderCode: string;
@@ -58,6 +61,7 @@ export default function GenzaichoPage() {
   const { query, setQuery } = useSharedSearch();
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
+  const [filterTagIds, setFilterTagIds] = useState<string[]>([]);
   const PAGE_SIZE = 10;
 
   const fetchRecords = useCallback(async () => {
@@ -65,6 +69,7 @@ export default function GenzaichoPage() {
     try {
       const params = new URLSearchParams();
       if (query) params.set("q", query);
+      if (filterTagIds.length > 0) params.set("tags", filterTagIds.join(","));
       const res = await fetchWithAuth("/api/genzaicho?" + params);
       const data = await res.json();
       const rows = Array.isArray(data) ? data : [];
@@ -81,7 +86,7 @@ export default function GenzaichoPage() {
     } finally {
       setLoading(false);
     }
-  }, [query]);
+  }, [query, filterTagIds]);
 
   useEffect(() => {
     const timer = setTimeout(fetchRecords, 300);
@@ -97,7 +102,7 @@ export default function GenzaichoPage() {
         </div>
       </div>
 
-      <div className="flex gap-4 items-center">
+      <div className="flex gap-2 items-center">
         <input
           type="text"
           placeholder="氏名・戸主名・住所で検索..."
@@ -105,6 +110,7 @@ export default function GenzaichoPage() {
           onChange={(e) => { setQuery(e.target.value); setCurrentPage(1); }}
           className="flex-1 border border-stone-300 rounded-lg px-4 py-2 text-base text-stone-800 bg-white placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-stone-400"
         />
+        <TagFilter selectedTagIds={filterTagIds} onChange={(ids) => { setFilterTagIds(ids); setCurrentPage(1); }} />
       </div>
 
       {loading ? (
@@ -136,6 +142,11 @@ export default function GenzaichoPage() {
                         {record.relation && <span>{record.relation}</span>}
                         {record.birthDate && <span>生: {formatDate(record.birthDate)}（{calcAge(record.birthDate)}）</span>}
                       </div>
+                      {record.tags && record.tags.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {record.tags.map((t) => <TagBadge key={t.tag.id} tag={t.tag} />)}
+                        </div>
+                      )}
                     </div>
                     <div className="shrink-0 text-right" onClick={(e) => e.stopPropagation()}>
                       <Link href={"/householder/" + record.householder.id} className="text-sm text-stone-500 hover:underline">
@@ -174,6 +185,7 @@ export default function GenzaichoPage() {
                   <th className="text-left px-4 py-3 text-stone-600 font-medium">住所</th>
                   <th className="text-left px-4 py-3 text-stone-600 font-medium">電話番号1</th>
                   <th className="text-left px-4 py-3 text-stone-600 font-medium">電話番号2</th>
+                  <th className="text-left px-4 py-3 text-stone-600 font-medium">タグ</th>
                   <th className="text-left px-4 py-3 text-stone-600 font-medium">詳細・編集</th>
                 </tr>
               </thead>
@@ -207,6 +219,11 @@ export default function GenzaichoPage() {
                       </td>
                       <td className="px-4 py-3 text-stone-600 text-sm">
                         {record.householder.phone2 || "-"}
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex flex-wrap gap-1">
+                          {record.tags?.map((t) => <TagBadge key={t.tag.id} tag={t.tag} />)}
+                        </div>
                       </td>
                       <td className="px-4 py-3 text-sm">
                         <Link href={"/members/" + record.id} className="text-amber-700 hover:text-amber-800 hover:underline">

@@ -52,6 +52,7 @@ model Householder {
   familyRegister   FamilyRegister?       @relation(fields: [familyRegisterId], references: [id])
   members          HouseholderMember[]
   addressHistories HouseholderAddressHistory[]
+  tags             HouseholderTag[]
 }
 
 model HouseholderAddressHistory {
@@ -95,6 +96,7 @@ model HouseholderMember {
   notePrintDisabled Boolean     @default(false)
   meinichiFusho     Boolean     @default(false)
   householder       Householder @relation(fields: [householderId], references: [id], onDelete: Cascade)
+  tags              MemberTag[]
 }
 
 model Ceremony {
@@ -151,4 +153,33 @@ enum CeremonyStatus {
   SCHEDULED
   COMPLETED
   CANCELLED
+}
+
+model Tag {
+  id             String           @id @default(uuid())
+  name           String           @unique
+  color          String           @default("#6b7280")
+  createdAt      DateTime         @default(now())
+  householderTags HouseholderTag[]
+  memberTags     MemberTag[]
+}
+
+model HouseholderTag {
+  id            String      @id @default(uuid())
+  householderId String
+  tagId         String
+  householder   Householder @relation(fields: [householderId], references: [id], onDelete: Cascade)
+  tag           Tag         @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@unique([householderId, tagId])
+}
+
+model MemberTag {
+  id       String            @id @default(uuid())
+  memberId String
+  tagId    String
+  member   HouseholderMember @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  tag      Tag               @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@unique([memberId, tagId])
 }
