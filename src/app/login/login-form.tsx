@@ -22,13 +22,26 @@ export function LoginForm({ callbackUrl }: { callbackUrl: string }) {
         }),
       });
 
+      console.log("[login] status:", res.status);
+      console.log("[login] headers:", [...res.headers.entries()]);
+
       if (res.ok) {
+        // cookie が設定されたか確認
+        console.log("[login] document.cookie:", document.cookie);
+        // セッション確認
+        const check = await fetch("/api/debug-session");
+        const session = await check.json();
+        console.log("[login] session check:", session);
+
         window.location.href = callbackUrl;
       } else {
+        const body = await res.text();
+        console.log("[login] error body:", body);
         setError(true);
         setLoading(false);
       }
-    } catch {
+    } catch (err) {
+      console.error("[login] exception:", err);
       setError(true);
       setLoading(false);
     }
