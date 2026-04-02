@@ -2,50 +2,14 @@
 
 import { useState } from "react";
 
-export function LoginForm({ callbackUrl }: { callbackUrl: string }) {
-  const [error, setError] = useState<boolean>(false);
+export function LoginForm({
+  callbackUrl,
+  error,
+}: {
+  callbackUrl: string;
+  error?: boolean;
+}) {
   const [loading, setLoading] = useState(false);
-
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    setLoading(true);
-    setError(false);
-
-    const data = new FormData(e.currentTarget);
-    try {
-      const res = await fetch("/api/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: data.get("email"),
-          password: data.get("password"),
-        }),
-      });
-
-      console.log("[login] status:", res.status);
-      console.log("[login] headers:", [...res.headers.entries()]);
-
-      if (res.ok) {
-        // cookie が設定されたか確認
-        console.log("[login] document.cookie:", document.cookie);
-        // セッション確認
-        const check = await fetch("/api/debug-session");
-        const session = await check.json();
-        console.log("[login] session check:", session);
-
-        window.location.href = callbackUrl;
-      } else {
-        const body = await res.text();
-        console.log("[login] error body:", body);
-        setError(true);
-        setLoading(false);
-      }
-    } catch (err) {
-      console.error("[login] exception:", err);
-      setError(true);
-      setLoading(false);
-    }
-  }
 
   return (
     <>
@@ -55,7 +19,14 @@ export function LoginForm({ callbackUrl }: { callbackUrl: string }) {
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form
+        action="/api/login"
+        method="POST"
+        onSubmit={() => setLoading(true)}
+        className="space-y-4"
+      >
+        <input type="hidden" name="callbackUrl" value={callbackUrl} />
+
         <div>
           <label className="block text-sm font-medium text-stone-600 mb-1">
             メールアドレス

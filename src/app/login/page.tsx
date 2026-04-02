@@ -13,10 +13,12 @@ export default async function LoginPage({
 }: {
   searchParams?: Promise<{
     callbackUrl?: string | string[];
+    error?: string | string[];
   }>;
 }) {
   const sp = searchParams ? await searchParams : {};
   const callbackUrl = normalizeCallbackUrl(sp.callbackUrl);
+  const error = sp.error === "credentials";
 
   return (
     <div className="min-h-screen bg-stone-50 flex items-center justify-center">
@@ -31,7 +33,7 @@ export default async function LoginPage({
 
         <div className="bg-white rounded-xl shadow-sm border border-stone-200 p-8">
           <h2 className="text-lg font-semibold text-stone-700 mb-6">ログイン</h2>
-          <LoginForm callbackUrl={callbackUrl} />
+          <LoginForm callbackUrl={callbackUrl} error={error} />
           <p className="mt-6 text-center text-sm text-stone-500">
             <Link href="/" className="text-stone-600 hover:text-stone-800 underline">
               トップへ戻る
