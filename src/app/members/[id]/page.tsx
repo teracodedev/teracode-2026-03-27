@@ -813,11 +813,11 @@ export default function MemberDetailPage({ params }: { params: Promise<{ id: str
                 const dateStr = addYears(member.deathDate!, years);
                 return (
                   <tr key={label} className="hover:bg-stone-50">
-                    <td className="px-4 py-2 text-stone-700">{label}</td>
-                    <td className="px-4 py-2">
+                    <td className="px-4 py-2 text-stone-700 whitespace-nowrap">{label}</td>
+                    <td className="px-4 py-2 whitespace-nowrap">
                       <span className="text-amber-700 hover:underline cursor-default">{formatDateWestern(dateStr)}</span>
                     </td>
-                    <td className="px-4 py-2">
+                    <td className="px-4 py-2 whitespace-nowrap">
                       <span className="text-amber-700 hover:underline cursor-default">{toWareki(dateStr)}</span>
                     </td>
                   </tr>
@@ -847,11 +847,11 @@ export default function MemberDetailPage({ params }: { params: Promise<{ id: str
                 const dateStr = addDays(member.deathDate!, days);
                 return (
                   <tr key={label} className="hover:bg-stone-50">
-                    <td className="px-4 py-2 text-stone-700">{label}</td>
-                    <td className="px-4 py-2">
+                    <td className="px-4 py-2 text-stone-700 whitespace-nowrap">{label}</td>
+                    <td className="px-4 py-2 whitespace-nowrap">
                       <span className="text-amber-700 hover:underline cursor-default">{formatDateWestern(dateStr)}</span>
                     </td>
-                    <td className="px-4 py-2">
+                    <td className="px-4 py-2 whitespace-nowrap">
                       <span className="text-amber-700 hover:underline cursor-default">{toWareki(dateStr)}</span>
                     </td>
                   </tr>
