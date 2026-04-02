@@ -1,10 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { decode } from "next-auth/jwt";
 
-const useSecure = process.env.AUTH_URL?.startsWith("https:") ?? false;
-const SESSION_COOKIE = useSecure
-  ? "__Host-authjs.session-token"
-  : "authjs.session-token";
+const SESSION_COOKIE = "authjs.session-token";
 
 export async function GET(request: NextRequest) {
   const allCookies = request.cookies.getAll().map((c) => ({
@@ -30,7 +27,7 @@ export async function GET(request: NextRequest) {
 
   return NextResponse.json({
     expectedCookieName: SESSION_COOKIE,
-    useSecure,
+    useSecureCookies: false,
     authUrl: process.env.AUTH_URL,
     cookies: allCookies,
     hasSessionCookie: !!sessionCookie,

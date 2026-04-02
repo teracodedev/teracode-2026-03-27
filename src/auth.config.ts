@@ -6,7 +6,9 @@ export const authConfig: NextAuthConfig = {
   // Nginx リバースプロキシ経由で Next.js が http://localhost:3000 で動くため、
   // useSecureCookies を明示的に true にしないと __Host- プレフィックス cookie に
   // Secure フラグが付かず、ブラウザが cookie を拒否して CSRF 検証が失敗する。
-  useSecureCookies: process.env.AUTH_URL?.startsWith("https:") ?? false,
+  // __Host- プレフィックス cookie がリバースプロキシ経由で保存されないブラウザがあるため
+  // useSecureCookies を false にし、cookie に Secure フラグのみ手動で付与する
+  useSecureCookies: false,
   providers: [],
   callbacks: {
     jwt({ token, user }) {

@@ -3,11 +3,8 @@ import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { encode } from "next-auth/jwt";
 
-// NextAuth の useSecureCookies 設定に合わせる
-const useSecure = process.env.AUTH_URL?.startsWith("https:") ?? false;
-const SESSION_COOKIE = useSecure
-  ? "__Host-authjs.session-token"
-  : "authjs.session-token";
+// auth.config.ts の useSecureCookies: false に合わせる
+const SESSION_COOKIE = "authjs.session-token";
 const SESSION_MAX_AGE = 30 * 24 * 60 * 60; // 30日
 
 export async function POST(request: NextRequest) {
@@ -77,7 +74,7 @@ export async function POST(request: NextRequest) {
 
   response.cookies.set(SESSION_COOKIE, token, {
     httpOnly: true,
-    secure: useSecure,
+    secure: process.env.AUTH_URL?.startsWith("https:") ?? false,
     sameSite: "lax",
     path: "/",
     maxAge: SESSION_MAX_AGE,
