@@ -170,7 +170,7 @@ export async function POST(req: NextRequest) {
       const deathDate = toDate(row["命日"]);
       const ageAtDeath = pickAgeAtDeath(row) ?? calcAgeAtDeathFromDates(birthDate, deathDate);
 
-      // 分類01〜10 → classification1〜8 にタグとして設定（0以外の値を詰めて格納）
+      // 分類01〜10 → Tag / HouseholderTag（0以外の値を詰めて格納）
       const tags: string[] = [];
       for (let i = 1; i <= 10; i++) {
         const col = `分類${String(i).padStart(2, "0")}`;
@@ -180,6 +180,7 @@ export async function POST(req: NextRequest) {
           if (name) tags.push(name);
         }
       }
+      const uniqueTagNames = [...new Set(tags)];
 
       const householder = await prisma.householder.create({
         data: {
@@ -204,14 +205,20 @@ export async function POST(req: NextRequest) {
           note: str(row["備考"]),
           domicile: str(row["本籍"]),
           joinedAt: toDate(row["新規登録日"]),
-          classification1: tags[0] ?? null,
-          classification2: tags[1] ?? null,
-          classification3: tags[2] ?? null,
-          classification4: tags[3] ?? null,
-          classification5: tags[4] ?? null,
-          classification6: tags[5] ?? null,
-          classification7: tags[6] ?? null,
-          classification8: tags[7] ?? null,
+          ...(uniqueTagNames.length > 0
+            ? {
+                tags: {
+                  create: uniqueTagNames.map((name) => ({
+                    tag: {
+                      connectOrCreate: {
+                        where: { name },
+                        create: { name },
+                      },
+                    },
+                  })),
+                },
+              }
+            : {}),
         },
       });
 
