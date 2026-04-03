@@ -117,15 +117,15 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "UTB001_戸主 テーブルが見つかりません。対応していないMDBファイルです。" }, { status: 400 });
   }
 
-  // 台帳区分マスタを読み込む（MTB001_台帳区分）
-  const daichoKubunMap = new Map<number, string>();
-  if (tableNames.includes("MTB001_台帳区分")) {
-    const kubunRows = reader.getTable("MTB001_台帳区分").getData();
-    for (const row of kubunRows) {
-      const key = row["台帳区分"] as number;
-      const name = row["台帳区分名"] as string;
-      if (key != null && name) {
-        daichoKubunMap.set(key, name);
+  // 分類マスタを読み込む（MTB011_分類 → 分類ID:分類名）
+  const bunruiMap = new Map<number, string>();
+  if (tableNames.includes("MTB011_分類")) {
+    const bunruiRows = reader.getTable("MTB011_分類").getData();
+    for (const row of bunruiRows) {
+      const id = row["分類ID"] as number;
+      const name = row["分類名"] as string;
+      if (id != null && name) {
+        bunruiMap.set(id, name);
       }
     }
   }
@@ -170,9 +170,16 @@ export async function POST(req: NextRequest) {
       const deathDate = toDate(row["命日"]);
       const ageAtDeath = pickAgeAtDeath(row) ?? calcAgeAtDeathFromDates(birthDate, deathDate);
 
-      // 台帳区分 → classification1 に台帳の分類名をタグとして設定
-      const daichoKubunId = row["台帳区分"] as number | null;
-      const classification1 = daichoKubunId != null ? daichoKubunMap.get(daichoKubunId) ?? null : null;
+      // 分類01〜10 → classification1〜8 にタグとして設定（0以外の値を詰めて格納）
+      const tags: string[] = [];
+      for (let i = 1; i <= 10; i++) {
+        const col = `分類${String(i).padStart(2, "0")}`;
+        const id = row[col] as number | null;
+        if (id && id !== 0) {
+          const name = bunruiMap.get(id);
+          if (name) tags.push(name);
+        }
+      }
 
       const householder = await prisma.householder.create({
         data: {
@@ -197,7 +204,14 @@ export async function POST(req: NextRequest) {
           note: str(row["備考"]),
           domicile: str(row["本籍"]),
           joinedAt: toDate(row["新規登録日"]),
-          classification1,
+          classification1: tags[0] ?? null,
+          classification2: tags[1] ?? null,
+          classification3: tags[2] ?? null,
+          classification4: tags[3] ?? null,
+          classification5: tags[4] ?? null,
+          classification6: tags[5] ?? null,
+          classification7: tags[6] ?? null,
+          classification8: tags[7] ?? null,
         },
       });
 
