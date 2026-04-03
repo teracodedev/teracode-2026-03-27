@@ -58,6 +58,7 @@ export async function GET(request: NextRequest) {
   const query   = sp.get("q") || "";
   const queryKana = toFullWidthKatakana(query) || query;
   const tagIds  = sp.get("tags")?.split(",").filter(Boolean) || [];
+  const notTagIds = sp.get("notTags")?.split(",").filter(Boolean) || [];
   const sort    = (sp.get("sort") || "nen") as SortMode;
   const order   = (sp.get("order") || "asc") as "asc" | "desc";
   const era     = sp.get("era") || "";
@@ -74,9 +75,13 @@ export async function GET(request: NextRequest) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const baseFilter: any = {};
 
-    // タグフィルター: 指定された全タグを持つレコードのみ (AND条件)
-    if (tagIds.length > 0) {
-      baseFilter.AND = tagIds.map((tagId: string) => ({ tags: { some: { tagId } } }));
+    // タグフィルター: AND条件 + NOT条件
+    const tagAndConditions = [
+      ...tagIds.map((tagId: string) => ({ tags: { some: { tagId } } })),
+      ...notTagIds.map((tagId: string) => ({ tags: { none: { tagId } } })),
+    ];
+    if (tagAndConditions.length > 0) {
+      baseFilter.AND = tagAndConditions;
     }
 
     if (sort === "fusho") {

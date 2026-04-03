@@ -15,6 +15,7 @@ export async function GET(request: NextRequest) {
   const queryKana = toFullWidthKatakana(query) || query;
   const activeOnly = searchParams.get("active") !== "false";
   const tagIds = searchParams.get("tags")?.split(",").filter(Boolean) || [];
+  const notTagIds = searchParams.get("notTags")?.split(",").filter(Boolean) || [];
 
   try {
     const kind = getHouseholderModelKind();
@@ -33,9 +34,13 @@ export async function GET(request: NextRequest) {
           }
         : { members: true };
 
-    // タグフィルター: 指定された全タグを持つレコードのみ返す (AND条件)
-    const tagFilter = tagIds.length > 0
-      ? { AND: tagIds.map((tagId: string) => ({ tags: { some: { tagId } } })) }
+    // タグフィルター: AND条件（指定タグを全て持つ） + NOT条件（指定タグを持たない）
+    const tagAndConditions = [
+      ...tagIds.map((tagId: string) => ({ tags: { some: { tagId } } })),
+      ...notTagIds.map((tagId: string) => ({ tags: { none: { tagId } } })),
+    ];
+    const tagFilter = tagAndConditions.length > 0
+      ? { AND: tagAndConditions }
       : {};
 
     const householderList = await delegate.findMany({

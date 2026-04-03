@@ -62,6 +62,7 @@ export default function GenzaichoPage() {
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [filterTagIds, setFilterTagIds] = useState<string[]>([]);
+  const [filterNotTagIds, setFilterNotTagIds] = useState<string[]>([]);
   const PAGE_SIZE = 10;
 
   const fetchRecords = useCallback(async () => {
@@ -70,6 +71,7 @@ export default function GenzaichoPage() {
       const params = new URLSearchParams();
       if (query) params.set("q", query);
       if (filterTagIds.length > 0) params.set("tags", filterTagIds.join(","));
+      if (filterNotTagIds.length > 0) params.set("notTags", filterNotTagIds.join(","));
       const res = await fetchWithAuth("/api/genzaicho?" + params);
       const data = await res.json();
       const rows = Array.isArray(data) ? data : [];
@@ -86,7 +88,7 @@ export default function GenzaichoPage() {
     } finally {
       setLoading(false);
     }
-  }, [query, filterTagIds]);
+  }, [query, filterTagIds, filterNotTagIds]);
 
   useEffect(() => {
     const timer = setTimeout(fetchRecords, 300);
@@ -110,7 +112,7 @@ export default function GenzaichoPage() {
           onChange={(e) => { setQuery(e.target.value); setCurrentPage(1); }}
           className="flex-1 border border-stone-300 rounded-lg px-4 py-2 text-base text-stone-800 bg-white placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-stone-400"
         />
-        <TagFilter selectedTagIds={filterTagIds} onChange={(ids) => { setFilterTagIds(ids); setCurrentPage(1); }} />
+        <TagFilter selectedTagIds={filterTagIds} notTagIds={filterNotTagIds} onChange={(ids, notIds) => { setFilterTagIds(ids); setFilterNotTagIds(notIds); setCurrentPage(1); }} />
       </div>
 
       {loading ? (
