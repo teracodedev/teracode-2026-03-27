@@ -37,20 +37,12 @@ export default function NavMenu({ userName, isAdmin }: NavMenuProps) {
           {userName && (
             <>
               {isAdmin && (
-                <>
-                  <Link
-                    href="/admin/import"
-                    className="hover:text-stone-300 transition-colors font-medium whitespace-nowrap"
-                  >
-                    データインポート
-                  </Link>
-                  <Link
-                    href="/admin/accounts"
-                    className="hover:text-stone-300 transition-colors font-medium whitespace-nowrap"
-                  >
-                    アカウント管理
-                  </Link>
-                </>
+                <Link
+                  href="/admin/settings"
+                  className="hover:text-stone-300 transition-colors font-medium whitespace-nowrap"
+                >
+                  各種設定
+                </Link>
               )}
               <div className="flex shrink-0 items-center gap-3 border-l border-stone-600 pl-4 lg:pl-6">
                 <span className="text-stone-400 text-sm whitespace-nowrap">{userName}</span>
@@ -122,22 +114,13 @@ export default function NavMenu({ userName, isAdmin }: NavMenuProps) {
           {userName && (
             <>
               {isAdmin && (
-                <>
-                  <Link
-                    href="/admin/import"
-                    onClick={() => setOpen(false)}
-                    className="block py-3 px-3 rounded text-lg font-medium text-stone-100 hover:bg-stone-700 transition-colors"
-                  >
-                    データインポート
-                  </Link>
-                  <Link
-                    href="/admin/accounts"
-                    onClick={() => setOpen(false)}
-                    className="block py-3 px-3 rounded text-lg font-medium text-stone-100 hover:bg-stone-700 transition-colors"
-                  >
-                    アカウント管理
-                  </Link>
-                </>
+                <Link
+                  href="/admin/settings"
+                  onClick={() => setOpen(false)}
+                  className="block py-3 px-3 rounded text-lg font-medium text-stone-100 hover:bg-stone-700 transition-colors"
+                >
+                  各種設定
+                </Link>
               )}
               <div className="border-t border-stone-700 pt-3 mt-2 flex items-center justify-between px-3 gap-3">
                 <span className="text-stone-400 truncate min-w-0">{userName}</span>
