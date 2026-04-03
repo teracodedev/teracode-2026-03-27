@@ -465,6 +465,10 @@ export default function MemberDetailPage({ params }: { params: Promise<{ id: str
                 <button onClick={() => setIsEditing(false)} className="text-stone-400 hover:text-stone-600 text-xl leading-none">✕</button>
               </div>
               <div className="px-6 py-4 space-y-4">
+                <div>
+                  <label className="block text-xs text-stone-500 mb-1">タグ</label>
+                  <TagManager entityType="member" entityId={id} />
+                </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-xs text-stone-500 mb-1">姓 <span className="text-red-500">*</span></label>
@@ -886,6 +890,10 @@ export default function MemberDetailPage({ params }: { params: Promise<{ id: str
               <button onClick={() => setIsEditing(false)} className="text-stone-400 hover:text-stone-600 text-xl leading-none">✕</button>
             </div>
             <div className="px-6 py-4 space-y-4">
+              <div>
+                <label className="block text-xs text-stone-500 mb-1">タグ</label>
+                <TagManager entityType="member" entityId={id} />
+              </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs text-stone-500 mb-1">姓 <span className="text-red-500">*</span></label>

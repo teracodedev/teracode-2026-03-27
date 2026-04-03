@@ -5,6 +5,7 @@ import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { PostalCodeSearch } from "@/components/PostalCodeSearch";
+import { TagManager } from "@/components/TagManager";
 
 function formatPostalCode(value: string): string {
   const digits = value.replace(/\D/g, "").slice(0, 7);
@@ -234,6 +235,12 @@ export default function EditHouseholderPage({ params }: { params: Promise<{ id: 
           {error}
         </div>
       )}
+
+      {/* タグ */}
+      <div className="bg-white rounded-xl shadow-sm border border-stone-200 p-6">
+        <label className="block text-sm font-medium text-stone-600 mb-2">タグ</label>
+        <TagManager entityType="householder" entityId={id} />
+      </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="bg-white rounded-xl shadow-sm border border-stone-200 p-6 space-y-4">

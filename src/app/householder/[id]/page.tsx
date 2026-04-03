@@ -588,6 +588,10 @@ export default function HouseholderDetailPage({ params }: { params: Promise<{ id
           {householderEditError && (
             <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">{householderEditError}</div>
           )}
+          <div>
+            <label className="block text-sm font-medium text-stone-600 mb-1">タグ</label>
+            <TagManager entityType="householder" entityId={id} />
+          </div>
           <form onSubmit={handleSaveHouseholder} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
