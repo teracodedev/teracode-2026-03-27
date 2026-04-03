@@ -613,6 +613,7 @@ export default function HouseholderDetailPage({ params }: { params: Promise<{ id
               <div>
                 <label className="block text-sm font-medium text-stone-600 mb-1">続柄</label>
                 <RelationInput value={householderEditForm.relation} onChange={v => setHouseholderEditForm({ ...householderEditForm, relation: v })}
+                  referencePersonName={householder ? `${householder.familyName}${householder.givenName}` : undefined}
                   placeholder="父・祖父など"
                   className="w-full border border-stone-300 rounded-lg px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-stone-400" />
               </div>

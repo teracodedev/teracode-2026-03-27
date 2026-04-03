@@ -199,6 +199,7 @@ export default function NewHouseholderPage() {
               <RelationInput
                 value={form.relation}
                 onChange={v => setForm(f => ({ ...f, relation: v }))}
+                referencePersonName={form.familyName || form.givenName ? `${form.familyName}${form.givenName}` : undefined}
                 placeholder="父・祖父など"
                 className="w-full border border-stone-300 rounded-lg px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-stone-400"
               />
