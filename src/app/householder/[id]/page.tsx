@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { PostalCodeSearch } from "@/components/PostalCodeSearch";
 import { RelationInput } from "@/components/RelationInput";
+import { TagManager } from "@/components/TagManager";
 
 interface Member {
   id: string;
@@ -549,6 +550,9 @@ export default function HouseholderDetailPage({ params }: { params: Promise<{ id
           {householder.isActive ? "在籍" : "離檀"}
         </span>
       </div>
+
+      {/* タグ */}
+      <TagManager entityType="householder" entityId={id} />
 
       <div className="flex gap-3 justify-end flex-wrap">
         {householder.familyRegister?.id && (

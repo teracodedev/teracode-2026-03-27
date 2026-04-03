@@ -5,6 +5,7 @@ import Link from "next/link";
 import { fetchWithAuth } from "@/lib/fetch-with-auth";
 import { PostalCodeSearch } from "@/components/PostalCodeSearch";
 import { RelationInput } from "@/components/RelationInput";
+import { TagManager } from "@/components/TagManager";
 
 interface MemberDetail {
   id: string;
@@ -386,6 +387,9 @@ export default function MemberDetailPage({ params }: { params: Promise<{ id: str
           </button>
         </div>
 
+        {/* タグ */}
+        <TagManager entityType="member" entityId={id} />
+
         {/* 基本情報テーブル */}
         <div className="bg-white rounded-xl shadow-sm border border-stone-200 overflow-hidden">
           <table className="w-full text-sm">
@@ -607,6 +611,9 @@ export default function MemberDetailPage({ params }: { params: Promise<{ id: str
 
       {/* タイトル */}
       <h1 className="text-2xl font-bold text-stone-800">過去帳: {fullName}</h1>
+
+      {/* タグ */}
+      <TagManager entityType="member" entityId={id} />
 
       {/* 直近の仏事 */}
       <div className="bg-white rounded-xl shadow-sm border border-stone-200 p-4">
