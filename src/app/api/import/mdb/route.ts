@@ -117,6 +117,19 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "UTB001_戸主 テーブルが見つかりません。対応していないMDBファイルです。" }, { status: 400 });
   }
 
+  // 台帳区分マスタを読み込む（MTB001_台帳区分）
+  const daichoKubunMap = new Map<number, string>();
+  if (tableNames.includes("MTB001_台帳区分")) {
+    const kubunRows = reader.getTable("MTB001_台帳区分").getData();
+    for (const row of kubunRows) {
+      const key = row["台帳区分"] as number;
+      const name = row["台帳区分名"] as string;
+      if (key != null && name) {
+        daichoKubunMap.set(key, name);
+      }
+    }
+  }
+
   // 戸主テーブルを読み込む
   const householderRows = reader.getTable("UTB001_戸主").getData();
   // 家族テーブルを読み込む（存在する場合）
@@ -157,6 +170,10 @@ export async function POST(req: NextRequest) {
       const deathDate = toDate(row["命日"]);
       const ageAtDeath = pickAgeAtDeath(row) ?? calcAgeAtDeathFromDates(birthDate, deathDate);
 
+      // 台帳区分 → classification1 に台帳の分類名をタグとして設定
+      const daichoKubunId = row["台帳区分"] as number | null;
+      const classification1 = daichoKubunId != null ? daichoKubunMap.get(daichoKubunId) ?? null : null;
+
       const householder = await prisma.householder.create({
         data: {
           familyName: familyName || "（不明）",
@@ -180,6 +197,7 @@ export async function POST(req: NextRequest) {
           note: str(row["備考"]),
           domicile: str(row["本籍"]),
           joinedAt: toDate(row["新規登録日"]),
+          classification1,
         },
       });
 
