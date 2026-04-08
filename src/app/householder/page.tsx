@@ -140,6 +140,10 @@ export default function HouseholderPage() {
         <TagFilter selectedTagIds={filterTagIds} notTagIds={filterNotTagIds} onChange={(ids, notIds) => { setFilterTagIds(ids); setFilterNotTagIds(notIds); setCurrentPage(1); }} />
       </div>
 
+      {!loading && (query || filterTagIds.length > 0 || filterNotTagIds.length > 0) && (
+        <div className="text-sm text-stone-500">検索結果: {householderList.length}件</div>
+      )}
+
       {loading ? (
         <div className="text-center py-12 text-stone-400">読み込み中...</div>
       ) : error ? (

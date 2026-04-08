@@ -117,6 +117,10 @@ export default function CeremoniesPage() {
         </select>
       </div>
 
+      {!loading && (query || filterType || filterStatus) && (
+        <div className="text-sm text-stone-500">検索結果: {ceremonies.length}件</div>
+      )}
+
       {loading ? (
         <div className="text-center py-12 text-stone-400">読み込み中...</div>
       ) : ceremonies.length === 0 ? (

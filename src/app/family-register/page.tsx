@@ -102,6 +102,10 @@ export default function FamilyRegisterPage() {
         />
       </div>
 
+      {!loading && query && (
+        <div className="text-sm text-stone-500">検索結果: {list.length}件</div>
+      )}
+
       {loading ? (
         <div className="text-center py-12 text-stone-400">読み込み中...</div>
       ) : list.length === 0 ? (
