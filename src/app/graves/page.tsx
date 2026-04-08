@@ -20,6 +20,8 @@ interface GravePlot {
   id: string;
   plotNumber: string;
   area: number | null;
+  width: number | null;
+  depth: number | null;
   permanentUsageFee: number | null;
   managementFee: number | null;
   note: string | null;
@@ -203,9 +205,13 @@ export default function GravesPage() {
                       <div className="font-medium text-stone-800 text-base">
                         No. {grave.plotNumber}
                       </div>
-                      {grave.area && (
+                      {(grave.width || grave.depth || grave.area) && (
                         <div className="text-xs text-stone-500 mt-0.5">
-                          面積: {grave.area}m²
+                          {grave.width && grave.depth
+                            ? `${grave.width}cm × ${grave.depth}cm`
+                            : grave.area
+                              ? `面積: ${grave.area}m²`
+                              : ""}
                         </div>
                       )}
                     </div>
@@ -254,7 +260,7 @@ export default function GravesPage() {
                     墓地番号
                   </th>
                   <th className="text-left px-4 py-3 text-stone-600 font-medium">
-                    面積 (m²)
+                    区画 (横×奥)
                   </th>
                   <th className="text-left px-4 py-3 text-stone-600 font-medium">
                     永代使用料
@@ -277,7 +283,11 @@ export default function GravesPage() {
                       {grave.plotNumber}
                     </td>
                     <td className="px-4 py-3 text-stone-600">
-                      {grave.area ?? "-"}
+                      {grave.width && grave.depth
+                        ? `${grave.width}cm × ${grave.depth}cm`
+                        : grave.area
+                          ? `${grave.area}m²`
+                          : "-"}
                     </td>
                     <td className="px-4 py-3 text-stone-600">
                       {formatCurrency(grave.permanentUsageFee)}

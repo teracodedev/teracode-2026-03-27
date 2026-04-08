@@ -20,6 +20,8 @@ interface GravePlot {
   id: string;
   plotNumber: string;
   area: number | null;
+  width: number | null;
+  depth: number | null;
   permanentUsageFee: number | null;
   managementFee: number | null;
   note: string | null;
@@ -104,6 +106,14 @@ export default function GraveDetailPage({
             <div>
               <dt className="text-sm text-stone-500">UUID</dt>
               <dd className="text-stone-500 text-xs font-mono">{grave.id}</dd>
+            </div>
+            <div>
+              <dt className="text-sm text-stone-500">区画サイズ (横 × 奥行き)</dt>
+              <dd className="text-stone-800">
+                {grave.width && grave.depth
+                  ? `${grave.width}cm × ${grave.depth}cm`
+                  : "-"}
+              </dd>
             </div>
             <div>
               <dt className="text-sm text-stone-500">面積</dt>

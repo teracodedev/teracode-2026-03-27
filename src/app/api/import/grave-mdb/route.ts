@@ -160,6 +160,10 @@ export async function POST(req: NextRequest) {
       }
 
       const area = toNumber(row["面積"]);
+      const widthM = toNumber(row["寸法横"]);
+      const depthM = toNumber(row["寸法縦"]);
+      const width = widthM !== null ? Math.round(widthM * 100 * 100) / 100 : null;
+      const depth = depthM !== null ? Math.round(depthM * 100 * 100) / 100 : null;
       const managementFee = toInt(row["管理費"]);
       const permanentUsageFee = toInt(row["永代使用料"]);
 
@@ -167,6 +171,8 @@ export async function POST(req: NextRequest) {
         data: {
           plotNumber,
           area,
+          width,
+          depth,
           managementFee,
           permanentUsageFee,
           note: str(row["墓地台帳ﾒﾓ"]),

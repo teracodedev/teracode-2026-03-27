@@ -59,13 +59,15 @@ export async function PUT(
 
   try {
     const body = await request.json();
-    const { plotNumber, area, permanentUsageFee, managementFee, note } = body;
+    const { plotNumber, area, width, depth, permanentUsageFee, managementFee, note } = body;
 
     const grave = await prisma.gravePlot.update({
       where: { id },
       data: {
         plotNumber: plotNumber || undefined,
         area: area !== undefined ? (area ? parseFloat(area) : null) : undefined,
+        width: width !== undefined ? (width ? parseFloat(width) : null) : undefined,
+        depth: depth !== undefined ? (depth ? parseFloat(depth) : null) : undefined,
         permanentUsageFee:
           permanentUsageFee !== undefined
             ? permanentUsageFee

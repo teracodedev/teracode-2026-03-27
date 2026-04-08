@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { plotNumber, area, permanentUsageFee, managementFee, note } = body;
+    const { plotNumber, area, width, depth, permanentUsageFee, managementFee, note } = body;
 
     if (!plotNumber) {
       return NextResponse.json(
@@ -81,6 +81,8 @@ export async function POST(request: NextRequest) {
       data: {
         plotNumber,
         area: area ? parseFloat(area) : null,
+        width: width ? parseFloat(width) : null,
+        depth: depth ? parseFloat(depth) : null,
         permanentUsageFee: permanentUsageFee ? parseInt(permanentUsageFee) : null,
         managementFee: managementFee ? parseInt(managementFee) : null,
         note: note || null,

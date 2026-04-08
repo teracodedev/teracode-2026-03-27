@@ -189,6 +189,8 @@ model GravePlot {
   id                String          @id @default(uuid())
   plotNumber         String          @unique
   area               Float?
+  width              Float?
+  depth              Float?
   permanentUsageFee  Int?
   managementFee      Int?
   note               String?
