@@ -9,7 +9,7 @@ export default function Home() {
         <p className="text-stone-500 text-lg">寺院管理システム</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl mx-auto">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-4xl mx-auto">
         <Link
           href="/householder"
           className="block bg-white rounded-xl shadow-sm border border-stone-200 p-8 hover:shadow-md hover:border-stone-300 transition-all group"
@@ -67,6 +67,21 @@ export default function Home() {
           </h2>
           <p className="text-stone-500 text-sm">
             故人の法名・命日を記録します
+          </p>
+        </Link>
+
+        <Link
+          href="/graves"
+          className="block bg-white rounded-xl shadow-sm border border-stone-200 p-8 hover:shadow-md hover:border-stone-300 transition-all group"
+        >
+          <div className="text-4xl mb-4" suppressHydrationWarning>
+            🪦
+          </div>
+          <h2 className="text-xl font-bold text-stone-800 mb-2 group-hover:text-stone-600">
+            墓地
+          </h2>
+          <p className="text-stone-500 text-sm">
+            墓地の区画・使用契約を管理します
           </p>
         </Link>
       </div>

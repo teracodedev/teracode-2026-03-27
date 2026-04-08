@@ -53,6 +53,7 @@ model Householder {
   members          HouseholderMember[]
   addressHistories HouseholderAddressHistory[]
   tags             HouseholderTag[]
+  graveContracts   GraveContract[]
 }
 
 model HouseholderAddressHistory {
@@ -182,4 +183,29 @@ model MemberTag {
   tag      Tag               @relation(fields: [tagId], references: [id], onDelete: Cascade)
 
   @@unique([memberId, tagId])
+}
+
+model GravePlot {
+  id                String          @id @default(uuid())
+  plotNumber         String          @unique
+  area               Float?
+  permanentUsageFee  Int?
+  managementFee      Int?
+  note               String?
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+  contracts          GraveContract[]
+}
+
+model GraveContract {
+  id              String          @id @default(uuid())
+  gravePlotId     String
+  householderId   String
+  startDate       DateTime?
+  endDate         DateTime?
+  note            String?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  gravePlot       GravePlot       @relation(fields: [gravePlotId], references: [id], onDelete: Cascade)
+  householder     Householder     @relation(fields: [householderId], references: [id], onDelete: Cascade)
 }
