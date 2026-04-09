@@ -7,6 +7,11 @@ const settingsItems = [
     description: "MDB ファイルから戸主・家族データを一括取り込みします。",
   },
   {
+    href: "/admin/backup",
+    title: "バックアップ & リカバリー",
+    description: "全データを YAML 形式で ZIP バックアップ、またはバックアップから復元します。",
+  },
+  {
     href: "/admin/accounts",
     title: "アカウント管理",
     description: "ログインアカウントの一覧・作成・パスワード設定を行います。",
