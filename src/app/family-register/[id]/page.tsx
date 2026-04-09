@@ -5,6 +5,21 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { RelationInput } from "@/components/RelationInput";
 
+interface GraveContract {
+  id: string;
+  startDate: string | null;
+  endDate: string | null;
+  note: string | null;
+  gravePlot: {
+    id: string;
+    plotNumber: string;
+    area: number | null;
+    permanentUsageFee: number | null;
+    managementFee: number | null;
+    note: string | null;
+  };
+}
+
 interface Member {
   id: string;
   familyName: string;
@@ -51,6 +66,7 @@ interface Householder {
   joinedAt: string | null;
   leftAt: string | null;
   members: Member[];
+  graveContracts?: GraveContract[];
 }
 
 interface FamilyRegister {
@@ -117,7 +133,7 @@ function formatGender(g: string | null) {
   return "不明";
 }
 
-type TabId = "householders" | "genzaicho" | "kakocho";
+type TabId = "householders" | "genzaicho" | "kakocho" | "bochi";
 
 const EMPTY_LIVING = { familyName: "", givenName: "", familyNameKana: "", givenNameKana: "", relation: "", birthDate: "" };
 const EMPTY_DECEASED = { familyName: "", givenName: "", familyNameKana: "", givenNameKana: "", relation: "", birthDate: "", deathDate: "", dharmaName: "", dharmaNameKana: "" };
@@ -416,11 +432,15 @@ export default function FamilyRegisterDetailPage({ params }: { params: Promise<{
   const deceasedMembers = allMembers
     .filter((m) => !!m.deathDate)
     .sort((a, b) => new Date(b.deathDate!).getTime() - new Date(a.deathDate!).getTime());
+  const graveContracts = householders.flatMap((h) =>
+    (h.graveContracts ?? []).map((c) => ({ ...c, householderName: `${h.familyName}${h.givenName}` }))
+  );
 
   const tabs: { id: TabId; label: string; count?: number }[] = [
     { id: "householders", label: "戸主" },
     { id: "genzaicho",    label: "現在帳", count: livingMembers.length },
     { id: "kakocho",      label: "過去帳",  count: deceasedMembers.length },
+    { id: "bochi",        label: "墓地",    count: graveContracts.length },
   ];
 
   const inputCls = "w-full border border-stone-300 rounded-lg px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-stone-400";
@@ -1040,6 +1060,55 @@ export default function FamilyRegisterDetailPage({ params }: { params: Promise<{
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* 墓地タブ */}
+      {activeTab === "bochi" && (
+        <div className="bg-white rounded-xl border border-stone-200 p-4">
+          {graveContracts.length === 0 ? (
+            <div className="space-y-2">
+              <p className="text-stone-400 text-sm">墓地契約が登録されていません</p>
+              <Link href="/graves" className="text-sm text-amber-700 hover:text-amber-800 font-medium">
+                → 墓地管理を開く
+              </Link>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {graveContracts.map((c) => (
+                <div key={c.id} className="border border-stone-100 rounded-lg overflow-hidden">
+                  <div className="flex items-center gap-2 px-3 py-2.5">
+                    <Link href={`/graves/${c.gravePlot.id}`}
+                      className="shrink-0 border border-stone-300 rounded px-2 py-1 text-sm text-stone-600 hover:bg-stone-100 font-medium">
+                      詳細
+                    </Link>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium text-stone-800">
+                        区画番号: {c.gravePlot.plotNumber}
+                      </div>
+                      <div className="text-xs text-stone-400 space-x-3">
+                        {c.gravePlot.area && <span>面積: {c.gravePlot.area}㎡</span>}
+                        {c.gravePlot.permanentUsageFee != null && <span>永代使用料: {c.gravePlot.permanentUsageFee.toLocaleString()}円</span>}
+                        {c.gravePlot.managementFee != null && <span>管理費: {c.gravePlot.managementFee.toLocaleString()}円</span>}
+                      </div>
+                      <div className="text-xs text-stone-400">
+                        {c.startDate && <span>契約日: {formatDate(c.startDate)}</span>}
+                        {c.householderName && <span className="ml-2">戸主: {c.householderName}</span>}
+                      </div>
+                      {(c.note || c.gravePlot.note) && (
+                        <div className="text-xs text-stone-400 mt-0.5">{c.note || c.gravePlot.note}</div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+              <div className="pt-2 border-t border-stone-100">
+                <Link href="/graves" className="text-sm text-amber-700 hover:text-amber-800 font-medium">
+                  → 墓地管理を開く
+                </Link>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

@@ -16,7 +16,12 @@ export async function GET(_req: NextRequest, { params }: Params) {
       where: { id },
       include: {
         householders: {
-          include: { members: true },
+          include: {
+            members: true,
+            graveContracts: {
+              include: { gravePlot: true },
+            },
+          },
         },
       },
     });
