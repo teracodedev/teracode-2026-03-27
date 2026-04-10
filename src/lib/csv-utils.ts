@@ -3,6 +3,11 @@
  */
 
 function escapeCsvValue(value: string): string {
+  // "1-2-3" や "1/2" など、Excelが日付として解釈しうるパターンは
+  // ="値" 形式でラップしてテキスト扱いにする
+  if (/^\d+[-\/]\d+([-\/]\d+)?$/.test(value.trim())) {
+    return `="${value.replace(/"/g, '""')}"`;
+  }
   if (value.includes(",") || value.includes('"') || value.includes("\n")) {
     return '"' + value.replace(/"/g, '""') + '"';
   }
