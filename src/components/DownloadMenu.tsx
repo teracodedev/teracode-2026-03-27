@@ -59,8 +59,8 @@ export function DownloadMenu({ disabled, onCsv, onExcel, onFudemame }: Props) {
             onClick={() => select(onFudemame)}
             className="w-full text-left px-4 py-2.5 text-sm text-stone-700 hover:bg-stone-50 flex items-center gap-2 border-t border-stone-100"
           >
-            <span className="text-blue-500 text-xs font-mono">VCF</span>
-            vCard形式 (.vcf)
+            <span className="text-blue-500 text-xs font-mono">筆</span>
+            筆まめ形式 (.csv)
           </button>
         </div>
       )}

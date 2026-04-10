@@ -117,7 +117,7 @@ export default function CeremoniesPage() {
                   address1: c.location || "", address2: "", address3: "",
                   tel1: "", tel2: "", fax: "",
                 })),
-                "法要行事.vcf"
+                "法要行事_筆まめ.csv"
               );
             }}
           />

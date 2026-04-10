@@ -149,7 +149,7 @@ export default function GenzaichoPage() {
                 address1: r.householder.address1 || "", address2: r.householder.address2 || "", address3: r.householder.address3 || "",
                 tel1: r.householder.phone1 || "", tel2: r.householder.phone2 || "", fax: r.householder.fax || "",
               })),
-              "現在帳.vcf"
+              "現在帳_筆まめ.csv"
             );
           }}
         />

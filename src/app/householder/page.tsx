@@ -146,7 +146,7 @@ export default function HouseholderPage() {
                   address1: h.address1 || "", address2: h.address2 || "", address3: h.address3 || "",
                   tel1: h.phone1 || "", tel2: h.phone2 || "", fax: h.fax || "",
                 })),
-                "戸主台帳.vcf"
+                "戸主台帳_筆まめ.csv"
               );
             }}
           />
