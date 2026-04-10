@@ -36,7 +36,6 @@ export default async function RootLayout({
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex min-w-0 items-center justify-between gap-4 h-16">
               <Link href="/" className="flex shrink-0 items-center gap-2">
-                <span className="text-2xl font-bold">寺</span>
                 <span className="font-bold text-xl tracking-wide">テラコード</span>
               </Link>
               <NavMenu
