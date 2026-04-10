@@ -10,7 +10,7 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "テラコード - 寺院管理システム",
+  title: "テラコード",
   description: "戸主・法要を管理するシステム",
 };
 

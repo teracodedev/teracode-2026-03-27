@@ -5,7 +5,6 @@ export default function Home() {
     <div className="space-y-8">
       <div className="text-center py-12">
         <h1 className="text-4xl font-bold text-stone-800 mb-2">テラコード</h1>
-        <p className="text-stone-500 text-lg">寺院管理システム</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-4xl mx-auto">
