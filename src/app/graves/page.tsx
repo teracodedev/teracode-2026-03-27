@@ -1,6 +1,7 @@
 "use client";
 import { fetchWithAuth } from "@/lib/fetch-with-auth";
 import { useState, useEffect, useCallback } from "react";
+import { useSharedSearch } from "@/lib/use-shared-search";
 import Link from "next/link";
 
 interface GraveContract {
@@ -40,7 +41,7 @@ const EMPTY_GRAVE_FORM = {
 
 export default function GravesPage() {
   const [graves, setGraves] = useState<GravePlot[]>([]);
-  const [query, setQuery] = useState("");
+  const { query, setQuery } = useSharedSearch();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
