@@ -35,50 +35,6 @@ export default function GravesPage() {
   const [error, setError] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const PAGE_SIZE = 20;
-  const [importing, setImporting] = useState(false);
-  const [importResult, setImportResult] = useState<{
-    graves: number;
-    contracts: number;
-    errors: number;
-    errorDetails: string[];
-  } | null>(null);
-
-  const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
-    setImporting(true);
-    setImportResult(null);
-    const formData = new FormData();
-    formData.append("file", files[0]);
-    try {
-      const res = await fetchWithAuth("/api/import/grave-mdb", {
-        method: "POST",
-        body: formData,
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        setImportResult({
-          graves: 0,
-          contracts: 0,
-          errors: 1,
-          errorDetails: [data.error || "インポートエラー"],
-        });
-      } else {
-        setImportResult(data);
-        fetchGraves();
-      }
-    } catch {
-      setImportResult({
-        graves: 0,
-        contracts: 0,
-        errors: 1,
-        errorDetails: ["通信エラー"],
-      });
-    } finally {
-      setImporting(false);
-      e.target.value = "";
-    }
-  };
 
   const fetchGraves = useCallback(async () => {
     setLoading(true);
@@ -121,43 +77,7 @@ export default function GravesPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-2">
         <h1 className="text-2xl font-bold text-amber-700">墓地台帳</h1>
-        <div className="flex gap-2 flex-wrap">
-          <label
-            className={`border border-stone-300 text-stone-600 px-4 py-2 rounded-lg hover:bg-stone-50 transition-colors text-sm font-medium cursor-pointer ${importing ? "opacity-50 pointer-events-none" : ""}`}
-          >
-            {importing ? "インポート中..." : "⬆ MDBインポート"}
-            <input
-              type="file"
-              accept=".mdb"
-              className="hidden"
-              onChange={handleImport}
-              disabled={importing}
-            />
-          </label>
-        </div>
       </div>
-
-      {importResult && (
-        <div
-          className={`rounded-lg px-4 py-3 text-sm ${importResult.errors > 0 ? "bg-yellow-50 border border-yellow-200" : "bg-green-50 border border-green-200"}`}
-        >
-          <p className="font-medium mb-1">
-            墓地 {importResult.graves}件 / 契約 {importResult.contracts}件
-            インポート完了
-            {importResult.errors > 0 &&
-              ` (${importResult.errors}件の注意事項)`}
-          </p>
-          {importResult.errorDetails.length > 0 && (
-            <ul className="space-y-0.5 text-xs mt-2">
-              {importResult.errorDetails.map((msg, i) => (
-                <li key={i} className="text-yellow-700">
-                  {msg}
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      )}
 
       <div className="flex gap-2 items-center">
         <input
@@ -186,7 +106,7 @@ export default function GravesPage() {
         <div className="text-center py-12 text-stone-400">
           <p>墓地が登録されていません</p>
           <p className="text-sm mt-2">
-            MDBファイルをインポートして墓地データを取り込めます
+            「各種設定」→「データインポート」から MDB ファイルを取り込めます
           </p>
         </div>
       ) : (

@@ -4,7 +4,7 @@ const settingsItems = [
   {
     href: "/admin/import",
     title: "データインポート",
-    description: "MDB ファイルから戸主・家族データを一括取り込みします。",
+    description: "MDB ファイルから戸主・家族・墓地データを一括取り込みします。",
   },
   {
     href: "/admin/backup",
