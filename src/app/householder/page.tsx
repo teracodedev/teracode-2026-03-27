@@ -267,32 +267,32 @@ export default function HouseholderPage() {
           </div>
 
           {/* デスクトップ: テーブル表示 */}
-          <div className="hidden md:block bg-white rounded-xl shadow-sm border border-stone-200 overflow-hidden">
-            <table className="w-full text-base">
+          <div className="hidden md:block bg-white rounded-xl shadow-sm border border-stone-200 overflow-x-auto">
+            <table className="min-w-full w-max text-base">
               <thead className="bg-stone-50 border-b border-stone-200">
                 <tr>
-                  <th className="text-left px-4 py-3 text-stone-600 font-medium">戸主氏名</th>
-                  <th className="text-left px-4 py-3 text-stone-600 font-medium">フリガナ</th>
-                  <th className="text-left px-4 py-3 text-stone-600 font-medium">所属グループ</th>
-                  <th className="text-left px-4 py-3 text-stone-600 font-medium">住所</th>
-                  <th className="text-left px-4 py-3 text-stone-600 font-medium">電話番号1</th>
-                  <th className="text-left px-4 py-3 text-stone-600 font-medium">電話番号2</th>
-                  <th className="text-left px-4 py-3 text-stone-600 font-medium">タグ</th>
+                  <th className="text-left px-4 py-3 text-stone-600 font-medium whitespace-nowrap">戸主氏名</th>
+                  <th className="text-left px-4 py-3 text-stone-600 font-medium whitespace-nowrap">フリガナ</th>
+                  <th className="text-left px-4 py-3 text-stone-600 font-medium whitespace-nowrap">所属グループ</th>
+                  <th className="text-left px-4 py-3 text-stone-600 font-medium whitespace-nowrap">住所</th>
+                  <th className="text-left px-4 py-3 text-stone-600 font-medium whitespace-nowrap">電話番号1</th>
+                  <th className="text-left px-4 py-3 text-stone-600 font-medium whitespace-nowrap">電話番号2</th>
+                  <th className="text-left px-4 py-3 text-stone-600 font-medium whitespace-nowrap">タグ</th>
                   <th className="text-left px-4 py-3 text-stone-600 font-medium whitespace-nowrap">詳細・編集</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-stone-100">
                 {householderList.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE).map((householder) => (
                   <tr key={householder.id} className="hover:bg-stone-50">
-                    <td className="px-4 py-3 text-stone-800">
+                    <td className="px-4 py-3 text-stone-800 whitespace-nowrap">
                       {householder.familyName} {householder.givenName}
                     </td>
-                    <td className="px-4 py-3 text-stone-600">
+                    <td className="px-4 py-3 text-stone-600 whitespace-nowrap">
                       {householder.familyNameKana || householder.givenNameKana
                         ? `${householder.familyNameKana ?? ""} ${householder.givenNameKana ?? ""}`.trim()
                         : "-"}
                     </td>
-                    <td className="px-4 py-3 text-stone-600">
+                    <td className="px-4 py-3 text-stone-600 whitespace-nowrap">
                       {householder.familyRegister ? (
                         <Link
                           href={`/family-register/${householder.familyRegister.id}`}
@@ -304,13 +304,13 @@ export default function HouseholderPage() {
                         <span className="text-stone-300 text-sm">未設定</span>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-stone-600">
+                    <td className="px-4 py-3 text-stone-600 whitespace-nowrap">
                       {[householder.address1, householder.address2, householder.address3].filter(Boolean).join(" ") || "-"}
                     </td>
-                    <td className="px-4 py-3 text-stone-600">{householder.phone1 || ""}</td>
-                    <td className="px-4 py-3 text-stone-600">{householder.phone2 || ""}</td>
-                    <td className="px-4 py-3">
-                      <div className="flex flex-wrap gap-1">
+                    <td className="px-4 py-3 text-stone-600 whitespace-nowrap">{householder.phone1 || ""}</td>
+                    <td className="px-4 py-3 text-stone-600 whitespace-nowrap">{householder.phone2 || ""}</td>
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      <div className="flex flex-nowrap gap-1">
                         {householder.tags?.map((t) => (
                           <TagBadge key={t.tag.id} tag={t.tag} />
                         ))}
