@@ -150,16 +150,8 @@ type TabId = "householders" | "genzaicho" | "kakocho" | "bochi";
 const EMPTY_LIVING = { familyName: "", givenName: "", familyNameKana: "", givenNameKana: "", relation: "", birthDate: "" };
 const EMPTY_DECEASED = { familyName: "", givenName: "", familyNameKana: "", givenNameKana: "", relation: "", birthDate: "", deathDate: "", dharmaName: "", dharmaNameKana: "" };
 const EMPTY_GRAVE_CONTRACT_FORM = {
-  mode: "existing" as "existing" | "new",
   gravePlotId: "",
   plotQuery: "",
-  plotNumber: "",
-  area: "",
-  width: "",
-  depth: "",
-  permanentUsageFee: "",
-  managementFee: "",
-  plotNote: "",
   startDate: "",
   endDate: "",
   contractNote: "",
@@ -246,7 +238,7 @@ export default function FamilyRegisterDetailPage({ params }: { params: Promise<{
   useEffect(() => { fetchData(); }, [fetchData]);
 
   useEffect(() => {
-    if (!showGraveForm || graveForm.mode !== "existing") return;
+    if (!showGraveForm) return;
     const query = graveForm.plotQuery.trim();
     if (!query) {
       setGraveSearchResults([]);
@@ -268,7 +260,7 @@ export default function FamilyRegisterDetailPage({ params }: { params: Promise<{
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [graveForm.mode, graveForm.plotQuery, showGraveForm]);
+  }, [graveForm.plotQuery, showGraveForm]);
 
   // メニュー外クリックで閉じる
   useEffect(() => {
@@ -357,35 +349,16 @@ export default function FamilyRegisterDetailPage({ params }: { params: Promise<{
     }
     setSavingGrave(true);
     setGraveError("");
-    const payload =
-      graveForm.mode === "existing"
-        ? {
-            mode: "existing",
-            householderId,
-            gravePlotId: graveForm.gravePlotId,
-            startDate: graveForm.startDate || null,
-            endDate: graveForm.endDate || null,
-            note: graveForm.contractNote || null,
-          }
-        : {
-            mode: "new",
-            householderId,
-            plotNumber: graveForm.plotNumber,
-            area: graveForm.area || null,
-            width: graveForm.width || null,
-            depth: graveForm.depth || null,
-            permanentUsageFee: graveForm.permanentUsageFee || null,
-            managementFee: graveForm.managementFee || null,
-            plotNote: graveForm.plotNote || null,
-            startDate: graveForm.startDate || null,
-            endDate: graveForm.endDate || null,
-            note: graveForm.contractNote || null,
-          };
-
     const res = await fetchWithAuth(`/api/family-register/${id}/grave-contracts`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
+      body: JSON.stringify({
+        householderId,
+        gravePlotId: graveForm.gravePlotId,
+        startDate: graveForm.startDate || null,
+        endDate: graveForm.endDate || null,
+        note: graveForm.contractNote || null,
+      }),
     });
     setSavingGrave(false);
     if (!res.ok) {
@@ -1191,107 +1164,43 @@ export default function FamilyRegisterDetailPage({ params }: { params: Promise<{
 
           {showGraveForm && (
             <form onSubmit={handleAddGraveContract} className="border border-amber-200 rounded-lg p-4 mb-4 space-y-4">
-              <div className="flex gap-3 flex-wrap">
-                <label className="inline-flex items-center gap-2 text-sm text-stone-700">
-                  <input
-                    type="radio"
-                    name="graveMode"
-                    checked={graveForm.mode === "existing"}
-                    onChange={() => {
-                      setGraveForm((f) => ({ ...EMPTY_GRAVE_CONTRACT_FORM, mode: "existing", startDate: f.startDate, endDate: f.endDate, contractNote: f.contractNote }));
-                      setGraveSearchResults([]);
-                    }}
-                  />
-                  既存の墓地区画を選ぶ
-                </label>
-                <label className="inline-flex items-center gap-2 text-sm text-stone-700">
-                  <input
-                    type="radio"
-                    name="graveMode"
-                    checked={graveForm.mode === "new"}
-                    onChange={() => {
-                      setGraveForm((f) => ({ ...EMPTY_GRAVE_CONTRACT_FORM, mode: "new", startDate: f.startDate, endDate: f.endDate, contractNote: f.contractNote }));
-                      setGraveSearchResults([]);
-                    }}
-                  />
-                  新しい墓地区画を作成
-                </label>
+              <div className="space-y-2">
+                <label className="block text-xs text-stone-500">墓地番号・備考で検索 <span className="text-red-500">*</span></label>
+                <input
+                  value={graveForm.plotQuery}
+                  onChange={(e) => setGraveForm((f) => ({ ...f, plotQuery: e.target.value, gravePlotId: "" }))}
+                  className={inputCls}
+                  placeholder="墓地番号を入力"
+                />
+                {graveSearchLoading && <p className="text-xs text-stone-400">検索中...</p>}
+                {graveSearchResults.length > 0 && (
+                  <div className="border border-stone-200 rounded-lg max-h-48 overflow-y-auto">
+                    {graveSearchResults.map((grave) => (
+                      <button
+                        key={grave.id}
+                        type="button"
+                        onClick={() => setGraveForm((f) => ({ ...f, gravePlotId: grave.id, plotQuery: grave.plotNumber }))}
+                        className={`w-full text-left px-3 py-2 text-sm border-b border-stone-100 last:border-0 ${
+                          graveForm.gravePlotId === grave.id
+                            ? "bg-amber-50 text-amber-700 font-medium"
+                            : "text-stone-700 hover:bg-stone-50"
+                        }`}
+                      >
+                        <span>No. {grave.plotNumber}</span>
+                        <span className="ml-2 text-xs text-stone-400">
+                          {grave.width && grave.depth ? `${grave.width}cm x ${grave.depth}cm` : grave.area ? `${grave.area}㎡` : "区画情報なし"}
+                        </span>
+                        {grave.contracts && grave.contracts.length > 0 && (
+                          <span className="ml-2 text-xs text-amber-700">契約あり</span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {graveForm.plotQuery && !graveSearchLoading && graveSearchResults.length === 0 && (
+                  <p className="text-xs text-stone-400">該当する墓地区画が見つかりません。墓地台帳一覧から新規作成してください。</p>
+                )}
               </div>
-
-              {graveForm.mode === "existing" ? (
-                <div className="space-y-2">
-                  <label className="block text-xs text-stone-500">墓地番号・備考で検索 <span className="text-red-500">*</span></label>
-                  <input
-                    value={graveForm.plotQuery}
-                    onChange={(e) => setGraveForm((f) => ({ ...f, plotQuery: e.target.value, gravePlotId: "" }))}
-                    className={inputCls}
-                    placeholder="墓地番号を入力"
-                  />
-                  {graveSearchLoading && <p className="text-xs text-stone-400">検索中...</p>}
-                  {graveSearchResults.length > 0 && (
-                    <div className="border border-stone-200 rounded-lg max-h-48 overflow-y-auto">
-                      {graveSearchResults.map((grave) => (
-                        <button
-                          key={grave.id}
-                          type="button"
-                          onClick={() => setGraveForm((f) => ({ ...f, gravePlotId: grave.id, plotQuery: grave.plotNumber }))}
-                          className={`w-full text-left px-3 py-2 text-sm border-b border-stone-100 last:border-0 ${
-                            graveForm.gravePlotId === grave.id
-                              ? "bg-amber-50 text-amber-700 font-medium"
-                              : "text-stone-700 hover:bg-stone-50"
-                          }`}
-                        >
-                          <span>No. {grave.plotNumber}</span>
-                          <span className="ml-2 text-xs text-stone-400">
-                            {grave.width && grave.depth ? `${grave.width}cm x ${grave.depth}cm` : grave.area ? `${grave.area}㎡` : "区画情報なし"}
-                          </span>
-                          {grave.contracts && grave.contracts.length > 0 && (
-                            <span className="ml-2 text-xs text-amber-700">契約あり</span>
-                          )}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs text-stone-500 mb-1">墓地番号 <span className="text-red-500">*</span></label>
-                    <input required value={graveForm.plotNumber} onChange={(e) => setGraveForm((f) => ({ ...f, plotNumber: e.target.value }))}
-                      className={inputCls} placeholder="A-001" />
-                  </div>
-                  <div>
-                    <label className="block text-xs text-stone-500 mb-1">面積</label>
-                    <input type="number" step="0.01" value={graveForm.area} onChange={(e) => setGraveForm((f) => ({ ...f, area: e.target.value }))}
-                      className={inputCls} placeholder="1.2" />
-                  </div>
-                  <div>
-                    <label className="block text-xs text-stone-500 mb-1">幅(cm)</label>
-                    <input type="number" step="0.01" value={graveForm.width} onChange={(e) => setGraveForm((f) => ({ ...f, width: e.target.value }))}
-                      className={inputCls} />
-                  </div>
-                  <div>
-                    <label className="block text-xs text-stone-500 mb-1">奥行(cm)</label>
-                    <input type="number" step="0.01" value={graveForm.depth} onChange={(e) => setGraveForm((f) => ({ ...f, depth: e.target.value }))}
-                      className={inputCls} />
-                  </div>
-                  <div>
-                    <label className="block text-xs text-stone-500 mb-1">永代使用料</label>
-                    <input type="number" value={graveForm.permanentUsageFee} onChange={(e) => setGraveForm((f) => ({ ...f, permanentUsageFee: e.target.value }))}
-                      className={inputCls} />
-                  </div>
-                  <div>
-                    <label className="block text-xs text-stone-500 mb-1">管理費</label>
-                    <input type="number" value={graveForm.managementFee} onChange={(e) => setGraveForm((f) => ({ ...f, managementFee: e.target.value }))}
-                      className={inputCls} />
-                  </div>
-                  <div className="col-span-2">
-                    <label className="block text-xs text-stone-500 mb-1">区画備考</label>
-                    <textarea value={graveForm.plotNote} onChange={(e) => setGraveForm((f) => ({ ...f, plotNote: e.target.value }))}
-                      className={inputCls} rows={2} />
-                  </div>
-                </div>
-              )}
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
@@ -1318,7 +1227,7 @@ export default function FamilyRegisterDetailPage({ params }: { params: Promise<{
                   className="border border-stone-300 text-stone-600 px-4 py-1.5 rounded-lg text-sm">キャンセル</button>
                 <button
                   type="submit"
-                  disabled={savingGrave || (graveForm.mode === "existing" && !graveForm.gravePlotId)}
+                  disabled={savingGrave || !graveForm.gravePlotId}
                   className="bg-amber-600 text-white px-4 py-1.5 rounded-lg text-sm font-medium disabled:opacity-50"
                 >
                   {savingGrave ? "保存中..." : "保存"}

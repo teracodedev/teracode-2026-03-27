@@ -28,12 +28,26 @@ interface GravePlot {
   contracts: GraveContract[];
 }
 
+const EMPTY_GRAVE_FORM = {
+  plotNumber: "",
+  area: "",
+  width: "",
+  depth: "",
+  permanentUsageFee: "",
+  managementFee: "",
+  note: "",
+};
+
 export default function GravesPage() {
   const [graves, setGraves] = useState<GravePlot[]>([]);
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [createForm, setCreateForm] = useState(EMPTY_GRAVE_FORM);
+  const [createError, setCreateError] = useState("");
+  const [savingCreate, setSavingCreate] = useState(false);
   const PAGE_SIZE = 20;
 
   const fetchGraves = useCallback(async () => {
@@ -67,6 +81,42 @@ export default function GravesPage() {
   const formatCurrency = (v: number | null) =>
     v != null ? `¥${v.toLocaleString()}` : "-";
 
+  const inputCls = "w-full border border-stone-300 rounded-lg px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-stone-400";
+
+  const handleCreateGrave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSavingCreate(true);
+    setCreateError("");
+    try {
+      const res = await fetchWithAuth("/api/graves", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          plotNumber: createForm.plotNumber,
+          area: createForm.area || null,
+          width: createForm.width || null,
+          depth: createForm.depth || null,
+          permanentUsageFee: createForm.permanentUsageFee || null,
+          managementFee: createForm.managementFee || null,
+          note: createForm.note || null,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setCreateError((data as { error?: string }).error || "墓地区画の作成に失敗しました");
+        return;
+      }
+      setShowCreateForm(false);
+      setCreateForm(EMPTY_GRAVE_FORM);
+      setCurrentPage(1);
+      await fetchGraves();
+    } catch {
+      setCreateError("墓地区画の作成に失敗しました");
+    } finally {
+      setSavingCreate(false);
+    }
+  };
+
   const paged = graves.slice(
     (currentPage - 1) * PAGE_SIZE,
     currentPage * PAGE_SIZE
@@ -77,7 +127,116 @@ export default function GravesPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-2">
         <h1 className="text-2xl font-bold text-amber-700">墓地台帳</h1>
+        <button
+          type="button"
+          onClick={() => {
+            setShowCreateForm((v) => !v);
+            setCreateError("");
+          }}
+          className="bg-amber-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-amber-700"
+        >
+          {showCreateForm ? "キャンセル" : "新規作成"}
+        </button>
       </div>
+
+      {showCreateForm && (
+        <form onSubmit={handleCreateGrave} className="bg-white rounded-xl border border-amber-200 p-4 space-y-4">
+          <h2 className="font-medium text-stone-700">墓地区画 新規作成</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs text-stone-500 mb-1">墓地番号 <span className="text-red-500">*</span></label>
+              <input
+                required
+                value={createForm.plotNumber}
+                onChange={(e) => setCreateForm((f) => ({ ...f, plotNumber: e.target.value }))}
+                className={inputCls}
+                placeholder="A-001"
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-stone-500 mb-1">面積</label>
+              <input
+                type="number"
+                step="0.01"
+                value={createForm.area}
+                onChange={(e) => setCreateForm((f) => ({ ...f, area: e.target.value }))}
+                className={inputCls}
+                placeholder="1.2"
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-stone-500 mb-1">幅(cm)</label>
+              <input
+                type="number"
+                step="0.01"
+                value={createForm.width}
+                onChange={(e) => setCreateForm((f) => ({ ...f, width: e.target.value }))}
+                className={inputCls}
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-stone-500 mb-1">奥行(cm)</label>
+              <input
+                type="number"
+                step="0.01"
+                value={createForm.depth}
+                onChange={(e) => setCreateForm((f) => ({ ...f, depth: e.target.value }))}
+                className={inputCls}
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-stone-500 mb-1">永代使用料</label>
+              <input
+                type="number"
+                value={createForm.permanentUsageFee}
+                onChange={(e) => setCreateForm((f) => ({ ...f, permanentUsageFee: e.target.value }))}
+                className={inputCls}
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-stone-500 mb-1">管理費</label>
+              <input
+                type="number"
+                value={createForm.managementFee}
+                onChange={(e) => setCreateForm((f) => ({ ...f, managementFee: e.target.value }))}
+                className={inputCls}
+              />
+            </div>
+            <div className="sm:col-span-2">
+              <label className="block text-xs text-stone-500 mb-1">備考</label>
+              <textarea
+                value={createForm.note}
+                onChange={(e) => setCreateForm((f) => ({ ...f, note: e.target.value }))}
+                className={inputCls}
+                rows={2}
+              />
+            </div>
+          </div>
+
+          {createError && <p className="text-sm text-red-600">{createError}</p>}
+
+          <div className="flex gap-2 justify-end">
+            <button
+              type="button"
+              onClick={() => {
+                setShowCreateForm(false);
+                setCreateForm(EMPTY_GRAVE_FORM);
+                setCreateError("");
+              }}
+              className="border border-stone-300 text-stone-600 px-4 py-1.5 rounded-lg text-sm"
+            >
+              キャンセル
+            </button>
+            <button
+              type="submit"
+              disabled={savingCreate}
+              className="bg-amber-600 text-white px-4 py-1.5 rounded-lg text-sm font-medium disabled:opacity-50"
+            >
+              {savingCreate ? "保存中..." : "保存"}
+            </button>
+          </div>
+        </form>
+      )}
 
       <div className="flex gap-2 items-center">
         <input

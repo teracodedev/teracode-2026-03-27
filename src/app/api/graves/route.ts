@@ -4,6 +4,18 @@ import { requireAuth } from "@/lib/require-auth";
 
 export const runtime = "nodejs";
 
+const parseNullableFloat = (value: unknown) => {
+  if (value === undefined) return undefined;
+  if (value === null || value === "") return null;
+  const parsed = typeof value === "number" ? value : parseFloat(String(value));
+  return Number.isFinite(parsed) ? parsed : null;
+};
+
+const calculateArea = (width: number | null, depth: number | null) => {
+  if (width == null || depth == null) return null;
+  return Math.round((width * depth) / 10000 * 10000) / 10000;
+};
+
 // 墓地一覧取得
 export async function GET(request: NextRequest) {
   const unauth = await requireAuth();
@@ -69,6 +81,12 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { plotNumber, area, width, depth, permanentUsageFee, managementFee, note } = body;
+    const parsedWidth = parseNullableFloat(width) ?? null;
+    const parsedDepth = parseNullableFloat(depth) ?? null;
+    const parsedArea =
+      parsedWidth != null && parsedDepth != null
+        ? calculateArea(parsedWidth, parsedDepth)
+        : (parseNullableFloat(area) ?? null);
 
     if (!plotNumber) {
       return NextResponse.json(
@@ -77,12 +95,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const existing = await prisma.gravePlot.findUnique({
+      where: { plotNumber },
+      select: { id: true },
+    });
+    if (existing) {
+      return NextResponse.json(
+        { error: "同じ墓地番号が既に登録されています" },
+        { status: 400 }
+      );
+    }
+
     const grave = await prisma.gravePlot.create({
       data: {
         plotNumber,
-        area: area ? parseFloat(area) : null,
-        width: width ? parseFloat(width) : null,
-        depth: depth ? parseFloat(depth) : null,
+        area: parsedArea,
+        width: parsedWidth,
+        depth: parsedDepth,
         permanentUsageFee: permanentUsageFee ? parseInt(permanentUsageFee) : null,
         managementFee: managementFee ? parseInt(managementFee) : null,
         note: note || null,
