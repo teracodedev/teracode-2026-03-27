@@ -70,43 +70,58 @@ export function downloadExcel(
   triggerDownload(blob, filename);
 }
 
-// ─── 筆まめ CSV ─────────────────────────────────────────
+// ─── vCard (.vcf) ──────────────────────────────────────
 
 /**
- * 筆まめ用CSVを生成してダウンロード
- * 標準フォーマット（UTF-8 BOM付き）
+ * vCard 3.0 形式でダウンロード（筆まめ・スマートフォン等でインポート可能）
  */
-export function downloadFudemame(rows: FudemameRow[], filename: string): void {
-  const headers = [
-    "氏名（姓）",
-    "氏名（名）",
-    "フリガナ（姓）",
-    "フリガナ（名）",
-    "郵便番号",
-    "住所1",
-    "住所2",
-    "住所3",
-    "TEL1",
-    "TEL2",
-    "FAX",
-  ];
-  const data = rows.map((r) => [
-    r.familyName,
-    r.givenName,
-    r.familyNameKana,
-    r.givenNameKana,
-    r.postalCode,
-    r.address1,
-    r.address2,
-    r.address3,
-    r.tel1,
-    r.tel2,
-    r.fax,
-  ]);
-  downloadCsv(generateCsv(headers, data), filename);
+export function downloadVcf(rows: VcfRow[], filename: string): void {
+  const cards = rows.map((r) => buildVcard(r));
+  const blob = new Blob([cards.join("\r\n")], { type: "text/vcard;charset=utf-8;" });
+  triggerDownload(blob, filename);
 }
 
-export interface FudemameRow {
+function buildVcard(r: VcfRow): string {
+  const fullName = [r.familyName, r.givenName].filter(Boolean).join(" ");
+  const fullKana = [r.familyNameKana, r.givenNameKana].filter(Boolean).join(" ");
+  const address = [r.address1, r.address2, r.address3].filter(Boolean).join("");
+
+  const lines: string[] = [
+    "BEGIN:VCARD",
+    "VERSION:3.0",
+    // 氏名（姓;名 形式）
+    `N:${vcfEscape(r.familyName)};${vcfEscape(r.givenName)};;;`,
+    `FN:${vcfEscape(fullName)}`,
+    // フリガナ（各社アプリが参照するフィールド）
+    ...(fullKana
+      ? [
+          `X-PHONETIC-LAST-NAME:${vcfEscape(r.familyNameKana)}`,
+          `X-PHONETIC-FIRST-NAME:${vcfEscape(r.givenNameKana)}`,
+          `SORT-STRING:${vcfEscape(fullKana)}`,
+        ]
+      : []),
+    // 住所
+    ...(address
+      ? [`ADR;TYPE=HOME:;;${vcfEscape(address)};;;;;`]
+      : []),
+    // 郵便番号（住所の一部として付加）
+    ...(r.postalCode ? [`X-ADDR-POSTAL-CODE:${vcfEscape(r.postalCode)}`] : []),
+    // 電話番号
+    ...(r.tel1 ? [`TEL;TYPE=HOME,VOICE:${vcfEscape(r.tel1)}`] : []),
+    ...(r.tel2 ? [`TEL;TYPE=HOME,VOICE:${vcfEscape(r.tel2)}`] : []),
+    ...(r.fax  ? [`TEL;TYPE=FAX:${vcfEscape(r.fax)}`] : []),
+    // メモ
+    ...(r.note ? [`NOTE:${vcfEscape(r.note)}`] : []),
+    "END:VCARD",
+  ];
+  return lines.join("\r\n");
+}
+
+function vcfEscape(s: string): string {
+  return s.replace(/\\/g, "\\\\").replace(/,/g, "\\,").replace(/;/g, "\\;").replace(/\n/g, "\\n");
+}
+
+export interface VcfRow {
   familyName: string;
   givenName: string;
   familyNameKana: string;
@@ -118,7 +133,12 @@ export interface FudemameRow {
   tel1: string;
   tel2: string;
   fax: string;
+  note?: string;
 }
+
+// 後方互換のため残す
+export { downloadVcf as downloadFudemame };
+export type { VcfRow as FudemameRow };
 
 // ─── 共通ユーティリティ ────────────────────────────────
 

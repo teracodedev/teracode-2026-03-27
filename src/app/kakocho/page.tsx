@@ -147,7 +147,7 @@ export default function KakochoPage() {
                 address1: "", address2: "", address3: "",
                 tel1: "", tel2: "", fax: "",
               })),
-              "過去帳_筆まめ.csv"
+              "過去帳.vcf"
             );
           }}
         />
