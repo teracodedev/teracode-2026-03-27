@@ -1,5 +1,6 @@
 "use client";
 import { fetchWithAuth } from "@/lib/fetch-with-auth";
+import { generateCsv, downloadCsv } from "@/lib/csv-utils";
 
 import { useState, useEffect, useCallback } from "react";
 import { useSharedSearch } from "@/lib/use-shared-search";
@@ -79,12 +80,32 @@ export default function CeremoniesPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-amber-700">法要・行事</h1>
-        <Link
-          href="/ceremonies/new"
-          className="bg-stone-700 text-white px-4 py-2 rounded-lg hover:bg-stone-800 transition-colors text-base font-medium"
-        >
-          + 新規登録
-        </Link>
+        <div className="flex gap-2">
+          <button
+            onClick={() => {
+              const headers = ["名称", "種別", "日時", "場所", "ステータス", "参加件数"];
+              const rows = ceremonies.map((c) => [
+                c.title,
+                CEREMONY_TYPE_LABELS[c.ceremonyType] || c.ceremonyType,
+                new Date(c.scheduledAt).toISOString().slice(0, 10),
+                c.location || "",
+                STATUS_LABELS[c.status] || c.status,
+                String((c.participants ?? []).length),
+              ]);
+              downloadCsv(generateCsv(headers, rows), "法要行事.csv");
+            }}
+            disabled={ceremonies.length === 0}
+            className="border border-stone-300 text-stone-600 px-4 py-2 rounded-lg hover:bg-stone-50 transition-colors text-sm font-medium disabled:opacity-50 disabled:pointer-events-none"
+          >
+            CSVダウンロード
+          </button>
+          <Link
+            href="/ceremonies/new"
+            className="bg-stone-700 text-white px-4 py-2 rounded-lg hover:bg-stone-800 transition-colors text-base font-medium"
+          >
+            + 新規登録
+          </Link>
+        </div>
       </div>
 
       <div className="flex flex-wrap gap-3 items-center">

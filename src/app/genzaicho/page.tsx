@@ -1,5 +1,6 @@
 "use client";
 import { fetchWithAuth } from "@/lib/fetch-with-auth";
+import { generateCsv, downloadCsv } from "@/lib/csv-utils";
 
 import { Fragment, useState, useEffect, useCallback } from "react";
 import { useSharedSearch } from "@/lib/use-shared-search";
@@ -102,6 +103,37 @@ export default function GenzaichoPage() {
           <h1 className="text-2xl font-bold text-amber-700">現在帳</h1>
           <p className="text-sm text-stone-500 mt-1">在籍中の世帯員一覧</p>
         </div>
+        <button
+          onClick={() => {
+            const headers = ["姓", "名", "姓フリガナ", "名フリガナ", "続柄", "生年月日", "年齢", "戸主姓", "戸主名", "戸主番号", "郵便番号", "住所1", "住所2", "住所3", "電話番号1", "電話番号2", "FAX", "家族・親族台帳", "タグ"];
+            const rows = records.map((r) => [
+              r.familyName,
+              r.givenName || "",
+              r.familyNameKana || "",
+              r.givenNameKana || "",
+              r.relation || "",
+              r.birthDate ? new Date(r.birthDate).toISOString().slice(0, 10) : "",
+              r.birthDate ? calcAge(r.birthDate) : "",
+              r.householder.familyName,
+              r.householder.givenName,
+              r.householder.householderCode,
+              r.householder.postalCode || "",
+              r.householder.address1 || "",
+              r.householder.address2 || "",
+              r.householder.address3 || "",
+              r.householder.phone1 || "",
+              r.householder.phone2 || "",
+              r.householder.fax || "",
+              r.householder.familyRegister?.name || "",
+              r.tags?.map((t) => t.tag.name).join(" / ") || "",
+            ]);
+            downloadCsv(generateCsv(headers, rows), "現在帳.csv");
+          }}
+          disabled={records.length === 0}
+          className="border border-stone-300 text-stone-600 px-4 py-2 rounded-lg hover:bg-stone-50 transition-colors text-sm font-medium disabled:opacity-50 disabled:pointer-events-none"
+        >
+          CSVダウンロード
+        </button>
       </div>
 
       <div className="flex gap-2 items-center">
