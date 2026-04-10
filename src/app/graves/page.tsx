@@ -31,12 +31,29 @@ interface GravePlot {
 
 const EMPTY_GRAVE_FORM = {
   plotNumber: "",
-  area: "",
   width: "",
   depth: "",
   permanentUsageFee: "",
   managementFee: "",
   note: "",
+};
+
+const parseFormNumber = (value: string) => {
+  if (value.trim() === "") return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+};
+
+const calculateArea = (width: string, depth: string) => {
+  const widthValue = parseFormNumber(width);
+  const depthValue = parseFormNumber(depth);
+  if (widthValue == null || depthValue == null) return null;
+  return Math.round((widthValue * depthValue) / 10000 * 10000) / 10000;
+};
+
+const formatArea = (value: number | null) => {
+  if (value == null) return "-";
+  return `${value.toLocaleString("ja-JP", { maximumFractionDigits: 4 })} m²`;
 };
 
 export default function GravesPage() {
@@ -83,6 +100,7 @@ export default function GravesPage() {
     v != null ? `¥${v.toLocaleString()}` : "-";
 
   const inputCls = "w-full border border-stone-300 rounded-lg px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-stone-400";
+  const createFormArea = calculateArea(createForm.width, createForm.depth);
 
   const handleCreateGrave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -94,7 +112,7 @@ export default function GravesPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           plotNumber: createForm.plotNumber,
-          area: createForm.area || null,
+          area: createFormArea,
           width: createForm.width || null,
           depth: createForm.depth || null,
           permanentUsageFee: createForm.permanentUsageFee || null,
@@ -156,14 +174,9 @@ export default function GravesPage() {
             </div>
             <div>
               <label className="block text-xs text-stone-500 mb-1">面積</label>
-              <input
-                type="number"
-                step="0.01"
-                value={createForm.area}
-                onChange={(e) => setCreateForm((f) => ({ ...f, area: e.target.value }))}
-                className={inputCls}
-                placeholder="1.2"
-              />
+              <div className="w-full border border-stone-200 rounded-lg px-3 py-2 text-base text-stone-700 bg-stone-50">
+                {formatArea(createFormArea)}
+              </div>
             </div>
             <div>
               <label className="block text-xs text-stone-500 mb-1">幅(cm)</label>

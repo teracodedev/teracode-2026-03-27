@@ -4,6 +4,18 @@ import { requireAuth } from "@/lib/require-auth";
 
 export const runtime = "nodejs";
 
+const parseNullableFloat = (value: unknown) => {
+  if (value === undefined) return undefined;
+  if (value === null || value === "") return null;
+  const parsed = typeof value === "number" ? value : parseFloat(String(value));
+  return Number.isFinite(parsed) ? parsed : null;
+};
+
+const calculateArea = (width: number | null, depth: number | null) => {
+  if (width == null || depth == null) return null;
+  return Math.round((width * depth) / 10000 * 10000) / 10000;
+};
+
 // 墓地詳細取得
 export async function GET(
   _request: NextRequest,
@@ -60,14 +72,20 @@ export async function PUT(
   try {
     const body = await request.json();
     const { plotNumber, area, width, depth, permanentUsageFee, managementFee, note } = body;
+    const parsedWidth = parseNullableFloat(width);
+    const parsedDepth = parseNullableFloat(depth);
+    const parsedArea =
+      parsedWidth !== undefined && parsedDepth !== undefined
+        ? calculateArea(parsedWidth ?? null, parsedDepth ?? null)
+        : parseNullableFloat(area);
 
     const grave = await prisma.gravePlot.update({
       where: { id },
       data: {
         plotNumber: plotNumber || undefined,
-        area: area !== undefined ? (area ? parseFloat(area) : null) : undefined,
-        width: width !== undefined ? (width ? parseFloat(width) : null) : undefined,
-        depth: depth !== undefined ? (depth ? parseFloat(depth) : null) : undefined,
+        area: parsedArea,
+        width: parsedWidth,
+        depth: parsedDepth,
         permanentUsageFee:
           permanentUsageFee !== undefined
             ? permanentUsageFee
