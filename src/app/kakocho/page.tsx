@@ -1,6 +1,7 @@
 "use client";
 import { fetchWithAuth } from "@/lib/fetch-with-auth";
-import { generateCsv, downloadCsv } from "@/lib/csv-utils";
+import { generateCsv, downloadCsv, downloadExcel, downloadFudemame } from "@/lib/csv-utils";
+import { DownloadMenu } from "@/components/DownloadMenu";
 
 import { Fragment, useState, useEffect, useCallback } from "react";
 import Link from "next/link";
@@ -103,33 +104,53 @@ export default function KakochoPage() {
           <h1 className="text-2xl font-bold text-amber-700">過去帳</h1>
           <p className="text-sm text-stone-500 mt-1">物故者リスト</p>
         </div>
-        <button
-          onClick={() => {
+        <DownloadMenu
+          disabled={records.length === 0}
+          onCsv={() => {
             const headers = ["姓", "名", "姓フリガナ", "名フリガナ", "法名", "法名フリガナ", "命日", "享年", "生年月日", "続柄", "戸主姓", "戸主名", "戸主番号", "家族・親族台帳", "タグ"];
             const rows = records.map((r) => [
-              r.familyName,
-              r.givenName || "",
-              r.familyNameKana || "",
-              r.givenNameKana || "",
-              r.dharmaName || "",
-              r.dharmaNameKana || "",
+              r.familyName, r.givenName || "",
+              r.familyNameKana || "", r.givenNameKana || "",
+              r.dharmaName || "", r.dharmaNameKana || "",
               r.deathDate ? new Date(r.deathDate).toISOString().slice(0, 10) : "",
               r.ageAtDeath ? r.ageAtDeath + "歳" : calcAge(r.birthDate, r.deathDate),
               r.birthDate ? new Date(r.birthDate).toISOString().slice(0, 10) : "",
               r.relation || "",
-              r.householder.familyName,
-              r.householder.givenName,
-              r.householder.householderCode,
+              r.householder.familyName, r.householder.givenName, r.householder.householderCode,
               r.householder.familyRegister?.name || "",
               r.tags?.map((t) => t.tag.name).join(" / ") || "",
             ]);
             downloadCsv(generateCsv(headers, rows), "過去帳.csv");
           }}
-          disabled={records.length === 0}
-          className="border border-stone-300 text-stone-600 px-4 py-2 rounded-lg hover:bg-stone-50 transition-colors text-sm font-medium disabled:opacity-50 disabled:pointer-events-none"
-        >
-          CSVダウンロード
-        </button>
+          onExcel={() => {
+            const headers = ["姓", "名", "姓フリガナ", "名フリガナ", "法名", "法名フリガナ", "命日", "享年", "生年月日", "続柄", "戸主姓", "戸主名", "戸主番号", "家族・親族台帳", "タグ"];
+            const rows = records.map((r) => [
+              r.familyName, r.givenName || "",
+              r.familyNameKana || "", r.givenNameKana || "",
+              r.dharmaName || "", r.dharmaNameKana || "",
+              r.deathDate ? new Date(r.deathDate).toISOString().slice(0, 10) : "",
+              r.ageAtDeath ? r.ageAtDeath + "歳" : calcAge(r.birthDate, r.deathDate),
+              r.birthDate ? new Date(r.birthDate).toISOString().slice(0, 10) : "",
+              r.relation || "",
+              r.householder.familyName, r.householder.givenName, r.householder.householderCode,
+              r.householder.familyRegister?.name || "",
+              r.tags?.map((t) => t.tag.name).join(" / ") || "",
+            ]);
+            downloadExcel(headers, rows, "過去帳.xlsx");
+          }}
+          onFudemame={() => {
+            downloadFudemame(
+              records.map((r) => ({
+                familyName: r.familyName, givenName: r.givenName || "",
+                familyNameKana: r.familyNameKana || "", givenNameKana: r.givenNameKana || "",
+                postalCode: "",
+                address1: "", address2: "", address3: "",
+                tel1: "", tel2: "", fax: "",
+              })),
+              "過去帳_筆まめ.csv"
+            );
+          }}
+        />
       </div>
 
       <div className="flex gap-2 items-center">

@@ -1,6 +1,7 @@
 "use client";
 import { fetchWithAuth } from "@/lib/fetch-with-auth";
-import { generateCsv, downloadCsv } from "@/lib/csv-utils";
+import { generateCsv, downloadCsv, downloadExcel, downloadFudemame } from "@/lib/csv-utils";
+import { DownloadMenu } from "@/components/DownloadMenu";
 
 import { useState, useEffect, useCallback } from "react";
 import { useSharedSearch } from "@/lib/use-shared-search";
@@ -81,8 +82,9 @@ export default function CeremoniesPage() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-amber-700">法要・行事</h1>
         <div className="flex gap-2">
-          <button
-            onClick={() => {
+          <DownloadMenu
+            disabled={ceremonies.length === 0}
+            onCsv={() => {
               const headers = ["名称", "種別", "日時", "場所", "ステータス", "参加件数"];
               const rows = ceremonies.map((c) => [
                 c.title,
@@ -94,11 +96,31 @@ export default function CeremoniesPage() {
               ]);
               downloadCsv(generateCsv(headers, rows), "法要行事.csv");
             }}
-            disabled={ceremonies.length === 0}
-            className="border border-stone-300 text-stone-600 px-4 py-2 rounded-lg hover:bg-stone-50 transition-colors text-sm font-medium disabled:opacity-50 disabled:pointer-events-none"
-          >
-            CSVダウンロード
-          </button>
+            onExcel={() => {
+              const headers = ["名称", "種別", "日時", "場所", "ステータス", "参加件数"];
+              const rows = ceremonies.map((c) => [
+                c.title,
+                CEREMONY_TYPE_LABELS[c.ceremonyType] || c.ceremonyType,
+                new Date(c.scheduledAt).toISOString().slice(0, 10),
+                c.location || "",
+                STATUS_LABELS[c.status] || c.status,
+                String((c.participants ?? []).length),
+              ]);
+              downloadExcel(headers, rows, "法要行事.xlsx");
+            }}
+            onFudemame={() => {
+              downloadFudemame(
+                ceremonies.map((c) => ({
+                  familyName: c.title, givenName: "",
+                  familyNameKana: "", givenNameKana: "",
+                  postalCode: "",
+                  address1: c.location || "", address2: "", address3: "",
+                  tel1: "", tel2: "", fax: "",
+                })),
+                "法要行事_筆まめ.csv"
+              );
+            }}
+          />
           <Link
             href="/ceremonies/new"
             className="bg-stone-700 text-white px-4 py-2 rounded-lg hover:bg-stone-800 transition-colors text-base font-medium"

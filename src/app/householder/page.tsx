@@ -1,6 +1,7 @@
 "use client";
 import { fetchWithAuth } from "@/lib/fetch-with-auth";
-import { generateCsv, downloadCsv } from "@/lib/csv-utils";
+import { generateCsv, downloadCsv, downloadExcel, downloadFudemame } from "@/lib/csv-utils";
+import { DownloadMenu } from "@/components/DownloadMenu";
 
 import { useState, useEffect, useCallback } from "react";
 import { useSharedSearch } from "@/lib/use-shared-search";
@@ -15,11 +16,13 @@ interface Householder {
   givenName: string;
   familyNameKana: string | null;
   givenNameKana: string | null;
+  postalCode: string | null;
   address1: string | null;
   address2: string | null;
   address3: string | null;
   phone1: string | null;
   phone2: string | null;
+  fax: string | null;
   isActive: boolean;
   familyRegister: { id: string; name: string } | null;
   members: { id: string; familyName: string; givenName: string | null; relation: string | null }[];
@@ -104,32 +107,49 @@ export default function HouseholderPage() {
       <div className="flex items-center justify-between flex-wrap gap-2">
         <h1 className="text-2xl font-bold text-amber-700">戸主台帳</h1>
         <div className="flex gap-2 flex-wrap">
-          <button
-            onClick={() => {
-              const headers = ["戸主番号", "姓", "名", "姓フリガナ", "名フリガナ", "住所1", "住所2", "住所3", "電話番号1", "電話番号2", "状態", "世帯員数", "家族・親族台帳", "タグ"];
+          <DownloadMenu
+            disabled={householderList.length === 0}
+            onCsv={() => {
+              const headers = ["戸主番号", "姓", "名", "姓フリガナ", "名フリガナ", "郵便番号", "住所1", "住所2", "住所3", "電話番号1", "電話番号2", "FAX", "状態", "世帯員数", "家族・親族台帳", "タグ"];
               const rows = householderList.map((h) => [
-                h.householderCode,
-                h.familyName,
-                h.givenName,
-                h.familyNameKana || "",
-                h.givenNameKana || "",
-                h.address1 || "",
-                h.address2 || "",
-                h.address3 || "",
-                h.phone1 || "",
-                h.phone2 || "",
-                h.isActive ? "在籍" : "離檀",
-                String(h.members.length),
+                h.householderCode, h.familyName, h.givenName,
+                h.familyNameKana || "", h.givenNameKana || "",
+                h.postalCode || "",
+                h.address1 || "", h.address2 || "", h.address3 || "",
+                h.phone1 || "", h.phone2 || "", h.fax || "",
+                h.isActive ? "在籍" : "離檀", String(h.members.length),
                 h.familyRegister?.name || "",
                 h.tags?.map((t) => t.tag.name).join(" / ") || "",
               ]);
               downloadCsv(generateCsv(headers, rows), "戸主台帳.csv");
             }}
-            disabled={householderList.length === 0}
-            className="border border-stone-300 text-stone-600 px-4 py-2 rounded-lg hover:bg-stone-50 transition-colors text-sm font-medium disabled:opacity-50 disabled:pointer-events-none"
-          >
-            CSVダウンロード
-          </button>
+            onExcel={() => {
+              const headers = ["戸主番号", "姓", "名", "姓フリガナ", "名フリガナ", "郵便番号", "住所1", "住所2", "住所3", "電話番号1", "電話番号2", "FAX", "状態", "世帯員数", "家族・親族台帳", "タグ"];
+              const rows = householderList.map((h) => [
+                h.householderCode, h.familyName, h.givenName,
+                h.familyNameKana || "", h.givenNameKana || "",
+                h.postalCode || "",
+                h.address1 || "", h.address2 || "", h.address3 || "",
+                h.phone1 || "", h.phone2 || "", h.fax || "",
+                h.isActive ? "在籍" : "離檀", String(h.members.length),
+                h.familyRegister?.name || "",
+                h.tags?.map((t) => t.tag.name).join(" / ") || "",
+              ]);
+              downloadExcel(headers, rows, "戸主台帳.xlsx");
+            }}
+            onFudemame={() => {
+              downloadFudemame(
+                householderList.map((h) => ({
+                  familyName: h.familyName, givenName: h.givenName,
+                  familyNameKana: h.familyNameKana || "", givenNameKana: h.givenNameKana || "",
+                  postalCode: h.postalCode || "",
+                  address1: h.address1 || "", address2: h.address2 || "", address3: h.address3 || "",
+                  tel1: h.phone1 || "", tel2: h.phone2 || "", fax: h.fax || "",
+                })),
+                "戸主台帳_筆まめ.csv"
+              );
+            }}
+          />
           <label className={`border border-stone-300 text-stone-600 px-4 py-2 rounded-lg hover:bg-stone-50 transition-colors text-sm font-medium cursor-pointer ${importing ? "opacity-50 pointer-events-none" : ""}`}>
             {importing ? "インポート中..." : "⬆ インポート"}
             <input type="file" accept=".yaml,.yml" multiple className="hidden" onChange={handleImport} disabled={importing} />
