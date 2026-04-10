@@ -29,6 +29,12 @@ function toInt(v: unknown): number | null {
   return n !== null ? Math.round(n) : null;
 }
 
+function earlierDate(current: Date | null, next: Date | null): Date | null {
+  if (!next) return current;
+  if (!current || next.getTime() < current.getTime()) return next;
+  return current;
+}
+
 export async function POST(req: NextRequest) {
   const unauth = await requireAuth();
   if (unauth) return unauth;
@@ -71,6 +77,34 @@ export async function POST(req: NextRequest) {
   const userRows = tableNames.includes("BOT040_使用者")
     ? reader.getTable("BOT040_使用者").getData()
     : [];
+
+  const firstStartDateByPlotNumber = new Map<string, Date>();
+  const fallbackStartDateByPlotNumber = new Map<string, Date>();
+  for (const row of graveRows) {
+    const plotNumber = str(row["墓地番号"]);
+    if (!plotNumber) continue;
+
+    const firstStartDate = earlierDate(
+      firstStartDateByPlotNumber.get(plotNumber) ?? null,
+      toDate(row["使用開始日"])
+    );
+    if (firstStartDate) {
+      firstStartDateByPlotNumber.set(plotNumber, firstStartDate);
+    }
+
+    const fallbackStartDate = earlierDate(
+      fallbackStartDateByPlotNumber.get(plotNumber) ?? null,
+      toDate(row["許可年月日"])
+    );
+    if (fallbackStartDate) {
+      fallbackStartDateByPlotNumber.set(plotNumber, fallbackStartDate);
+    }
+  }
+
+  const contractStartDate = (plotNumber: string) =>
+    firstStartDateByPlotNumber.get(plotNumber) ??
+    fallbackStartDateByPlotNumber.get(plotNumber) ??
+    null;
 
   // Build user map: 台帳ID → user row
   const userMap = new Map<number, Record<string, unknown>>();
@@ -146,7 +180,7 @@ export async function POST(req: NextRequest) {
                   data: {
                     gravePlotId: existing.id,
                     householderId: matched.id,
-                    startDate: toDate(row["使用開始日"]) || toDate(row["許可年月日"]),
+                    startDate: contractStartDate(plotNumber),
                     endDate: toDate(row["永代使用期限"]),
                     note: str(row["墓地台帳ﾒﾓ"]),
                   },
@@ -194,8 +228,7 @@ export async function POST(req: NextRequest) {
                 data: {
                   gravePlotId: grave.id,
                   householderId: matched.id,
-                  startDate:
-                    toDate(row["使用開始日"]) || toDate(row["許可年月日"]),
+                  startDate: contractStartDate(plotNumber),
                   endDate: toDate(row["永代使用期限"]),
                   note: null,
                 },
