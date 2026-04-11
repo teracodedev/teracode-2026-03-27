@@ -3,14 +3,18 @@ import { useState, useEffect } from "react";
 const STORAGE_KEY = "teracode_shared_search";
 
 export function useSharedSearch() {
-  const [query, setQueryState] = useState(() => {
-    if (typeof window === "undefined") return "";
+  // 初回は常に ""（サーバーとクライアントの HTML を一致させる）。
+  // localStorage はマウント後に読み込む（ハイドレーション不一致を防ぐ）。
+  const [query, setQueryState] = useState("");
+
+  useEffect(() => {
     try {
-      return localStorage.getItem(STORAGE_KEY) ?? "";
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored) setQueryState(stored);
     } catch {
-      return "";
+      // ignore
     }
-  });
+  }, []);
 
   // 他タブ・ページからの変更を同期
   useEffect(() => {
