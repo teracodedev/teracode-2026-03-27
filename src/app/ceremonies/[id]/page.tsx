@@ -1,7 +1,8 @@
 "use client";
 import { fetchWithAuth } from "@/lib/fetch-with-auth";
 
-import { useState, useEffect, use } from "react";
+import { useRouteParams } from "@/lib/use-route-params";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
@@ -78,7 +79,7 @@ function formatDateTime(dateStr: string) {
 }
 
 export default function CeremonyDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params);
+  const { id } = useRouteParams(params);
   const router = useRouter();
   const [ceremony, setCeremony] = useState<CeremonyDetail | null>(null);
   const [loading, setLoading] = useState(true);

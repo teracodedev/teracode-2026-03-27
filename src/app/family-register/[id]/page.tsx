@@ -1,6 +1,7 @@
 "use client";
 import { fetchWithAuth } from "@/lib/fetch-with-auth";
-import { useState, useEffect, use, useCallback, useRef } from "react";
+import { useRouteParams } from "@/lib/use-route-params";
+import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { RelationInput } from "@/components/RelationInput";
@@ -189,7 +190,7 @@ const EMPTY_GRAVE_CONTRACT_FORM = {
 };
 
 export default function FamilyRegisterDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params);
+  const { id } = useRouteParams(params);
   const router = useRouter();
   const [data, setData] = useState<FamilyRegister | null>(null);
   const [loading, setLoading] = useState(true);

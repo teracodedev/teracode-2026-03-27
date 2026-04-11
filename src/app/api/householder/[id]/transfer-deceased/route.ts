@@ -130,7 +130,7 @@ export async function POST(req: NextRequest, { params }: Params) {
           where: { id: contract.id },
           data: {
             householderId: newHouseholder.id,
-            startDate: transferDate,
+            startDate: contract.startDate,
             endDate: null,
           },
         });

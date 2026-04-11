@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, use } from "react";
+import { useRouteParams } from "@/lib/use-route-params";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { fetchWithAuth } from "@/lib/fetch-with-auth";
 import { PostalCodeSearch } from "@/components/PostalCodeSearch";
@@ -217,7 +218,7 @@ function toDateInputValue(dateStr: string | null): string {
 }
 
 export default function MemberDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params);
+  const { id } = useRouteParams(params);
   const [member, setMember] = useState<MemberDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);

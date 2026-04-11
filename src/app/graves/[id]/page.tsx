@@ -1,6 +1,7 @@
 "use client";
 import { fetchWithAuth } from "@/lib/fetch-with-auth";
-import { useState, useEffect, use } from "react";
+import { useRouteParams } from "@/lib/use-route-params";
+import { useState, useEffect } from "react";
 import type { FormEvent } from "react";
 import Link from "next/link";
 
@@ -84,7 +85,7 @@ export default function GraveDetailPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const { id } = use(params);
+  const { id } = useRouteParams(params);
   const [grave, setGrave] = useState<GravePlot | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");

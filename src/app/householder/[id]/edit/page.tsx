@@ -1,7 +1,8 @@
 "use client";
 import { fetchWithAuth } from "@/lib/fetch-with-auth";
 
-import { useState, useEffect, use } from "react";
+import { useRouteParams } from "@/lib/use-route-params";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { PostalCodeSearch } from "@/components/PostalCodeSearch";
@@ -61,7 +62,7 @@ function toDateInput(dateStr: string | null) {
 }
 
 export default function EditHouseholderPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params);
+  const { id } = useRouteParams(params);
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
