@@ -33,6 +33,7 @@ export async function GET() {
     memberTags,
     gravePlots,
     graveContracts,
+    graveContractHistories,
   ] = await Promise.all([
     prisma.familyRegister.findMany({ orderBy: { createdAt: "asc" } }),
     prisma.householder.findMany({ orderBy: { createdAt: "asc" } }),
@@ -45,6 +46,7 @@ export async function GET() {
     prisma.memberTag.findMany(),
     prisma.gravePlot.findMany({ orderBy: { createdAt: "asc" } }),
     prisma.graveContract.findMany({ orderBy: { createdAt: "asc" } }),
+    prisma.graveContractHistory.findMany({ orderBy: { transferredAt: "asc" } }),
   ]);
 
   // --- YAML変換 ---
@@ -64,6 +66,7 @@ export async function GET() {
   zip.file("世帯員タグ.yaml", serialize("世帯員タグ", memberTags));
   zip.file("墓地区画.yaml", serialize("墓地区画", gravePlots));
   zip.file("墓地契約.yaml", serialize("墓地契約", graveContracts));
+  zip.file("墓地契約履歴.yaml", serialize("墓地契約履歴", graveContractHistories));
 
   const now = new Date();
   const stamp = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}_${String(now.getHours()).padStart(2, "0")}${String(now.getMinutes()).padStart(2, "0")}`;

@@ -4,6 +4,16 @@ import { useState, useEffect, use } from "react";
 import type { FormEvent } from "react";
 import Link from "next/link";
 
+interface GraveContractHistoryEntry {
+  id: string;
+  householderName: string;
+  householderKana: string | null;
+  startDate: string | null;
+  endDate: string | null;
+  transferredAt: string;
+  note: string | null;
+}
+
 interface GraveContract {
   id: string;
   startDate: string | null;
@@ -15,6 +25,7 @@ interface GraveContract {
     givenName: string;
     familyRegister: { id: string; name: string } | null;
   };
+  histories: GraveContractHistoryEntry[];
 }
 
 interface GravePlot {
@@ -424,6 +435,24 @@ export default function GraveDetailPage({
                 {c.note && (
                   <div className="text-sm text-stone-500 mt-2 whitespace-pre-wrap">
                     {c.note}
+                  </div>
+                )}
+                {c.histories.length > 0 && (
+                  <div className="mt-3 border-l-2 border-stone-200 pl-3">
+                    <div className="text-xs text-stone-500 mb-1">過去の使用者</div>
+                    <ul className="space-y-1">
+                      {c.histories.map((h) => (
+                        <li key={h.id} className="text-xs text-stone-600">
+                          <span className="font-medium text-stone-700">{h.householderName}</span>
+                          <span className="ml-2 text-stone-500">
+                            {formatDate(h.startDate)} 〜 {formatDate(h.endDate)}
+                          </span>
+                          {h.note && (
+                            <span className="ml-2 text-stone-400">{h.note}</span>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
                   </div>
                 )}
               </div>

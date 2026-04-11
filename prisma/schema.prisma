@@ -210,4 +210,17 @@ model GraveContract {
   updatedAt       DateTime        @updatedAt
   gravePlot       GravePlot       @relation(fields: [gravePlotId], references: [id], onDelete: Cascade)
   householder     Householder     @relation(fields: [householderId], references: [id], onDelete: Cascade)
+  histories       GraveContractHistory[]
+}
+
+model GraveContractHistory {
+  id              String        @id @default(uuid())
+  graveContractId String
+  householderName String
+  householderKana String?
+  startDate       DateTime?
+  endDate         DateTime?
+  transferredAt   DateTime      @default(now())
+  note            String?
+  graveContract   GraveContract @relation(fields: [graveContractId], references: [id], onDelete: Cascade)
 }

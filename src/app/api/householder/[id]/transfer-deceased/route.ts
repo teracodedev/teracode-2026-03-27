@@ -106,6 +106,36 @@ export async function POST(req: NextRequest, { params }: Params) {
         data:  { householderId: newHouseholder.id },
       });
 
+      // 4-2. 墓地契約: 旧戸主の使用履歴を保存し、墓地使用者を新戸主に更新
+      const graveContracts = await tx.graveContract.findMany({
+        where: { householderId: oldHouseholderId },
+      });
+      const transferDate = new Date();
+      for (const contract of graveContracts) {
+        await tx.graveContractHistory.create({
+          data: {
+            graveContractId: contract.id,
+            householderName: `${oldHouseholder.familyName}${oldHouseholder.givenName ? " " + oldHouseholder.givenName : ""}`,
+            householderKana:
+              oldHouseholder.familyNameKana || oldHouseholder.givenNameKana
+                ? `${oldHouseholder.familyNameKana || ""}${oldHouseholder.givenNameKana ? " " + oldHouseholder.givenNameKana : ""}`.trim()
+                : null,
+            startDate: contract.startDate,
+            endDate: transferDate,
+            transferredAt: transferDate,
+            note: contract.note,
+          },
+        });
+        await tx.graveContract.update({
+          where: { id: contract.id },
+          data: {
+            householderId: newHouseholder.id,
+            startDate: transferDate,
+            endDate: null,
+          },
+        });
+      }
+
       // 5. 旧戸主を故人（過去帳）として新戸主配下の世帯員に追加
       await tx.householderMember.create({
         data: {

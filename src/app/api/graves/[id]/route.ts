@@ -40,6 +40,9 @@ export async function GET(
                 familyRegister: { select: { id: true, name: true } },
               },
             },
+            histories: {
+              orderBy: { transferredAt: "desc" },
+            },
           },
         },
       },
@@ -110,6 +113,9 @@ export async function PUT(
                 givenName: true,
                 familyRegister: { select: { id: true, name: true } },
               },
+            },
+            histories: {
+              orderBy: { transferredAt: "desc" },
             },
           },
         },

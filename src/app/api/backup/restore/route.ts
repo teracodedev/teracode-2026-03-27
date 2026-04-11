@@ -19,6 +19,7 @@ const FILE_MAP: Record<string, string> = {
   "世帯員タグ.yaml": "memberTag",
   "墓地区画.yaml": "gravePlot",
   "墓地契約.yaml": "graveContract",
+  "墓地契約履歴.yaml": "graveContractHistory",
 };
 
 function parseDate(v: unknown): Date | null {
@@ -78,6 +79,7 @@ export async function POST(req: NextRequest) {
     // --- トランザクションで全データ入れ替え（タイムアウト5分） ---
     await prisma.$transaction(async (tx) => {
       // 削除順（外部キー制約を考慮: 子テーブルから削除）
+      await tx.graveContractHistory.deleteMany();
       await tx.graveContract.deleteMany();
       await tx.gravePlot.deleteMany();
       await tx.memberTag.deleteMany();
@@ -299,6 +301,22 @@ export async function POST(req: NextRequest) {
           })),
         });
       }
+
+      // 12. 墓地契約履歴
+      if (data.graveContractHistory?.length) {
+        await tx.graveContractHistory.createMany({
+          data: data.graveContractHistory.map((r) => ({
+            id: r.id as string,
+            graveContractId: r.graveContractId as string,
+            householderName: r.householderName as string,
+            householderKana: (r.householderKana as string) || null,
+            startDate: parseDate(r.startDate),
+            endDate: parseDate(r.endDate),
+            transferredAt: parseDate(r.transferredAt) ?? new Date(),
+            note: (r.note as string) || null,
+          })),
+        });
+      }
     }, {
       timeout: 300000, // 5分
     });
@@ -316,6 +334,7 @@ export async function POST(req: NextRequest) {
       世帯員タグ: data.memberTag?.length ?? 0,
       墓地区画: data.gravePlot?.length ?? 0,
       墓地契約: data.graveContract?.length ?? 0,
+      墓地契約履歴: data.graveContractHistory?.length ?? 0,
     };
 
     return NextResponse.json({ ok: true, summary });
