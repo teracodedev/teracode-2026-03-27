@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/require-auth";
+import { earliestGraveContractStartDate } from "@/lib/grave-contract-start-date";
 
 export const runtime = "nodejs";
 
@@ -19,14 +20,35 @@ export async function GET(_req: NextRequest, { params }: Params) {
           include: {
             members: true,
             graveContracts: {
-              include: { gravePlot: true },
+              include: {
+                gravePlot: true,
+                histories: { orderBy: { transferredAt: "desc" } },
+              },
             },
           },
         },
       },
     });
     if (!register) return NextResponse.json({ error: "見つかりません" }, { status: 404 });
-    return NextResponse.json(register);
+
+    const h = register.householders;
+    const normalized = {
+      ...register,
+      householders: h
+        ? {
+            ...h,
+            graveContracts: h.graveContracts.map((c) => {
+              const { histories, ...rest } = c;
+              return {
+                ...rest,
+                startDate: earliestGraveContractStartDate(c.startDate, histories),
+              };
+            }),
+          }
+        : null,
+    };
+
+    return NextResponse.json(normalized);
   } catch (e) {
     console.error("GET /api/family-register/[id] error:", e);
     return NextResponse.json({ error: "データ取得エラー" }, { status: 500 });

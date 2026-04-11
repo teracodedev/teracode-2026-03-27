@@ -3,7 +3,7 @@ import { fetchWithAuth } from "@/lib/fetch-with-auth";
 import { useRouteParams } from "@/lib/use-route-params";
 import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { RelationInput } from "@/components/RelationInput";
 
 interface GraveContract {
@@ -189,12 +189,23 @@ const EMPTY_GRAVE_CONTRACT_FORM = {
   contractNote: "",
 };
 
+const TAB_IDS: TabId[] = ["householders", "genzaicho", "kakocho", "bochi"];
+
+function tabFromSearchParams(raw: string | null): TabId | null {
+  if (!raw) return null;
+  return TAB_IDS.includes(raw as TabId) ? (raw as TabId) : null;
+}
+
 export default function FamilyRegisterDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = useRouteParams(params);
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [data, setData] = useState<FamilyRegister | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<TabId>("householders");
+  const [activeTab, setActiveTab] = useState<TabId>(() => {
+    const t = tabFromSearchParams(searchParams.get("tab"));
+    return t ?? "householders";
+  });
   const [deleting, setDeleting] = useState(false);
   const [editing, setEditing] = useState(false);
   const [editName, setEditName] = useState("");
@@ -268,6 +279,11 @@ export default function FamilyRegisterDetailPage({ params }: { params: Promise<{
   }, [id]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
+
+  useEffect(() => {
+    const t = tabFromSearchParams(searchParams.get("tab"));
+    if (t) setActiveTab(t);
+  }, [searchParams]);
 
   useEffect(() => {
     if (!showGraveForm) return;
@@ -1290,8 +1306,10 @@ export default function FamilyRegisterDetailPage({ params }: { params: Promise<{
               {graveContracts.map((c) => (
                 <div key={c.id} className="border border-stone-100 rounded-lg overflow-hidden">
                   <div className="flex items-center gap-2 px-3 py-2.5">
-                    <Link href={`/graves/${c.gravePlot.id}`}
-                      className="shrink-0 border border-stone-300 rounded px-2 py-1 text-sm text-stone-600 hover:bg-stone-100 font-medium">
+                    <Link
+                      href={`/graves/${c.gravePlot.id}?fromFamily=${encodeURIComponent(id)}&tab=bochi`}
+                      className="shrink-0 border border-stone-300 rounded px-2 py-1 text-sm text-stone-600 hover:bg-stone-100 font-medium"
+                    >
                       詳細
                     </Link>
                     <div className="flex-1 min-w-0">

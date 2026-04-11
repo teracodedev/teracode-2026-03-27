@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/require-auth";
+import { earliestGraveContractStartDate } from "@/lib/grave-contract-start-date";
 
 export const runtime = "nodejs";
 
@@ -57,13 +58,27 @@ export async function GET(request: NextRequest) {
                 familyRegister: { select: { id: true, name: true } },
               },
             },
+            histories: {
+              orderBy: { transferredAt: "desc" },
+            },
           },
         },
       },
       orderBy: { plotNumber: "asc" },
     });
 
-    return NextResponse.json(graves);
+    const normalized = graves.map((g) => ({
+      ...g,
+      contracts: g.contracts.map((c) => {
+        const { histories, ...rest } = c;
+        return {
+          ...rest,
+          startDate: earliestGraveContractStartDate(c.startDate, histories),
+        };
+      }),
+    }));
+
+    return NextResponse.json(normalized);
   } catch (error) {
     console.error("GET /api/graves error:", error);
     return NextResponse.json(
@@ -127,12 +142,26 @@ export async function POST(request: NextRequest) {
                 familyRegister: { select: { id: true, name: true } },
               },
             },
+            histories: {
+              orderBy: { transferredAt: "desc" },
+            },
           },
         },
       },
     });
 
-    return NextResponse.json(grave, { status: 201 });
+    const normalized = {
+      ...grave,
+      contracts: grave.contracts.map((c) => {
+        const { histories, ...rest } = c;
+        return {
+          ...rest,
+          startDate: earliestGraveContractStartDate(c.startDate, histories),
+        };
+      }),
+    };
+
+    return NextResponse.json(normalized, { status: 201 });
   } catch (error) {
     console.error("POST /api/graves error:", error);
     return NextResponse.json(

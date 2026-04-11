@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/require-auth";
+import { earliestGraveContractStartDate } from "@/lib/grave-contract-start-date";
 
 export const runtime = "nodejs";
 
@@ -52,7 +53,15 @@ export async function GET(
       return NextResponse.json({ error: "墓地が見つかりません" }, { status: 404 });
     }
 
-    return NextResponse.json(grave);
+    const normalized = {
+      ...grave,
+      contracts: grave.contracts.map((c) => ({
+        ...c,
+        startDate: earliestGraveContractStartDate(c.startDate, c.histories),
+      })),
+    };
+
+    return NextResponse.json(normalized);
   } catch (error) {
     console.error("GET /api/graves/[id] error:", error);
     return NextResponse.json(
@@ -82,7 +91,7 @@ export async function PUT(
         ? calculateArea(parsedWidth ?? null, parsedDepth ?? null)
         : parseNullableFloat(area);
 
-    const grave = await prisma.gravePlot.update({
+    const raw = await prisma.gravePlot.update({
       where: { id },
       data: {
         plotNumber: plotNumber || undefined,
@@ -121,6 +130,14 @@ export async function PUT(
         },
       },
     });
+
+    const grave = {
+      ...raw,
+      contracts: raw.contracts.map((c) => ({
+        ...c,
+        startDate: earliestGraveContractStartDate(c.startDate, c.histories),
+      })),
+    };
 
     return NextResponse.json(grave);
   } catch (error) {

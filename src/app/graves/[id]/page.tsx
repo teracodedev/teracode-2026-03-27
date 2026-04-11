@@ -4,6 +4,7 @@ import { useRouteParams } from "@/lib/use-route-params";
 import { useState, useEffect } from "react";
 import type { FormEvent } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 
 interface GraveContractHistoryEntry {
   id: string;
@@ -86,6 +87,20 @@ export default function GraveDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = useRouteParams(params);
+  const searchParams = useSearchParams();
+  const fromFamilyRegisterId = searchParams.get("fromFamily");
+  const tabFromFamily = searchParams.get("tab");
+  const familyRegisterBackTab =
+    tabFromFamily === "householders" ||
+    tabFromFamily === "genzaicho" ||
+    tabFromFamily === "kakocho" ||
+    tabFromFamily === "bochi"
+      ? tabFromFamily
+      : "bochi";
+  const familyRegisterBackHref = fromFamilyRegisterId
+    ? `/family-register/${fromFamilyRegisterId}?tab=${encodeURIComponent(familyRegisterBackTab)}`
+    : null;
+
   const [grave, setGrave] = useState<GravePlot | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -187,7 +202,15 @@ export default function GraveDetailPage({
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-2">
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+          {familyRegisterBackHref && (
+            <Link
+              href={familyRegisterBackHref}
+              className="text-stone-500 hover:text-stone-700 transition-colors text-sm font-medium"
+            >
+              ← 家族・親族台帳（墓地タブ）
+            </Link>
+          )}
           <Link
             href="/graves"
             className="text-stone-400 hover:text-stone-600 transition-colors"
