@@ -16,6 +16,7 @@ const navLinks = [
   { href: "/genzaicho",       label: "現在帳" },
   { href: "/ceremonies",      label: "法要・行事" },
   { href: "/graves",          label: "墓地" },
+  { href: "/print",           label: "各種印刷" },
 ] as const;
 
 export default function NavMenu({ userName, isAdmin }: NavMenuProps) {

@@ -43,5 +43,7 @@ export const config = {
     "/householder",
     "/householder/:path*",
     "/kakocho",
+    "/print",
+    "/print/:path*",
   ],
 };
