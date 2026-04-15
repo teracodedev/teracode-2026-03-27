@@ -26,17 +26,9 @@ export async function GET(_request: NextRequest, { params }: Params) {
         ? {
             members: true,
             familyRegister: { select: { id: true, name: true } },
-            ceremonies: {
-              include: { ceremony: true },
-              orderBy: { ceremony: { scheduledAt: "desc" } },
-            },
           }
         : {
             members: true,
-            ceremonies: {
-              include: { ceremony: true },
-              orderBy: { ceremony: { scheduledAt: "desc" } },
-            },
           };
 
     const householder = await delegate.findUnique({

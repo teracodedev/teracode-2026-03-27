@@ -11,7 +11,7 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   title: "テラコード",
-  description: "戸主・法要を管理するシステム",
+  description: "戸主・家族を管理するシステム",
 };
 
 /** デプロイ直後の古いHTML参照に対する自己復旧（JS/CSSのハッシュ不一致時） */

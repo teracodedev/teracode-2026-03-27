@@ -7,8 +7,7 @@
  * 1. 選択した世帯員(memberId)を新しい戸主として作成
  * 2. 旧戸主を故人（過去帳）として世帯員に追加（deathDate付き）
  * 3. 既存の世帯員を新戸主に移動
- * 4. 法要参加データを新戸主へ引き継ぎ
- * 5. 旧戸主レコードを削除
+ * 4. 旧戸主レコードを削除
  */
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
@@ -100,13 +99,7 @@ export async function POST(req: NextRequest, { params }: Params) {
         data:  { householderId: newHouseholder.id },
       });
 
-      // 4. 法要参加データを新戸主へ引き継ぎ
-      await tx.ceremonyParticipant.updateMany({
-        where: { householderId: oldHouseholderId },
-        data:  { householderId: newHouseholder.id },
-      });
-
-      // 4-2. 墓地契約: 旧戸主の使用履歴を保存し、墓地使用者を新戸主に更新
+      // 4. 墓地契約: 旧戸主の使用履歴を保存し、墓地使用者を新戸主に更新
       const graveContracts = await tx.graveContract.findMany({
         where: { householderId: oldHouseholderId },
       });

@@ -37,16 +37,3 @@ export interface HouseholderWithMembers {
   }[];
 }
 
-export const CEREMONY_TYPE_LABELS: Record<string, string> = {
-  MEMORIAL: "法要",
-  REGULAR: "定例行事",
-  FUNERAL: "葬儀・告別式",
-  SPECIAL: "特別行事",
-  OTHER: "その他",
-};
-
-export const CEREMONY_STATUS_LABELS: Record<string, string> = {
-  SCHEDULED: "予定",
-  COMPLETED: "完了",
-  CANCELLED: "中止",
-};

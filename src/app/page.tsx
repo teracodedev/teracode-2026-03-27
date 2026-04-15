@@ -25,21 +25,6 @@ export default function Home() {
         </Link>
 
         <Link
-          href="/ceremonies"
-          className="block bg-white rounded-xl shadow-sm border border-stone-200 p-8 hover:shadow-md hover:border-stone-300 transition-all group"
-        >
-          <div className="text-4xl mb-4" suppressHydrationWarning>
-            🪷
-          </div>
-          <h2 className="text-xl font-bold text-stone-800 mb-2 group-hover:text-stone-600">
-            法要・行事
-          </h2>
-          <p className="text-stone-500 text-sm">
-            法要・行事のスケジュールと参加者を管理します
-          </p>
-        </Link>
-
-        <Link
           href="/genzaicho"
           className="block bg-white rounded-xl shadow-sm border border-stone-200 p-8 hover:shadow-md hover:border-stone-300 transition-all group"
         >

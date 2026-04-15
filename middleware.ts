@@ -35,8 +35,6 @@ export const config = {
     "/",
     "/admin",
     "/admin/:path*",
-    "/ceremonies",
-    "/ceremonies/:path*",
     "/family-register",
     "/family-register/:path*",
     "/genzaicho",

@@ -26,8 +26,6 @@ export async function GET() {
     householders,
     members,
     addressHistories,
-    ceremonies,
-    ceremonyParticipants,
     tags,
     householderTags,
     memberTags,
@@ -39,8 +37,6 @@ export async function GET() {
     prisma.householder.findMany({ orderBy: { createdAt: "asc" } }),
     prisma.householderMember.findMany({ orderBy: { createdAt: "asc" } }),
     prisma.householderAddressHistory.findMany({ orderBy: { movedAt: "asc" } }),
-    prisma.ceremony.findMany({ orderBy: { createdAt: "asc" } }),
-    prisma.ceremonyParticipant.findMany({ orderBy: { createdAt: "asc" } }),
     prisma.tag.findMany({ orderBy: { createdAt: "asc" } }),
     prisma.householderTag.findMany(),
     prisma.memberTag.findMany(),
@@ -59,8 +55,6 @@ export async function GET() {
   zip.file("戸主.yaml", serialize("戸主", householders));
   zip.file("世帯員.yaml", serialize("世帯員", members));
   zip.file("住所変更履歴.yaml", serialize("住所変更履歴", addressHistories));
-  zip.file("法要行事.yaml", serialize("法要行事", ceremonies));
-  zip.file("法要参加者.yaml", serialize("法要参加者", ceremonyParticipants));
   zip.file("タグ.yaml", serialize("タグ", tags));
   zip.file("戸主タグ.yaml", serialize("戸主タグ", householderTags));
   zip.file("世帯員タグ.yaml", serialize("世帯員タグ", memberTags));
