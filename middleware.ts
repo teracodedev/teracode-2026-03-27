@@ -61,5 +61,17 @@ export const config = {
   matcher: [
     "/((?!api/|_next/|favicon\\.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
     "/",
+    "/admin",
+    "/admin/:path*",
+    "/ceremonies",
+    "/ceremonies/:path*",
+    "/family-register",
+    "/family-register/:path*",
+    "/genzaicho",
+    "/householder",
+    "/householder/:path*",
+    "/kakocho",
+    "/print",
+    "/print/:path*",
   ],
 };
