@@ -135,6 +135,7 @@ export async function POST(req: NextRequest, { params }: Params) {
           data: {
             householderId: newHouseholder.id,
             startDate: contract.startDate,
+            usageStartDate: contract.usageStartDate,
             endDate: null,
           },
         });

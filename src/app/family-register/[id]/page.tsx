@@ -5,6 +5,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { RelationInput } from "@/components/RelationInput";
+import { graveContractPeriodGaSentence } from "@/lib/grave-contract-period-text";
 
 interface GraveContract {
   id: string;
@@ -98,8 +99,12 @@ function toHouseholderList(value: FamilyRegister["householders"]): Householder[]
 
 function formatDate(d: string | null) {
   if (!d) return "-";
-  const dt = new Date(d);
-  return `${dt.getFullYear()}年${dt.getMonth() + 1}月${dt.getDate()}日`;
+  return new Date(d).toLocaleDateString("ja-JP", {
+    timeZone: "Asia/Tokyo",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
 }
 
 function calcAge(birth: string | null, death: string | null): number | null {
@@ -393,6 +398,10 @@ export default function FamilyRegisterDetailPage({ params }: { params: Promise<{
     const householderId = householders[0]?.id;
     if (!householderId) {
       setGraveError("戸主が登録されていないため、墓地契約を追加できません");
+      return;
+    }
+    if (!graveForm.startDate?.trim()) {
+      setGraveError("契約が始まる日（契約開始日）を入力してください");
       return;
     }
     setSavingGrave(true);
@@ -1262,12 +1271,19 @@ export default function FamilyRegisterDetailPage({ params }: { params: Promise<{
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs text-stone-500 mb-1">契約日</label>
-                  <input type="date" value={graveForm.startDate} onChange={(e) => setGraveForm((f) => ({ ...f, startDate: e.target.value }))}
-                    className={inputCls} />
+                  <label className="block text-xs text-stone-500 mb-1">
+                    契約開始日 <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="date"
+                    required
+                    value={graveForm.startDate}
+                    onChange={(e) => setGraveForm((f) => ({ ...f, startDate: e.target.value }))}
+                    className={inputCls}
+                  />
                 </div>
                 <div>
-                  <label className="block text-xs text-stone-500 mb-1">終了日</label>
+                  <label className="block text-xs text-stone-500 mb-1">契約終了日</label>
                   <input type="date" value={graveForm.endDate} onChange={(e) => setGraveForm((f) => ({ ...f, endDate: e.target.value }))}
                     className={inputCls} />
                 </div>
@@ -1321,9 +1337,9 @@ export default function FamilyRegisterDetailPage({ params }: { params: Promise<{
                         {c.gravePlot.permanentUsageFee != null && <span>永代使用料: {c.gravePlot.permanentUsageFee.toLocaleString()}円</span>}
                         {c.gravePlot.managementFee != null && <span>管理費: {c.gravePlot.managementFee.toLocaleString()}円</span>}
                       </div>
-                      <div className="text-xs text-stone-400">
-                        {c.startDate && <span>契約日: {formatDate(c.startDate)}</span>}
-                        {c.householderName && <span className="ml-2">戸主: {c.householderName}</span>}
+                      <div className="text-xs text-stone-600">
+                        {graveContractPeriodGaSentence(c.startDate, c.endDate)}
+                        {c.householderName && <span className="ml-2 text-stone-400">戸主: {c.householderName}</span>}
                       </div>
                       {(c.note || c.gravePlot.note) && (
                         <div className="text-xs text-stone-400 mt-0.5">{c.note || c.gravePlot.note}</div>

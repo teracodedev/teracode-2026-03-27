@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/require-auth";
-import { earliestGraveContractStartDate } from "@/lib/grave-contract-start-date";
+import { effectiveGraveContractStartDate } from "@/lib/grave-contract-start-date";
 
 export const runtime = "nodejs";
 
@@ -57,7 +57,7 @@ export async function GET(
       ...grave,
       contracts: grave.contracts.map((c) => ({
         ...c,
-        startDate: earliestGraveContractStartDate(c.startDate, c.histories),
+        startDate: effectiveGraveContractStartDate(c, c.histories),
       })),
     };
 
@@ -135,7 +135,7 @@ export async function PUT(
       ...raw,
       contracts: raw.contracts.map((c) => ({
         ...c,
-        startDate: earliestGraveContractStartDate(c.startDate, c.histories),
+        startDate: effectiveGraveContractStartDate(c, c.histories),
       })),
     };
 

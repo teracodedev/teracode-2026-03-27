@@ -14,3 +14,18 @@ export function earliestGraveContractStartDate(
   if (dates.length === 0) return null;
   return dates.reduce((a, b) => (a.getTime() <= b.getTime() ? a : b));
 }
+
+/**
+ * 画面表示用の契約開始日。
+ * usageStartDate・startDate・履歴のいずれかが誤って譲渡日などに上書きされていても、
+ * 利用可能な値のうち最も早い日付を採用する（履歴に残った本来の開始日を復元できるようにする）。
+ */
+export function effectiveGraveContractStartDate(
+  contract: { startDate: Date | null; usageStartDate: Date | null },
+  histories: { startDate: Date | null }[]
+): Date | null {
+  return earliestGraveContractStartDate(contract.startDate, [
+    { startDate: contract.usageStartDate },
+    ...histories,
+  ]);
+}

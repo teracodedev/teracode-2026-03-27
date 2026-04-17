@@ -5,6 +5,20 @@ echo "=== テラコード デプロイ ==="
 
 cd "$(dirname "$0")"
 
+# FORCE_BUILD=1 のとき: Next ビルドと付帯処理を速める（next.config でも参照される）
+if [ -n "${FORCE_BUILD:-}" ]; then
+  export NEXT_TELEMETRY_DISABLED=1
+  export GIT_TERMINAL_PROMPT=0
+  export NPM_CONFIG_FUND=false
+  export NPM_CONFIG_AUDIT=false
+  export NPM_CONFIG_PROGRESS=false
+  case " ${NODE_OPTIONS:-} " in
+    *"max-old-space-size"*) ;;
+    *) export NODE_OPTIONS="${NODE_OPTIONS:+$NODE_OPTIONS }--max-old-space-size=6144" ;;
+  esac
+  echo "FORCE_BUILD: テレメトリ無効・npm 余計な出力抑制・ヒープ拡張を有効化しました"
+fi
+
 prev_sha="$(git rev-parse HEAD 2>/dev/null || true)"
 
 echo "[1/5] git pull..."
@@ -76,10 +90,14 @@ pm2 stop teracode 2>/dev/null || true
 
 echo "[5/5] ビルド..."
 # 古いHTMLが旧ハッシュのCSS/JSを参照しても崩れないよう、既存staticを一時退避する
-STATIC_BACKUP_DIR="$(mktemp -d)"
-if [ -d .next/standalone/.next/static ]; then
-  mkdir -p "${STATIC_BACKUP_DIR}/static"
-  cp -a .next/standalone/.next/static/. "${STATIC_BACKUP_DIR}/static/"
+# FORCE_BUILD 時は旧世代とのマージを省略して I/O を削減（長時間開いたタブで稀に旧チャンク 404 の可能性あり）
+STATIC_BACKUP_DIR=""
+if [ -z "${FORCE_BUILD:-}" ]; then
+  STATIC_BACKUP_DIR="$(mktemp -d)"
+  if [ -d .next/standalone/.next/static ]; then
+    mkdir -p "${STATIC_BACKUP_DIR}/static"
+    cp -a .next/standalone/.next/static/. "${STATIC_BACKUP_DIR}/static/"
+  fi
 fi
 
 # ビルドキャッシュを活かすため、.next 全消しはしない（standalone だけ作り直す）
@@ -104,22 +122,28 @@ if [ -d .next/static ]; then
     # 現行ビルドの静的アセットを配置
     rsync -a .next/static/ .next/standalone/.next/static/
     # 旧HTML救済用に、過去ビルドのハッシュ資産も残す（同名は上書きしない）
-    if [ -d "${STATIC_BACKUP_DIR}/static" ]; then
+    if [ -n "${STATIC_BACKUP_DIR:-}" ] && [ -d "${STATIC_BACKUP_DIR}/static" ]; then
       rsync -a --ignore-existing "${STATIC_BACKUP_DIR}/static/" .next/standalone/.next/static/
     fi
   else
     cp -r .next/static .next/standalone/.next/
-    if [ -d "${STATIC_BACKUP_DIR}/static" ]; then
+    if [ -n "${STATIC_BACKUP_DIR:-}" ] && [ -d "${STATIC_BACKUP_DIR}/static" ]; then
       cp -rn "${STATIC_BACKUP_DIR}/static/." .next/standalone/.next/static/ || true
     fi
   fi
 fi
 
-rm -rf "${STATIC_BACKUP_DIR}"
+if [ -n "${STATIC_BACKUP_DIR:-}" ]; then
+  rm -rf "${STATIC_BACKUP_DIR}"
+fi
 
 echo "[5c/5] PM2 再起動..."
 fuser -k 3000/tcp 2>/dev/null || true
-sleep 1
+if [ -n "${FORCE_BUILD:-}" ]; then
+  sleep 0.25
+else
+  sleep 1
+fi
 pm2 restart teracode 2>/dev/null || pm2 start ecosystem.config.cjs
 
 echo "[5d/5] nginx をリロード（失敗時は再起動）..."

@@ -293,6 +293,7 @@ export async function POST(req: NextRequest) {
             id: r.id as string,
             gravePlotId: r.gravePlotId as string,
             householderId: r.householderId as string,
+            usageStartDate: parseDate(r.usageStartDate),
             startDate: parseDate(r.startDate),
             endDate: parseDate(r.endDate),
             note: (r.note as string) || null,

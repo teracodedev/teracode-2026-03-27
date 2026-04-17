@@ -4,6 +4,7 @@ import { useRouteParams } from "@/lib/use-route-params";
 import { useState, useEffect } from "react";
 import type { FormEvent } from "react";
 import Link from "next/link";
+import { graveContractPeriodGaSentence } from "@/lib/grave-contract-period-text";
 import { useSearchParams } from "next/navigation";
 
 interface GraveContractHistoryEntry {
@@ -140,7 +141,7 @@ export default function GraveDetailPage({
 
   const formatDate = (d: string | null) => {
     if (!d) return "-";
-    return new Date(d).toLocaleDateString("ja-JP");
+    return new Date(d).toLocaleDateString("ja-JP", { timeZone: "Asia/Tokyo" });
   };
 
   const updateEditForm = (patch: Partial<GraveEditForm>) => {
@@ -451,9 +452,7 @@ export default function GraveDetailPage({
                     </div>
                   </div>
                   <div className="text-sm text-stone-600">
-                    <span>
-                      {formatDate(c.startDate)} 〜 {formatDate(c.endDate)}
-                    </span>
+                    {graveContractPeriodGaSentence(c.startDate, c.endDate)}
                   </div>
                 </div>
                 {c.note && (

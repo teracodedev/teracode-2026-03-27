@@ -1,5 +1,5 @@
 /**
- * 墓地契約の startDate を、履歴に残っているより早い使用開始日に合わせて修正する。
+ * 墓地契約の startDate / usageStartDate を、履歴と現契約から復元できる最も早い使用開始日に揃える。
  * （旧仕様の戸主譲渡で譲渡日に上書きされたレコードの復旧用）
  *
  * 使い方:
@@ -23,18 +23,21 @@ async function main() {
     const correct = earliestGraveContractStartDate(c.startDate, c.histories);
     if (correct === null) continue;
 
-    const needsFix =
-      c.startDate === null || correct.getTime() < c.startDate.getTime();
-    if (!needsFix) continue;
+    const startMatch = c.startDate?.getTime() === correct.getTime();
+    const usageMatch = c.usageStartDate?.getTime() === correct.getTime();
+    if (startMatch && usageMatch) continue;
 
     fixCount++;
-    const label = `${c.id}  ${c.startDate?.toISOString() ?? "null"} → ${correct.toISOString()}`;
+    const label = `${c.id}  start ${c.startDate?.toISOString() ?? "null"} usage ${c.usageStartDate?.toISOString() ?? "null"} → ${correct.toISOString()}`;
     console.log(APPLY ? `更新: ${label}` : `予定: ${label}`);
 
     if (APPLY) {
       await prisma.graveContract.update({
         where: { id: c.id },
-        data: { startDate: correct },
+        data: {
+          startDate: correct,
+          usageStartDate: correct,
+        },
       });
     }
   }

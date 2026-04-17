@@ -42,6 +42,14 @@ export async function POST(request: NextRequest, { params }: Params) {
       );
     }
 
+    const start = nullableDate(body.startDate);
+    if (!start) {
+      return NextResponse.json(
+        { error: "契約開始日は必須です" },
+        { status: 400 }
+      );
+    }
+
     const contract = await prisma.$transaction(async (tx) => {
       const gravePlot = await tx.gravePlot.findUnique({
         where: { id: gravePlotId },
@@ -64,7 +72,8 @@ export async function POST(request: NextRequest, { params }: Params) {
         data: {
           gravePlotId: gravePlot.id,
           householderId,
-          startDate: nullableDate(body.startDate),
+          usageStartDate: start,
+          startDate: start,
           endDate: nullableDate(body.endDate),
           note: body.note ? String(body.note) : null,
         },

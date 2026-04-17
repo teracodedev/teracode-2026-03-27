@@ -10,6 +10,11 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
 
+  # nginx はホストのネットワークで 80/443 を直接掴む（ports: の二重公開はしない）。
+  # 「Bind for 0.0.0.0:80 failed: port is already allocated」→ 古い nginx 等が 80 を占有している。
+  #   sudo docker ps --format '{{.Names}}\t{{.Ports}}' | grep -E ':80->|:443->'
+  #   sudo docker stop <該当コンテナ名>
+  #   sudo docker compose up -d --force-recreate nginx
   nginx:
     image: nginx:alpine
     restart: unless-stopped

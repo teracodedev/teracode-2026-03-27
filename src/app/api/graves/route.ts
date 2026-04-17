@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/require-auth";
-import { earliestGraveContractStartDate } from "@/lib/grave-contract-start-date";
+import { effectiveGraveContractStartDate } from "@/lib/grave-contract-start-date";
 
 export const runtime = "nodejs";
 
@@ -73,7 +73,7 @@ export async function GET(request: NextRequest) {
         const { histories, ...rest } = c;
         return {
           ...rest,
-          startDate: earliestGraveContractStartDate(c.startDate, histories),
+          startDate: effectiveGraveContractStartDate(c, histories),
         };
       }),
     }));
@@ -156,7 +156,7 @@ export async function POST(request: NextRequest) {
         const { histories, ...rest } = c;
         return {
           ...rest,
-          startDate: earliestGraveContractStartDate(c.startDate, histories),
+          startDate: effectiveGraveContractStartDate(c, histories),
         };
       }),
     };

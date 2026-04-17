@@ -203,6 +203,8 @@ model GraveContract {
   id              String          @id @default(uuid())
   gravePlotId     String
   householderId   String
+  /// 区画の最初の使用開始日（戸主譲渡では変更しない）
+  usageStartDate  DateTime?
   startDate       DateTime?
   endDate         DateTime?
   note            String?
