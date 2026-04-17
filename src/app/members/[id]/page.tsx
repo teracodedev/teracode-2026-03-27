@@ -107,22 +107,6 @@ function formatDate(dateStr: string | null): string {
   return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日`;
 }
 
-function formatDateWestern(dateStr: string): string {
-  return formatDate(dateStr);
-}
-
-function addDays(dateStr: string, days: number): string {
-  const d = new Date(dateStr);
-  d.setDate(d.getDate() + days);
-  return d.toISOString();
-}
-
-function addYears(dateStr: string, years: number): string {
-  const d = new Date(dateStr);
-  d.setFullYear(d.getFullYear() + years);
-  return d.toISOString();
-}
-
 function calcAgeAtDeath(birthDateStr: string | null, deathDateStr: string | null): string {
   if (!birthDateStr || !deathDateStr) return "-";
   const birth = new Date(birthDateStr);
@@ -131,57 +115,6 @@ function calcAgeAtDeath(birthDateStr: string | null, deathDateStr: string | null
   const m = death.getMonth() - birth.getMonth();
   if (m < 0 || (m === 0 && death.getDate() < birth.getDate())) age--;
   return age + "才";
-}
-
-// 年回表データ
-function getNenkai(deathDate: string): { label: string; years: number }[] {
-  return [
-    { label: "一周忌", years: 1 },
-    { label: "三回忌", years: 2 },
-    { label: "七回忌", years: 6 },
-    { label: "十三回忌", years: 12 },
-    { label: "十七回忌", years: 16 },
-    { label: "二十五回忌", years: 24 },
-    { label: "三十三回忌", years: 32 },
-    { label: "五十回忌", years: 49 },
-  ];
-}
-
-// 中陰表データ（命日を1日目として数える）
-function getChuIn(): { label: string; days: number }[] {
-  return [
-    { label: "初七日忌", days: 6 },
-    { label: "二七日忌", days: 13 },
-    { label: "三七日忌", days: 20 },
-    { label: "四七日忌", days: 27 },
-    { label: "五七日忌", days: 34 },
-    { label: "六七日忌", days: 41 },
-    { label: "四十九日（七七日忌）", days: 48 },
-  ];
-}
-
-// 直近の仏事を計算（四十九日忌 + 年回）
-function getNextCeremony(deathDate: string): { label: string; date: string } | null {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  // 四十九日忌のみチェック
-  const shijukuDate = new Date(addDays(deathDate, 48));
-  shijukuDate.setHours(0, 0, 0, 0);
-  if (shijukuDate >= today) {
-    return { label: "四十九日忌", date: addDays(deathDate, 48) };
-  }
-
-  // 年回チェック
-  for (const nk of getNenkai(deathDate)) {
-    const d = new Date(addYears(deathDate, nk.years));
-    d.setHours(0, 0, 0, 0);
-    if (d >= today) {
-      return { label: nk.label, date: addYears(deathDate, nk.years) };
-    }
-  }
-
-  return null;
 }
 
 function handleYamlExport(member: MemberDetail) {
@@ -222,17 +155,6 @@ export default function MemberDetailPage({ params }: { params: Promise<{ id: str
   const [member, setMember] = useState<MemberDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
-
-  // Googleカレンダー用テキスト
-  const [ceremonyTime, setCeremonyTime] = useState("11:00");
-  const [copiedId, setCopiedId] = useState<string | null>(null);
-
-  function copyText(text: string, id: string) {
-    navigator.clipboard.writeText(text).then(() => {
-      setCopiedId(id);
-      setTimeout(() => setCopiedId(null), 2000);
-    });
-  }
 
   function formatPostalCode(value: string): string {
     const digits = value.replace(/\D/g, "").slice(0, 7);
@@ -583,10 +505,6 @@ export default function MemberDetailPage({ params }: { params: Promise<{ id: str
     );
   }
 
-  const nenkai = getNenkai(member.deathDate!);
-  const chuIn = getChuIn();
-  const nextCeremony = getNextCeremony(member.deathDate!);
-
   return (
     <div className="max-w-3xl space-y-5">
       {/* 上部ボタン */}
@@ -620,63 +538,6 @@ export default function MemberDetailPage({ params }: { params: Promise<{ id: str
       {/* タグ */}
       <TagManager entityType="member" entityId={id} />
 
-      {/* 直近の仏事 */}
-      <div className="bg-white rounded-xl shadow-sm border border-stone-200 p-4">
-        <h2 className="font-semibold text-stone-700 mb-3 text-sm">直近の仏事</h2>
-        {nextCeremony ? (() => {
-          const householderName = member.householder.familyName + member.householder.givenName;
-          const rel = member.relation || "";
-          const relationPart = rel ? ` （${rel}）` : "";
-          const ceremonyLabel = `${fullName}の${nextCeremony.label}`;
-          const addr = [member.householder.address1, member.householder.address2, member.householder.address3].filter(Boolean).join("");
-          const phone = member.householder.phone1 || "";
-          const homeText = `<至法>${ceremonyTime} ${householderName}${relationPart} ${ceremonyLabel}＠自宅［${addr}、、${phone}］ 至法受付`;
-          const templeText = `<至法>${ceremonyTime} ${householderName}${relationPart} ${ceremonyLabel}＠善法寺本堂 名 至法受付`;
-          return (
-            <div className="space-y-4">
-              <p className="text-sm text-red-600 font-medium">
-                {fullName}の<span className="font-semibold">{nextCeremony.label}</span>：
-                {formatDateWestern(nextCeremony.date)}（{toWareki(nextCeremony.date)}）
-              </p>
-              <div className="flex items-center gap-2">
-                <label className="text-xs text-stone-500 whitespace-nowrap">受付時間</label>
-                <input
-                  type="time"
-                  value={ceremonyTime}
-                  onChange={e => setCeremonyTime(e.target.value)}
-                  className="border border-stone-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-stone-300"
-                />
-              </div>
-              {[
-                { id: "home", label: "ご自宅の場合", text: homeText },
-                { id: "temple", label: "お寺参りの場合", text: templeText },
-              ].map(({ id, label, text }) => (
-                <div key={id} className="space-y-1">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-medium text-stone-600">{label}</span>
-                    <button
-                      onClick={() => copyText(text, id)}
-                      className="text-xs px-2.5 py-0.5 border border-stone-300 rounded hover:bg-stone-100 text-stone-600 transition-colors"
-                    >
-                      {copiedId === id ? "✓ コピー済" : "コピー"}
-                    </button>
-                  </div>
-                  <pre
-                    className="text-xs bg-stone-50 border border-stone-200 rounded p-2 whitespace-pre-wrap break-all font-mono select-all leading-relaxed cursor-text"
-                    onClick={() => copyText(text, id)}
-                    title="クリックでコピー"
-                  >
-                    {text}
-                  </pre>
-                </div>
-              ))}
-            </div>
-          );
-        })() : (
-          <p className="text-sm text-stone-400">直近の仏事はありません</p>
-        )}
-      </div>
-
       {/* ダウンロード */}
       <div className="bg-white rounded-xl shadow-sm border border-stone-200 p-4">
         <h2 className="font-semibold text-stone-700 mb-3 text-sm">ダウンロード</h2>
@@ -687,16 +548,10 @@ export default function MemberDetailPage({ params }: { params: Promise<{ id: str
           const labelMap: Record<string, string> = {
             sogi: "葬儀法名",
             "sogi-ingo": "葬儀院号法名",
-            nenkai: "年回法名",
-            "nenkai-ingo": "年回院号法名",
-            chuin: "中陰表・年回表",
-            "chuin-ingo": "中陰表・年回表（院号法名）",
             noukansoungou: "納棺尊号",
           };
           const buttons = [
             { label: "葬儀法名", type: isIngo ? "sogi-ingo" : "sogi" },
-            { label: "年回法名", type: isIngo ? "nenkai-ingo" : "nenkai" },
-            { label: "中陰表・年回表", type: isIngo ? "chuin-ingo" : "chuin" },
             { label: "納棺尊号", type: "noukansoungou" },
           ];
 
@@ -801,74 +656,6 @@ export default function MemberDetailPage({ params }: { params: Promise<{ id: str
             <div className="text-xs text-stone-500 font-medium whitespace-nowrap">続柄</div>
             <div className="text-stone-600 whitespace-nowrap">{member.relation || "-"}</div>
           </div>
-        </div>
-      </div>
-
-      {/* 年回表 */}
-      <div className="bg-white rounded-xl shadow-sm border border-stone-200 overflow-hidden">
-        <div className="px-4 py-3 border-b border-stone-200">
-          <h2 className="font-semibold text-stone-700 text-sm">年回表</h2>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="bg-stone-50 border-b border-stone-200">
-              <tr>
-                <th className="text-left px-4 py-2 text-stone-500 font-medium text-xs">年回</th>
-                <th className="text-left px-4 py-2 text-stone-500 font-medium text-xs">年月日（西暦）</th>
-                <th className="text-left px-4 py-2 text-stone-500 font-medium text-xs">年月日（和暦）</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-stone-100">
-              {nenkai.map(({ label, years }) => {
-                const dateStr = addYears(member.deathDate!, years);
-                return (
-                  <tr key={label} className="hover:bg-stone-50">
-                    <td className="px-4 py-2 text-stone-700 whitespace-nowrap">{label}</td>
-                    <td className="px-4 py-2 whitespace-nowrap">
-                      <span className="text-amber-700 hover:underline cursor-default">{formatDateWestern(dateStr)}</span>
-                    </td>
-                    <td className="px-4 py-2 whitespace-nowrap">
-                      <span className="text-amber-700 hover:underline cursor-default">{toWareki(dateStr)}</span>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* 中陰表 */}
-      <div className="bg-white rounded-xl shadow-sm border border-stone-200 overflow-hidden">
-        <div className="px-4 py-3 border-b border-stone-200">
-          <h2 className="font-semibold text-stone-700 text-sm">中陰表</h2>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="bg-stone-50 border-b border-stone-200">
-              <tr>
-                <th className="text-left px-4 py-2 text-stone-500 font-medium text-xs">中陰</th>
-                <th className="text-left px-4 py-2 text-stone-500 font-medium text-xs">年月日（西暦）</th>
-                <th className="text-left px-4 py-2 text-stone-500 font-medium text-xs">年月日（和暦）</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-stone-100">
-              {chuIn.map(({ label, days }) => {
-                const dateStr = addDays(member.deathDate!, days);
-                return (
-                  <tr key={label} className="hover:bg-stone-50">
-                    <td className="px-4 py-2 text-stone-700 whitespace-nowrap">{label}</td>
-                    <td className="px-4 py-2 whitespace-nowrap">
-                      <span className="text-amber-700 hover:underline cursor-default">{formatDateWestern(dateStr)}</span>
-                    </td>
-                    <td className="px-4 py-2 whitespace-nowrap">
-                      <span className="text-amber-700 hover:underline cursor-default">{toWareki(dateStr)}</span>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
         </div>
       </div>
 

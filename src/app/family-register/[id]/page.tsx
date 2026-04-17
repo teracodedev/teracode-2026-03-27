@@ -139,37 +139,6 @@ function formatAge(member: { ageAtDeath: string | null; birthDate: string | null
   return "-";
 }
 
-// 命日から1年以内に迎える年回のラベルを返す（なければ null）
-const NENKAI_LIST: { label: string; years: number }[] = [
-  { label: "一周忌", years: 1 },
-  { label: "三回忌", years: 2 },
-  { label: "七回忌", years: 6 },
-  { label: "十三回忌", years: 12 },
-  { label: "十七回忌", years: 16 },
-  { label: "二十五回忌", years: 24 },
-  { label: "三十三回忌", years: 32 },
-  { label: "五十回忌", years: 49 },
-];
-
-function getUpcomingNenkaiLabel(deathDate: string | null): string | null {
-  if (!deathDate) return null;
-  const death = new Date(deathDate);
-  if (Number.isNaN(death.getTime())) return null;
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const oneYearLater = new Date(today);
-  oneYearLater.setFullYear(oneYearLater.getFullYear() + 1);
-  for (const nk of NENKAI_LIST) {
-    const d = new Date(death);
-    d.setFullYear(d.getFullYear() + nk.years);
-    d.setHours(0, 0, 0, 0);
-    if (d >= today && d <= oneYearLater) {
-      return nk.label;
-    }
-  }
-  return null;
-}
-
 function formatGender(g: string | null) {
   if (g === "M") return "男性";
   if (g === "F") return "女性";
@@ -1019,16 +988,9 @@ export default function FamilyRegisterDetailPage({ params }: { params: Promise<{
                     </tr>
                   </thead>
                   <tbody>
-                    {deceasedMembers.map((m) => {
-                      const nenkaiLabel = getUpcomingNenkaiLabel(m.deathDate);
-                      return (
+                    {deceasedMembers.map((m) => (
                       <tr key={m.id} className="border-b border-stone-100 last:border-0 hover:bg-stone-50">
                         <td className="px-3 py-2.5 text-stone-800 whitespace-nowrap">
-                          {nenkaiLabel && (
-                            <span className="inline-block mr-2 px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 text-xs font-medium align-middle">
-                              {nenkaiLabel}
-                            </span>
-                          )}
                           {m.familyName}{m.givenName ? ` ${m.givenName}` : ""}
                         </td>
                         <td className="px-3 py-2.5 text-stone-500 whitespace-nowrap">{[m.familyNameKana, m.givenNameKana].filter(Boolean).join(" ") || "-"}</td>
@@ -1044,8 +1006,7 @@ export default function FamilyRegisterDetailPage({ params }: { params: Promise<{
                           </Link>
                         </td>
                       </tr>
-                      );
-                    })}
+                    ))}
                   </tbody>
                 </table>
               </div>
