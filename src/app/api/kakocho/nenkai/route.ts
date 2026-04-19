@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getHouseholderFieldMap, getHouseholderModelKind, getMemberDelegate } from "@/lib/prisma-models";
+import {
+  getHouseholderDelegate,
+  getHouseholderFieldMap,
+  getHouseholderModelKind,
+  getMemberDelegate,
+} from "@/lib/prisma-models";
 import { requireAuth } from "@/lib/require-auth";
 
 export const runtime = "nodejs";
@@ -43,6 +48,9 @@ export async function GET(request: NextRequest) {
   try {
     const kind = getHouseholderModelKind();
     const memberDelegate = getMemberDelegate() as { findMany: (args: unknown) => Promise<unknown> };
+    const householderDelegate = getHouseholderDelegate() as {
+      findMany: (args: unknown) => Promise<unknown>;
+    };
     const fields = getHouseholderFieldMap(kind);
     const relationName = fields.relation;
 
@@ -55,7 +63,7 @@ export async function GET(request: NextRequest) {
       },
     };
 
-    const records = (await memberDelegate.findMany({
+    const memberRecords = (await memberDelegate.findMany({
       where,
       include: {
         [relationName]: {
@@ -74,6 +82,53 @@ export async function GET(request: NextRequest) {
         },
       },
     })) as Array<Record<string, unknown>>;
+
+    // 故人として Householder 自身のレコードにも deathDate が入っているケースを拾う
+    // (過去帳への移行がまだ行われていない旧戸主など)
+    const householderRecords = (await householderDelegate.findMany({
+      where,
+      select: {
+        id: true,
+        [fields.code]: true,
+        familyName: true,
+        givenName: true,
+        familyNameKana: true,
+        givenNameKana: true,
+        postalCode: true,
+        address1: true,
+        address2: true,
+        address3: true,
+        deathDate: true,
+        ageAtDeath: true,
+        dharmaName: true,
+      },
+    })) as Array<Record<string, unknown>>;
+
+    // 戸主自身の故人レコードを、member 形式に合わせた擬似レコードに変換
+    const records: Array<Record<string, unknown>> = [
+      ...memberRecords,
+      ...householderRecords.map((h) => ({
+        id: `householder:${String(h.id)}`,
+        familyName: h.familyName,
+        givenName: h.givenName,
+        dharmaName: h.dharmaName,
+        relation: "戸主",
+        ageAtDeath: h.ageAtDeath,
+        deathDate: h.deathDate,
+        [relationName]: {
+          id: h.id,
+          [fields.code]: h[fields.code],
+          familyName: h.familyName,
+          givenName: h.givenName,
+          familyNameKana: h.familyNameKana,
+          givenNameKana: h.givenNameKana,
+          postalCode: h.postalCode,
+          address1: h.address1,
+          address2: h.address2,
+          address3: h.address3,
+        },
+      })),
+    ];
 
     type Item = {
       memberId: string;
