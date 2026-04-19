@@ -150,7 +150,7 @@ export default function FamilyRegisterPage() {
                       href={`/family-register/${r.id}`}
                       className="shrink-0 px-3 py-1.5 bg-stone-100 text-stone-700 rounded-lg text-sm hover:bg-stone-200 transition-colors"
                     >
-                      編集
+                      詳細
                     </Link>
                   </div>
                 </div>
