@@ -72,10 +72,11 @@ export default function NenkaihyoAddressPage() {
           margin: 0;
         }
         @media print {
-          html,
-          body {
-            background: #fff;
-          }
+          html, body { background: #fff !important; margin: 0 !important; padding: 0 !important; }
+          body > nav,
+          nav.bg-stone-800,
+          header { display: none !important; }
+          main { padding: 0 !important; margin: 0 !important; max-width: none !important; }
           .no-print {
             display: none !important;
           }

@@ -28,7 +28,6 @@ interface NenkaiItem {
   };
 }
 
-// 享年の漢数字化。"71" のような数字や "71歳" の両方に対応。
 function ageToKanji(age: string | null): string {
   if (!age) return "";
   const m = age.match(/\d+/);
@@ -87,77 +86,79 @@ export default function NenkaihyoPostcardPage() {
           margin: 0;
         }
         @media print {
-          html,
-          body {
-            background: #fff;
-          }
-          .no-print {
-            display: none !important;
-          }
+          html, body { background: #fff !important; margin: 0 !important; padding: 0 !important; }
+          /* アプリのナビバー・mainラッパーを非表示 */
+          body > nav,
+          nav.bg-stone-800,
+          header { display: none !important; }
+          main { padding: 0 !important; margin: 0 !important; max-width: none !important; }
+          .no-print { display: none !important; }
           .postcard {
             page-break-after: always;
             box-shadow: none !important;
             border: none !important;
             margin: 0 !important;
           }
-          .postcard:last-child {
-            page-break-after: auto;
-          }
+          .postcard:last-child { page-break-after: auto; }
         }
+
         .postcard {
           width: 100mm;
           height: 148mm;
-          padding: 5mm;
+          padding: 8mm 5mm;
           background: #fff;
           color: #000;
           box-sizing: border-box;
           font-family: "Yu Mincho", "YuMincho", "Hiragino Mincho ProN", "MS Mincho", serif;
-          writing-mode: vertical-rl;
-          -webkit-writing-mode: vertical-rl;
-          text-orientation: upright;
+          /* コンテナは通常の横書き。flex で子要素を右→左に配置 */
           display: flex;
           flex-direction: row-reverse;
           align-items: stretch;
-          gap: 1.5mm;
-          line-height: 1.6;
+          gap: 0;
+          overflow: hidden;
         }
+        /* 各列は縦書き */
+        .postcard > div {
+          writing-mode: vertical-rl;
+          -webkit-writing-mode: vertical-rl;
+          flex-shrink: 0;
+          line-height: 1.7;
+        }
+
         .col-title {
-          font-size: 13pt;
+          font-size: 14pt;
           font-weight: bold;
-          letter-spacing: 0.15em;
-          padding-top: 4mm;
+          letter-spacing: 0.2em;
+          padding: 10mm 1mm 0 1mm;
         }
         .col-intro {
           font-size: 9pt;
           letter-spacing: 0.05em;
+          padding: 10mm 0.5mm 0 0.5mm;
+          max-width: 24mm;
         }
         .col-body {
           font-size: 10pt;
           letter-spacing: 0.08em;
-          flex: 1;
+          flex: 1 1 auto !important;
+          min-width: 0;
+          padding: 4mm 1mm 0 1mm;
         }
         .col-body .kaiki-label {
-          font-size: 14pt;
+          font-size: 16pt;
           font-weight: bold;
-          margin-bottom: 2mm;
+          margin-bottom: 3mm;
+          text-align: center;
         }
-        .col-body .entry-row {
-          margin-left: 2mm;
-        }
-        .col-body .entry-row + .entry-row {
-          border-right: 0.3pt dotted #888;
-          padding-right: 2mm;
+        .col-body .detail-line {
+          font-size: 10pt;
         }
         .col-footer {
-          font-size: 7.5pt;
-          letter-spacing: 0.03em;
-          line-height: 1.5;
-          padding-bottom: 4mm;
-        }
-        /* 縦書き内で半角英数字をそのまま縦並びに */
-        .tcu {
-          text-combine-upright: all;
-          -webkit-text-combine: horizontal;
+          font-size: 7pt;
+          letter-spacing: 0.02em;
+          line-height: 1.4;
+          padding: 5mm 0.5mm 0 0.5mm;
+          max-width: 18mm;
         }
       `}</style>
 
@@ -178,12 +179,13 @@ export default function NenkaihyoPostcardPage() {
           <div className="no-print text-stone-500 py-12">該当する年回はありません</div>
         )}
         {grouped.map((g, gi) => (
-          <div
-            key={gi}
-            className="postcard shadow border border-stone-300 print:shadow-none print:border-0"
-          >
+          <div key={gi} className="postcard shadow border border-stone-300 print:shadow-none print:border-0">
             {/* 右端: タイトル */}
-            <div className="col-title">{warekiYear}　ご法事のご案内</div>
+            <div className="col-title">
+              {warekiYear}
+              <br />
+              ご法事のご案内
+            </div>
 
             {/* 導入文 */}
             <div className="col-intro">
@@ -193,24 +195,24 @@ export default function NenkaihyoPostcardPage() {
 
             {/* 本文: 故人ごとの詳細 */}
             <div className="col-body">
-              {g.members.map((m, mi) => (
-                <div key={m.memberId} className={"entry-row" + (mi > 0 ? " mt-2" : "") }>
+              {g.members.map((m) => (
+                <div key={m.memberId} style={{ marginLeft: g.members.length > 1 ? "1mm" : 0 }}>
                   <div className="kaiki-label">{m.kaikiLabel}</div>
-                  {m.dharmaName && <div>法名　{m.dharmaName}</div>}
-                  <div>命日　{isoDateToWareki(m.deathDate)}</div>
-                  <div>
+                  {m.dharmaName && <div className="detail-line">法名　{m.dharmaName}</div>}
+                  <div className="detail-line">命日　{isoDateToWareki(m.deathDate)}</div>
+                  <div className="detail-line">
                     俗名　{[m.familyName, m.givenName].filter(Boolean).join("　")}　様
                   </div>
-                  {m.ageAtDeath && <div>享年　{ageToKanji(m.ageAtDeath)}歳</div>}
+                  {m.ageAtDeath && (
+                    <div className="detail-line">享年　{ageToKanji(m.ageAtDeath)}歳</div>
+                  )}
                 </div>
               ))}
             </div>
 
             {/* 左端: 連絡先 */}
             <div className="col-footer">
-              電話　(<span className="tcu">090</span>-<span className="tcu">2553</span>-
-              <span className="tcu">3346</span>)　・　メール(zenpoji@gmail.com)で早めに予約されるとご希望の日取りに沿いやすくなります。
-              インターネットを使ったご法事も承っております。気軽にご相談ください。
+              電話(〇九〇ー二五五三ー三三四六)・メール(zenpoji@gmail.com)で早めに予約されるとご希望の日取りに沿いやすくなります。インターネットを使ったご法事も承っております。気軽にご相談ください。
             </div>
           </div>
         ))}
