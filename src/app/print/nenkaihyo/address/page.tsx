@@ -1,5 +1,6 @@
 "use client";
 import { fetchWithAuth } from "@/lib/fetch-with-auth";
+import { compareHouseholderGojuon } from "@/lib/householder-sort";
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
@@ -55,11 +56,7 @@ export default function NenkaihyoAddressPage() {
     for (const it of items) {
       if (!map.has(it.householder.id)) map.set(it.householder.id, it.householder);
     }
-    return Array.from(map.values()).sort((a, b) => {
-      const ka = (a.familyNameKana ?? "") + (a.givenNameKana ?? "");
-      const kb = (b.familyNameKana ?? "") + (b.givenNameKana ?? "");
-      return ka.localeCompare(kb, "ja");
-    });
+    return Array.from(map.values()).sort((a, b) => compareHouseholderGojuon(a, b));
   }, [items]);
 
   if (loading) return <div className="p-8 text-stone-500">読み込み中...</div>;

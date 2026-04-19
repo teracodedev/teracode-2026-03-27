@@ -1,6 +1,8 @@
 "use client";
 import { fetchWithAuth } from "@/lib/fetch-with-auth";
+import { compareHouseholderGojuon } from "@/lib/householder-sort";
 import { isoDateToWareki, numToKanji, yearToWareki } from "@/lib/kanji-num";
+import { DEFAULT_NENKAI_POSTCARD_FOOTER } from "@/lib/nenkai-postcard-config";
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
@@ -44,13 +46,26 @@ export default function NenkaihyoPostcardPage() {
 
   const [items, setItems] = useState<NenkaiItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [postcardFooter, setPostcardFooter] = useState(DEFAULT_NENKAI_POSTCARD_FOOTER);
+  const [postcardSenderName, setPostcardSenderName] = useState<string | null>(null);
+  const [postcardSenderAddress, setPostcardSenderAddress] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
       try {
-        const res = await fetchWithAuth(`/api/kakocho/nenkai?year=${year}&month=${month}`);
-        const data = await res.json();
+        const [resItems, resCfg] = await Promise.all([
+          fetchWithAuth(`/api/kakocho/nenkai?year=${year}&month=${month}`),
+          fetchWithAuth(`/api/settings/nenkai-postcard`),
+        ]);
+        const data = await resItems.json();
         setItems(Array.isArray(data?.items) ? data.items : []);
+
+        if (resCfg.ok) {
+          const cfg = await resCfg.json();
+          setPostcardFooter(typeof cfg.footer === "string" ? cfg.footer : DEFAULT_NENKAI_POSTCARD_FOOTER);
+          setPostcardSenderName(cfg.senderName ?? null);
+          setPostcardSenderAddress(cfg.senderAddress ?? null);
+        }
       } catch (e) {
         console.error(e);
       } finally {
@@ -67,11 +82,9 @@ export default function NenkaihyoPostcardPage() {
       if (cur) cur.members.push(it);
       else map.set(key, { householder: it.householder, members: [it] });
     }
-    return Array.from(map.values()).sort((a, b) => {
-      const ka = (a.householder.familyNameKana ?? "") + (a.householder.givenNameKana ?? "");
-      const kb = (b.householder.familyNameKana ?? "") + (b.householder.givenNameKana ?? "");
-      return ka.localeCompare(kb, "ja");
-    });
+    return Array.from(map.values()).sort((a, b) =>
+      compareHouseholderGojuon(a.householder, b.householder),
+    );
   }, [items]);
 
   const warekiYear = yearToWareki(year);
@@ -158,7 +171,22 @@ export default function NenkaihyoPostcardPage() {
           letter-spacing: 0.02em;
           line-height: 1.4;
           padding: 5mm 0.5mm 0 0.5mm;
-          max-width: 18mm;
+          max-width: 22mm;
+        }
+        .col-footer .footer-sender-name {
+          font-size: 8pt;
+          font-weight: bold;
+          letter-spacing: 0.08em;
+          margin-bottom: 1.5mm;
+        }
+        .col-footer .footer-address {
+          font-size: 6.5pt;
+          letter-spacing: 0.02em;
+          white-space: pre-line;
+          margin-bottom: 2mm;
+        }
+        .col-footer .footer-contact {
+          font-size: 7pt;
         }
       `}</style>
 
@@ -210,9 +238,15 @@ export default function NenkaihyoPostcardPage() {
               ))}
             </div>
 
-            {/* 左端: 連絡先 */}
+            {/* 左端: 差出人・連絡先 */}
             <div className="col-footer">
-              電話(〇九〇ー二五五三ー三三四六)・メール(zenpoji@gmail.com)で早めに予約されるとご希望の日取りに沿いやすくなります。インターネットを使ったご法事も承っております。気軽にご相談ください。
+              {postcardSenderName?.trim() && (
+                <div className="footer-sender-name">{postcardSenderName.trim()}</div>
+              )}
+              {postcardSenderAddress?.trim() && (
+                <div className="footer-address">{postcardSenderAddress.trim()}</div>
+              )}
+              <div className="footer-contact">{postcardFooter}</div>
             </div>
           </div>
         ))}

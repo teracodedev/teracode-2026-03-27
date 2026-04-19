@@ -179,3 +179,15 @@ model GraveContractHistory {
   note            String?
   graveContract   GraveContract @relation(fields: [graveContractId], references: [id], onDelete: Cascade)
 }
+
+/// アプリ全体の単一設定（id は常に "default"）
+model AppConfig {
+  id                         String   @id
+  /// 年回案内ハガキ裏面の差出人名（寺院名など）
+  nenkaiPostcardSenderName   String?
+  /// 差出人住所（複数行可）
+  nenkaiPostcardSenderAddress String? @db.Text
+  /// 裏面左下の連絡・案内文
+  nenkaiPostcardFooter       String?  @db.Text
+  updatedAt                  DateTime @updatedAt
+}

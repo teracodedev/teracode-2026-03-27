@@ -2,6 +2,11 @@ import Link from "next/link";
 
 const settingsItems = [
   {
+    href: "/admin/settings/basic-info",
+    title: "基本情報設定",
+    description: "年回案内ハガキの差出人名・住所・連絡案内を設定します。",
+  },
+  {
     href: "/admin/import",
     title: "データインポート",
     description: "MDB ファイルから戸主・家族・墓地データを一括取り込みします。",

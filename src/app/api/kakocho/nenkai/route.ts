@@ -6,6 +6,7 @@ import {
   getMemberDelegate,
 } from "@/lib/prisma-models";
 import { requireAuth } from "@/lib/require-auth";
+import { compareHouseholderGojuon } from "@/lib/householder-sort";
 
 export const runtime = "nodejs";
 
@@ -189,11 +190,11 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // 命日昇順
+    // 戸主の五十音順 → 同一世帯内は命日（日付）昇順
     items.sort((a, b) => {
-      const am = new Date(a.deathDate).getDate();
-      const bm = new Date(b.deathDate).getDate();
-      return am - bm;
+      const byH = compareHouseholderGojuon(a.householder, b.householder);
+      if (byH !== 0) return byH;
+      return new Date(a.deathDate).getTime() - new Date(b.deathDate).getTime();
     });
 
     return NextResponse.json({ year, month, items });
