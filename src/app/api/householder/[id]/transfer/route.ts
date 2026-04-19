@@ -9,6 +9,7 @@
  * 3. 既存の世帯員を新戸主に移動
  * 4. 旧戸主レコードを削除
  */
+
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/require-auth";
@@ -104,13 +105,7 @@ export async function POST(req: NextRequest, { params }: Params) {
         data: { householderId: newHouseholder.id },
       });
 
-      // 4. 法要参加データも新戸主へ引き継ぐ
-      await tx.ceremonyParticipant.updateMany({
-        where: { householderId: oldHouseholderId },
-        data: { householderId: newHouseholder.id },
-      });
-
-      // 4-2. 墓地契約: 旧戸主の使用履歴を保存し、墓地使用者を新戸主に更新
+      // 4. 墓地契約: 旧戸主の使用履歴を保存し、墓地使用者を新戸主に更新
       const graveContracts = await tx.graveContract.findMany({
         where: { householderId: oldHouseholderId },
       });

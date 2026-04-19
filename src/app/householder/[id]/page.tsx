@@ -31,13 +31,6 @@ interface Member {
   note: string | null;
 }
 
-interface Ceremony {
-  id: string;
-  title: string;
-  scheduledAt: string;
-  ceremonyType: string;
-}
-
 interface HouseholderDetail {
   id: string;
   householderCode: string;
@@ -61,7 +54,6 @@ interface HouseholderDetail {
   isActive: boolean;
   familyRegister?: { id: string; name: string } | null;
   members: Member[];
-  ceremonies: { ceremony: Ceremony }[];
 }
 
 type ContactForm = {
@@ -95,14 +87,6 @@ interface HouseholderEditForm {
   leftAt: string;
   isActive: boolean;
 }
-
-const CEREMONY_TYPE_LABELS: Record<string, string> = {
-  MEMORIAL: "法要",
-  REGULAR: "定例行事",
-  FUNERAL: "葬儀・告別式",
-  SPECIAL: "特別行事",
-  OTHER: "その他",
-};
 
 function formatDate(dateStr: string | null) {
   if (!dateStr) return "-";
@@ -334,7 +318,6 @@ export default function HouseholderDetailPage({ params }: { params: Promise<{ id
           setHouseholder({
             ...(data as HouseholderDetail),
             members: Array.isArray(data.members) ? data.members : [],
-            ceremonies: Array.isArray(data.ceremonies) ? data.ceremonies : [],
           });
         } else {
           setHouseholder(null);
@@ -787,28 +770,6 @@ export default function HouseholderDetailPage({ params }: { params: Promise<{ id
             </tbody>
           </table>
 
-          {/* 参加法要履歴 */}
-          {(householder.ceremonies ?? []).filter((row) => row?.ceremony?.id).length > 0 && (
-            <div className="mt-0 pt-4 pb-4 px-4 border-t border-stone-200">
-              <h3 className="font-medium text-stone-600 mb-3 text-sm">参加法要履歴</h3>
-              <div className="space-y-2">
-                {(householder.ceremonies ?? [])
-                  .filter((row): row is { ceremony: Ceremony } => !!row?.ceremony?.id)
-                  .map(({ ceremony }) => (
-                  <Link key={ceremony.id} href={`/ceremonies/${ceremony.id}`}
-                    className="flex items-center justify-between border border-stone-100 rounded-lg p-3 hover:bg-stone-50">
-                    <div>
-                      <span className="text-sm font-medium text-stone-800">{ceremony.title}</span>
-                      <span className="ml-2 text-xs text-stone-400">
-                        {CEREMONY_TYPE_LABELS[ceremony.ceremonyType] || ceremony.ceremonyType}
-                      </span>
-                    </div>
-                    <span className="text-xs text-stone-400">{formatDate(ceremony.scheduledAt)}</span>
-                  </Link>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
       )}
 

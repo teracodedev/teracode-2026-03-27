@@ -12,8 +12,6 @@ const FILE_MAP: Record<string, string> = {
   "戸主.yaml": "householder",
   "世帯員.yaml": "member",
   "住所変更履歴.yaml": "addressHistory",
-  "法要行事.yaml": "ceremony",
-  "法要参加者.yaml": "ceremonyParticipant",
   "タグ.yaml": "tag",
   "戸主タグ.yaml": "householderTag",
   "世帯員タグ.yaml": "memberTag",
@@ -84,8 +82,6 @@ export async function POST(req: NextRequest) {
       await tx.gravePlot.deleteMany();
       await tx.memberTag.deleteMany();
       await tx.householderTag.deleteMany();
-      await tx.ceremonyParticipant.deleteMany();
-      await tx.ceremony.deleteMany();
       await tx.householderAddressHistory.deleteMany();
       await tx.householderMember.deleteMany();
       await tx.householder.deleteMany();
@@ -209,44 +205,7 @@ export async function POST(req: NextRequest) {
         });
       }
 
-      // 6. 法要行事
-      if (data.ceremony?.length) {
-        await tx.ceremony.createMany({
-          data: data.ceremony.map((r) => ({
-            id: r.id as string,
-            title: r.title as string,
-            ceremonyType: r.ceremonyType as "MEMORIAL" | "REGULAR" | "FUNERAL" | "SPECIAL" | "OTHER",
-            scheduledAt: parseDate(r.scheduledAt) ?? new Date(),
-            endAt: parseDate(r.endAt),
-            location: (r.location as string) || null,
-            description: (r.description as string) || null,
-            maxAttendees: toInt(r.maxAttendees),
-            fee: toInt(r.fee),
-            status: (r.status as "SCHEDULED" | "COMPLETED" | "CANCELLED") || "SCHEDULED",
-            note: (r.note as string) || null,
-            createdAt: parseDate(r.createdAt) ?? new Date(),
-            updatedAt: parseDate(r.updatedAt) ?? new Date(),
-          })),
-        });
-      }
-
-      // 7. 法要参加者
-      if (data.ceremonyParticipant?.length) {
-        await tx.ceremonyParticipant.createMany({
-          data: data.ceremonyParticipant.map((r) => ({
-            id: r.id as string,
-            ceremonyId: r.ceremonyId as string,
-            householderId: r.householderId as string,
-            attendees: toInt(r.attendees) ?? 1,
-            offering: toInt(r.offering),
-            note: (r.note as string) || null,
-            createdAt: parseDate(r.createdAt) ?? new Date(),
-            updatedAt: parseDate(r.updatedAt) ?? new Date(),
-          })),
-        });
-      }
-
-      // 8. 戸主タグ
+      // 6. 戸主タグ
       if (data.householderTag?.length) {
         await tx.householderTag.createMany({
           data: data.householderTag.map((r) => ({
@@ -257,7 +216,7 @@ export async function POST(req: NextRequest) {
         });
       }
 
-      // 9. 世帯員タグ
+      // 7. 世帯員タグ
       if (data.memberTag?.length) {
         await tx.memberTag.createMany({
           data: data.memberTag.map((r) => ({
@@ -268,7 +227,7 @@ export async function POST(req: NextRequest) {
         });
       }
 
-      // 10. 墓地区画
+      // 8. 墓地区画
       if (data.gravePlot?.length) {
         await tx.gravePlot.createMany({
           data: data.gravePlot.map((r) => ({
@@ -286,7 +245,7 @@ export async function POST(req: NextRequest) {
         });
       }
 
-      // 11. 墓地契約
+      // 9. 墓地契約
       if (data.graveContract?.length) {
         await tx.graveContract.createMany({
           data: data.graveContract.map((r) => ({
@@ -303,7 +262,7 @@ export async function POST(req: NextRequest) {
         });
       }
 
-      // 12. 墓地契約履歴
+      // 10. 墓地契約履歴
       if (data.graveContractHistory?.length) {
         await tx.graveContractHistory.createMany({
           data: data.graveContractHistory.map((r) => ({
@@ -328,8 +287,6 @@ export async function POST(req: NextRequest) {
       戸主: data.householder?.length ?? 0,
       世帯員: data.member?.length ?? 0,
       住所変更履歴: data.addressHistory?.length ?? 0,
-      法要行事: data.ceremony?.length ?? 0,
-      法要参加者: data.ceremonyParticipant?.length ?? 0,
       タグ: data.tag?.length ?? 0,
       戸主タグ: data.householderTag?.length ?? 0,
       世帯員タグ: data.memberTag?.length ?? 0,

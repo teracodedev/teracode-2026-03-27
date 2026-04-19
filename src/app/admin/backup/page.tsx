@@ -100,7 +100,7 @@ export default function BackupPage() {
         </div>
         <div className="p-6 space-y-4">
           <p className="text-sm text-stone-600">
-            戸主・世帯員・法要・墓地・タグなど、全てのデータを YAML ファイルに変換し ZIP でダウンロードします。
+            戸主・世帯員・墓地・タグなど、全てのデータを YAML ファイルに変換し ZIP でダウンロードします。
           </p>
           <button
             onClick={handleBackup}

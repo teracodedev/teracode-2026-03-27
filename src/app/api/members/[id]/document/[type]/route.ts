@@ -6,14 +6,8 @@ import { getMemberDelegate, getHouseholderFieldMap, getHouseholderModelKind } fr
 import {
   fillDocxTemplate,
   toWareki,
-  addDays,
-  addYears,
   calcAgeAtDeath,
-  getNextMemorialLabel,
-  getNenkaiLabel,
   toFullWidthHiragana,
-  CHUIN_SCHEDULE,
-  NENKAI_SCHEDULE,
 } from "@/lib/docx-template";
 
 export const runtime = "nodejs";
@@ -24,10 +18,6 @@ type Params = { params: Promise<{ id: string; type: string }> };
 const TEMPLATE_MAP: Record<string, string> = {
   sogi: "葬儀法名テンプレート.docx",
   "sogi-ingo": "葬儀院号法名テンプレート.docx",
-  chuin: "中陰表法名テンプレート.docx",
-  "chuin-ingo": "中陰表院号法名テンプレート.docx",
-  nenkai: "年回法名テンプレート.docx",
-  "nenkai-ingo": "年回院号法名テンプレート.docx",
   noukansoungou: "納棺尊号.docx",
 };
 
@@ -75,10 +65,10 @@ export async function GET(request: NextRequest, { params }: Params) {
       return NextResponse.json({ error: "命日が登録されていません" }, { status: 400 });
     }
 
-    const vars = buildVars(member, type);
+    const vars = buildVars(member);
     const buffer = await fillDocxTemplate(templatePath, vars);
 
-    const downloadName = buildFilename(member, type, vars["年回"]);
+    const downloadName = buildFilename(member, type);
     return new NextResponse(new Uint8Array(buffer), {
       headers: buildHeaders(downloadName),
     });
@@ -116,14 +106,13 @@ interface HouseholderData {
 // ── Variable builders ──────────────────────────────────────────────────────
 
 function buildVars(
-  member: MemberWithHouseholder,
-  type: string
+  member: MemberWithHouseholder
 ): Record<string, string> {
   const deathDate = new Date(member.deathDate!);
   const birthDate = member.birthDate ? new Date(member.birthDate) : null;
   const ageAtDeath = toKanjiAgeString(calcAgeAtDeath(birthDate, deathDate) || member.ageAtDeath) || "不詳";
 
-  const vars: Record<string, string> = {
+  return {
     命日: toWareki(deathDate) + "往生",
     法名: member.dharmaName ?? "",
     法名ふりがな: toFullWidthHiragana(member.dharmaNameKana),
@@ -136,20 +125,7 @@ function buildVars(
     年齢: ageAtDeath,
     享年才: ageAtDeath,
     享年歳: ageAtDeath,
-    年回: (type === "nenkai" || type === "nenkai-ingo") ? getNenkaiLabel(deathDate) : getNextMemorialLabel(deathDate),
   };
-
-  // 中陰表 / 年回表 date placeholders
-  if (type === "chuin" || type === "chuin-ingo") {
-    for (const { key, days } of CHUIN_SCHEDULE) {
-      vars[key] = toWareki(addDays(deathDate, days));
-    }
-    for (const { key, years } of NENKAI_SCHEDULE) {
-      vars[key] = toWareki(addYears(deathDate, years));
-    }
-  }
-
-  return vars;
 }
 
 function toKanjiAgeString(value: string | null | undefined): string {
@@ -172,18 +148,11 @@ function toKanjiAgeString(value: string | null | undefined): string {
   return `${kanji}歳`;
 }
 
-function buildFilename(member: MemberWithHouseholder, type: string, memorialLabel?: string): string {
+function buildFilename(member: MemberWithHouseholder, type: string): string {
   const name = member.familyName + (member.givenName ? member.givenName : "");
-  if ((type === "nenkai" || type === "nenkai-ingo") && memorialLabel) {
-    return `${name}の${memorialLabel}.docx`;
-  }
   const labelMap: Record<string, string> = {
     sogi: "葬儀法名",
     "sogi-ingo": "葬儀院号法名",
-    chuin: "中陰表・年回表",
-    "chuin-ingo": "中陰表院号・年回表",
-    nenkai: "年回法名",
-    "nenkai-ingo": "年回院号法名",
   };
   return `${name}の${labelMap[type] ?? type}.docx`;
 }

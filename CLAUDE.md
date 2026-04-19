@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-テラコード (TeraCode) は仏教寺院の檀家・法要・過去帳を管理するWebアプリケーション。
+テラコード (TeraCode) は仏教寺院の檀家・過去帳を管理するWebアプリケーション。
 
 **Tech Stack:** Next.js 16 (App Router) + TypeScript + PostgreSQL + Prisma ORM + NextAuth.js + Tailwind CSS 4
 
@@ -71,15 +71,12 @@ Browser → Nginx (HTTPS) → Next.js (port 3000) ↔ PostgreSQL
 | `FamilyRegister` | Family/kinship group ledger |
 | `Householder` | Parishioner (head of household) |
 | `HouseholderMember` | Individual members within a household |
-| `Ceremony` | Rituals/ceremonies (MEMORIAL, REGULAR, FUNERAL, SPECIAL, OTHER) |
-| `CeremonyParticipant` | Links householders to ceremonies with offering amounts |
 | `User` | Login accounts |
 
 ### Key Features
 
 - **Householder management** — `/householder/` pages + `/api/householder/`
 - **Family register** — `/family-register/` (current 現在帳 and posthumous 過去帳 ledgers)
-- **Ceremonies** — `/ceremonies/` for scheduling rituals and tracking offerings (御布施)
 - **Document export** — Word (.docx) generation via `src/lib/docx-template.ts` (docxtemplater + nunjucks)
 - **Data import** — YAML and Microsoft Access (.mdb) file import via `/api/import/`
 

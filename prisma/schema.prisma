@@ -48,7 +48,6 @@ model Householder {
   dharmaNameKana   String?
   relation         String?
   familyRegisterId String?               @unique
-  ceremonies       CeremonyParticipant[]
   familyRegister   FamilyRegister?       @relation(fields: [familyRegisterId], references: [id])
   members          HouseholderMember[]
   addressHistories HouseholderAddressHistory[]
@@ -100,23 +99,6 @@ model HouseholderMember {
   tags              MemberTag[]
 }
 
-model Ceremony {
-  title        String
-  ceremonyType CeremonyType
-  scheduledAt  DateTime
-  endAt        DateTime?
-  location     String?
-  description  String?
-  maxAttendees Int?
-  fee          Int?
-  status       CeremonyStatus        @default(SCHEDULED)
-  note         String?
-  createdAt    DateTime              @default(now())
-  updatedAt    DateTime              @updatedAt
-  id           String                @id @default(uuid())
-  participants CeremonyParticipant[]
-}
-
 model User {
   id        String   @id @default(uuid())
   email     String   @unique
@@ -125,35 +107,6 @@ model User {
   isAdmin   Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-}
-
-model CeremonyParticipant {
-  attendees     Int         @default(1)
-  offering      Int?
-  note          String?
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
-  id            String      @id @default(uuid())
-  ceremonyId    String
-  householderId String
-  ceremony      Ceremony    @relation(fields: [ceremonyId], references: [id], onDelete: Cascade)
-  householder   Householder @relation(fields: [householderId], references: [id], onDelete: Cascade)
-
-  @@unique([ceremonyId, householderId])
-}
-
-enum CeremonyType {
-  MEMORIAL
-  REGULAR
-  FUNERAL
-  SPECIAL
-  OTHER
-}
-
-enum CeremonyStatus {
-  SCHEDULED
-  COMPLETED
-  CANCELLED
 }
 
 model Tag {
