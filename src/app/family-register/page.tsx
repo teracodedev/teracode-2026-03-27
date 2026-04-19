@@ -150,7 +150,7 @@ export default function FamilyRegisterPage() {
                       href={`/family-register/${r.id}`}
                       className="shrink-0 px-3 py-1.5 bg-stone-100 text-stone-700 rounded-lg text-sm hover:bg-stone-200 transition-colors"
                     >
-                      編集
+                      詳細
                     </Link>
                   </div>
                 </div>
@@ -167,7 +167,7 @@ export default function FamilyRegisterPage() {
                   <th className="text-left px-4 py-3 text-stone-600 font-medium">所属グループフリガナ</th>
                   <th className="text-left px-4 py-3 text-stone-600 font-medium">所属グループ</th>
                   <th className="text-left px-4 py-3 text-stone-600 font-medium">戸主</th>
-                  <th className="text-left px-4 py-3 text-stone-600 font-medium">編集</th>
+                  <th className="text-left px-4 py-3 text-stone-600 font-medium">詳細</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-stone-100">
@@ -196,7 +196,7 @@ export default function FamilyRegisterPage() {
                           href={`/family-register/${r.id}`}
                           className="px-3 py-1.5 bg-stone-100 text-stone-700 rounded-lg text-sm hover:bg-stone-200 transition-colors"
                         >
-                          編集
+                          詳細
                         </Link>
                       </td>
                     </tr>
