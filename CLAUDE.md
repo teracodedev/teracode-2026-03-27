@@ -102,3 +102,15 @@ Required in `.env`:
 - `DATABASE_URL` — PostgreSQL connection string
 - `AUTH_SECRET` — NextAuth secret
 - `AUTH_URL` — Public-facing base URL (used for OAuth redirects)
+
+## Git Workflow
+
+変更を feature ブランチにプッシュした後、必ず main ブランチにもマージしてプッシュすること。
+
+```bash
+git checkout main
+git pull origin main
+git merge <feature-branch>
+git push -u origin main
+git checkout <feature-branch>  # 元のブランチに戻る
+```
