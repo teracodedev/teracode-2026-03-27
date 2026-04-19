@@ -3,7 +3,7 @@ import { fetchWithAuth } from "@/lib/fetch-with-auth";
 import { compareHouseholderGojuon } from "@/lib/householder-sort";
 import { isoDateToWareki, numToKanji, yearToWareki } from "@/lib/kanji-num";
 import { DEFAULT_NENKAI_POSTCARD_FOOTER } from "@/lib/nenkai-postcard-config";
-import { useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
 interface NenkaiItem {
@@ -47,8 +47,6 @@ export default function NenkaihyoPostcardPage() {
   const [items, setItems] = useState<NenkaiItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [postcardFooter, setPostcardFooter] = useState(DEFAULT_NENKAI_POSTCARD_FOOTER);
-  const [postcardSenderName, setPostcardSenderName] = useState<string | null>(null);
-  const [postcardSenderAddress, setPostcardSenderAddress] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -63,8 +61,6 @@ export default function NenkaihyoPostcardPage() {
         if (resCfg.ok) {
           const cfg = await resCfg.json();
           setPostcardFooter(typeof cfg.footer === "string" ? cfg.footer : DEFAULT_NENKAI_POSTCARD_FOOTER);
-          setPostcardSenderName(cfg.senderName ?? null);
-          setPostcardSenderAddress(cfg.senderAddress ?? null);
         }
       } catch (e) {
         console.error(e);
@@ -118,75 +114,117 @@ export default function NenkaihyoPostcardPage() {
         .postcard {
           width: 100mm;
           height: 148mm;
-          padding: 8mm 5mm;
+          padding: 10mm 6mm 9mm 6mm;
           background: #fff;
           color: #000;
           box-sizing: border-box;
           font-family: "Yu Mincho", "YuMincho", "Hiragino Mincho ProN", "MS Mincho", serif;
-          /* コンテナは通常の横書き。flex で子要素を右→左に配置 */
           display: flex;
           flex-direction: row-reverse;
-          align-items: stretch;
-          gap: 0;
+          align-items: flex-start;
+          justify-content: flex-start;
+          gap: 1.5mm;
           overflow: hidden;
         }
-        /* 各列は縦書き */
-        .postcard > div {
+        .postcard > .col-title,
+        .postcard > .col-intro,
+        .postcard > .col-kaiki,
+        .postcard > .col-footer {
           writing-mode: vertical-rl;
           -webkit-writing-mode: vertical-rl;
           flex-shrink: 0;
-          line-height: 1.7;
+          line-height: 1.75;
         }
 
+        /* 右端: 年号＋見出し（上寄せ） */
         .col-title {
           font-size: 14pt;
           font-weight: bold;
           letter-spacing: 0.2em;
-          padding: 10mm 1mm 0 1mm;
+          padding: 0 0.5mm 0 0.5mm;
+          max-width: 15mm;
         }
+        /* 導入文は1列にまとめる（縦に続けて折り返し） */
         .col-intro {
           font-size: 9pt;
           letter-spacing: 0.05em;
-          padding: 10mm 0.5mm 0 0.5mm;
-          max-width: 24mm;
+          padding: 0 0.5mm 0 0.5mm;
+          max-width: 13mm;
+          line-height: 1.82;
         }
-        .col-body {
-          font-size: 10pt;
-          letter-spacing: 0.08em;
-          flex: 1 1 auto !important;
-          min-width: 0;
-          padding: 4mm 1mm 0 1mm;
-        }
-        .col-body .kaiki-label {
-          font-size: 16pt;
+        /* 回忌（ページ内で縦方向センター） */
+        .col-kaiki {
+          font-size: 22pt;
           font-weight: bold;
-          margin-bottom: 3mm;
-          text-align: center;
+          letter-spacing: 0.14em;
+          padding: 0 0.5mm;
+          line-height: 1.3;
+          align-self: center;
         }
-        .col-body .detail-line {
+        /* 故人4列ブロック（内部は横並び flex、各列のみ縦書き） */
+        .detail-cluster {
+          display: flex;
+          flex-direction: row-reverse;
+          align-items: stretch;
+          flex-shrink: 0;
+          height: 122mm;
+          max-height: 122mm;
+          gap: 1.5mm;
+          writing-mode: horizontal-tb;
+        }
+        .detail-cluster > div {
+          writing-mode: vertical-rl;
+          -webkit-writing-mode: vertical-rl;
           font-size: 10pt;
+          letter-spacing: 0.07em;
+          line-height: 1.65;
         }
+        .col-houmyou {
+          align-self: flex-start;
+          padding-top: 5mm;
+          max-width: 11mm;
+        }
+        .col-meinichi {
+          align-self: flex-start;
+          padding-top: 20mm;
+          max-width: 13mm;
+        }
+        .col-zokumei {
+          align-self: flex-end;
+          padding-bottom: 16mm;
+          max-width: 13mm;
+        }
+        .col-kyounen {
+          align-self: flex-end;
+          padding-bottom: 16mm;
+          max-width: 10mm;
+        }
+        /* 複数故人のときはやや詰める */
+        .postcard.multi-member .detail-cluster {
+          height: 108mm;
+          max-height: 108mm;
+        }
+        .postcard.multi-member .col-kaiki {
+          font-size: 18pt;
+        }
+        .postcard.multi-member .col-meinichi {
+          padding-top: 16mm;
+        }
+        .postcard.multi-member .col-zokumei,
+        .postcard.multi-member .col-kyounen {
+          padding-bottom: 12mm;
+        }
+        /* 左端: 連絡（最小・上寄せ） */
         .col-footer {
-          font-size: 7pt;
-          letter-spacing: 0.02em;
-          line-height: 1.4;
-          padding: 5mm 0.5mm 0 0.5mm;
-          max-width: 22mm;
-        }
-        .col-footer .footer-sender-name {
-          font-size: 8pt;
-          font-weight: bold;
-          letter-spacing: 0.08em;
-          margin-bottom: 1.5mm;
-        }
-        .col-footer .footer-address {
           font-size: 6.5pt;
           letter-spacing: 0.02em;
-          white-space: pre-line;
-          margin-bottom: 2mm;
+          line-height: 1.6;
+          padding: 0 0.5mm;
+          max-width: 27mm;
+          align-self: flex-start;
         }
         .col-footer .footer-contact {
-          font-size: 7pt;
+          white-space: pre-line;
         }
       `}</style>
 
@@ -207,7 +245,13 @@ export default function NenkaihyoPostcardPage() {
           <div className="no-print text-stone-500 py-12">該当する年回はありません</div>
         )}
         {grouped.map((g, gi) => (
-          <div key={gi} className="postcard shadow border border-stone-300 print:shadow-none print:border-0">
+          <div
+            key={gi}
+            className={
+              "postcard shadow border border-stone-300 print:shadow-none print:border-0" +
+              (g.members.length > 1 ? " multi-member" : "")
+            }
+          >
             {/* 右端: タイトル */}
             <div className="col-title">
               {warekiYear}
@@ -215,37 +259,31 @@ export default function NenkaihyoPostcardPage() {
               ご法事のご案内
             </div>
 
-            {/* 導入文 */}
+            {/* 導入文（1列・縦書きで全文） */}
             <div className="col-intro">
               {warekiYear}の年回を左記のようにお迎えになっております。
               ご法事を営まれ、ご仏縁を結ばれますようご案内申し上げます。
             </div>
 
-            {/* 本文: 故人ごとの詳細 */}
-            <div className="col-body">
-              {g.members.map((m) => (
-                <div key={m.memberId} style={{ marginLeft: g.members.length > 1 ? "1mm" : 0 }}>
-                  <div className="kaiki-label">{m.kaikiLabel}</div>
-                  {m.dharmaName && <div className="detail-line">法名　{m.dharmaName}</div>}
-                  <div className="detail-line">命日　{isoDateToWareki(m.deathDate)}</div>
-                  <div className="detail-line">
+            {/* 故人ごと: 回忌（縦中央）→ 法名・命日・俗名・享年の4列 */}
+            {g.members.map((m) => (
+              <Fragment key={m.memberId}>
+                <div className="col-kaiki">{m.kaikiLabel}</div>
+                <div className="detail-cluster">
+                  {m.dharmaName && <div className="col-houmyou">法名　{m.dharmaName}</div>}
+                  <div className="col-meinichi">命日　{isoDateToWareki(m.deathDate)}</div>
+                  <div className="col-zokumei">
                     俗名　{[m.familyName, m.givenName].filter(Boolean).join("　")}　様
                   </div>
                   {m.ageAtDeath && (
-                    <div className="detail-line">享年　{ageToKanji(m.ageAtDeath)}歳</div>
+                    <div className="col-kyounen">享年　{ageToKanji(m.ageAtDeath)}歳</div>
                   )}
                 </div>
-              ))}
-            </div>
+              </Fragment>
+            ))}
 
-            {/* 左端: 差出人・連絡先 */}
+            {/* 左端: 連絡案内 */}
             <div className="col-footer">
-              {postcardSenderName?.trim() && (
-                <div className="footer-sender-name">{postcardSenderName.trim()}</div>
-              )}
-              {postcardSenderAddress?.trim() && (
-                <div className="footer-address">{postcardSenderAddress.trim()}</div>
-              )}
               <div className="footer-contact">{postcardFooter}</div>
             </div>
           </div>

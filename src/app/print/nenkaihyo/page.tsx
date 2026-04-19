@@ -73,7 +73,7 @@ export default function NenkaihyoPrintPage() {
       <div>
         <h1 className="text-2xl font-bold text-amber-700">年回表の印刷</h1>
         <p className="text-sm text-stone-500 mt-1">
-          月を選ぶとその月に年回が当たる方を抽出します。案内ハガキ(裏面)と宛名を PDF として出力できます。
+          月を選ぶとその月に年回が当たる方を抽出します。案内文面（裏面）と宛名（表面・差出人印字）を PDF として出力できます。
         </p>
       </div>
 
@@ -125,7 +125,7 @@ export default function NenkaihyoPrintPage() {
               (items.length === 0 ? "bg-stone-300 pointer-events-none" : "bg-amber-700 hover:bg-amber-800")
             }
           >
-            宛名 PDF
+            宛名(表面) PDF
           </Link>
         </div>
       </div>

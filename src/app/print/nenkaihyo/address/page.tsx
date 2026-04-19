@@ -1,6 +1,7 @@
 "use client";
 import { fetchWithAuth } from "@/lib/fetch-with-auth";
 import { compareHouseholderGojuon } from "@/lib/householder-sort";
+import { westernNumeralsToKanjiDigits } from "@/lib/kanji-digits";
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
@@ -28,6 +29,40 @@ interface NenkaiItem {
   };
 }
 
+interface PostcardConfig {
+  senderName: string | null;
+  senderAddress: string | null;
+  sect: string | null;
+  ingo: string | null;
+  sango: string | null;
+  templeName: string | null;
+  chiefPriest: string | null;
+  chiefTitle: string | null;
+  senderPostalCode: string | null;
+  senderAddressLine1: string | null;
+  senderAddressLine2: string | null;
+  phone: string | null;
+  fax: string | null;
+  mobile: string | null;
+}
+
+const emptyConfig: PostcardConfig = {
+  senderName: null,
+  senderAddress: null,
+  sect: null,
+  ingo: null,
+  sango: null,
+  templeName: null,
+  chiefPriest: null,
+  chiefTitle: null,
+  senderPostalCode: null,
+  senderAddressLine1: null,
+  senderAddressLine2: null,
+  phone: null,
+  fax: null,
+  mobile: null,
+};
+
 export default function NenkaihyoAddressPage() {
   const sp = useSearchParams();
   const year = parseInt(sp.get("year") ?? String(new Date().getFullYear()), 10);
@@ -35,13 +70,37 @@ export default function NenkaihyoAddressPage() {
 
   const [items, setItems] = useState<NenkaiItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [cfg, setCfg] = useState<PostcardConfig>(emptyConfig);
 
   useEffect(() => {
     (async () => {
       try {
-        const res = await fetchWithAuth(`/api/kakocho/nenkai?year=${year}&month=${month}`);
-        const data = await res.json();
+        const [resItems, resCfg] = await Promise.all([
+          fetchWithAuth(`/api/kakocho/nenkai?year=${year}&month=${month}`),
+          fetchWithAuth(`/api/settings/nenkai-postcard`),
+        ]);
+        const data = await resItems.json();
         setItems(Array.isArray(data?.items) ? data.items : []);
+
+        if (resCfg.ok) {
+          const j = (await resCfg.json()) as PostcardConfig;
+          setCfg({
+            senderName: j.senderName ?? null,
+            senderAddress: j.senderAddress ?? null,
+            sect: j.sect ?? null,
+            ingo: j.ingo ?? null,
+            sango: j.sango ?? null,
+            templeName: j.templeName ?? null,
+            chiefPriest: j.chiefPriest ?? null,
+            chiefTitle: j.chiefTitle ?? null,
+            senderPostalCode: j.senderPostalCode ?? null,
+            senderAddressLine1: j.senderAddressLine1 ?? null,
+            senderAddressLine2: j.senderAddressLine2 ?? null,
+            phone: j.phone ?? null,
+            fax: j.fax ?? null,
+            mobile: j.mobile ?? null,
+          });
+        }
       } catch (e) {
         console.error(e);
       } finally {
@@ -50,7 +109,6 @@ export default function NenkaihyoAddressPage() {
     })();
   }, [year, month]);
 
-  // 戸主単位に重複排除
   const householders = useMemo(() => {
     const map = new Map<string, NenkaiItem["householder"]>();
     for (const it of items) {
@@ -90,70 +148,135 @@ export default function NenkaihyoAddressPage() {
         .postcard {
           width: 100mm;
           height: 148mm;
-          padding: 8mm 6mm;
+          padding: 7mm 5mm;
           background: #fff;
           color: #000;
           box-sizing: border-box;
           font-family: "Yu Mincho", "YuMincho", "Hiragino Mincho ProN", "MS Mincho", serif;
           position: relative;
         }
-        /* 郵便番号枠(ハガキ上部) */
-        .postal-box {
+        /* 宛先 郵便番号（右上・横書き・漢数字） */
+        .recv-postal {
           position: absolute;
-          top: 8mm;
-          right: 15mm;
+          top: 6mm;
+          right: 8mm;
+          font-size: 10.5pt;
+          letter-spacing: 0.18em;
+          writing-mode: horizontal-tb;
+        }
+        /* 宛名・住所のブロック（右寄りだがカード中央付近にまとまる） */
+        .recipient-area {
+          position: absolute;
+          top: 16mm;
+          left: 8mm;
+          right: 8mm;
+          bottom: 40mm;
           display: flex;
-          gap: 0.8mm;
+          flex-direction: row-reverse;
+          justify-content: center;
+          align-items: center;
+          gap: 5mm;
         }
-        .postal-box .digit {
-          width: 4.5mm;
-          height: 6mm;
-          border: 0.3pt solid #d00;
-          text-align: center;
-          line-height: 6mm;
-          font-size: 11pt;
-          color: #000;
-        }
-        .postal-box .sep {
-          width: 1mm;
-        }
-        /* 宛先(住所)縦書き */
-        .addr-block {
-          position: absolute;
-          top: 22mm;
-          right: 10mm;
-          bottom: 20mm;
+        .recipient-area > .col {
           writing-mode: vertical-rl;
           -webkit-writing-mode: vertical-rl;
-          font-size: 12pt;
-          line-height: 1.5;
+          flex-shrink: 0;
+        }
+        .recipient-area .col-address {
+          font-size: 11.5pt;
+          line-height: 1.55;
           letter-spacing: 0.08em;
+          max-height: 108mm;
         }
-        /* 氏名は中央大きく */
-        .name-block {
-          position: absolute;
-          top: 35mm;
-          left: 0;
-          right: 0;
-          writing-mode: vertical-rl;
-          -webkit-writing-mode: vertical-rl;
+        .recipient-area .col-name {
           font-size: 20pt;
           font-weight: 500;
-          letter-spacing: 0.25em;
-          text-align: center;
-          height: 90mm;
-          display: flex;
-          justify-content: center;
+          letter-spacing: 0.22em;
+          line-height: 1.45;
+          max-height: 100mm;
         }
-        .name-block .sama {
-          font-size: 14pt;
-          margin-top: 3mm;
+        .recipient-area .col-name .sama {
+          font-size: 13pt;
+          margin-top: 2mm;
+        }
+        /* 差出人（左下・Access 風：右から 住所+郵便、山号寺院、宗派…、電話） */
+        .sender-root {
+          position: absolute;
+          left: 4mm;
+          bottom: 5mm;
+          max-width: 92mm;
+          display: flex;
+          flex-direction: row-reverse;
+          align-items: flex-end;
+          gap: 3.5mm;
+        }
+        .sender-root .sender-col {
+          writing-mode: vertical-rl;
+          -webkit-writing-mode: vertical-rl;
+          flex-shrink: 0;
+          line-height: 1.55;
+        }
+        .sender-root .sender-addr-stack {
+          display: flex;
+          flex-direction: column;
+          align-items: flex-end;
+          gap: 1mm;
+        }
+        .sender-root .sender-zip-h {
+          writing-mode: horizontal-tb;
+          font-size: 7.5pt;
+          letter-spacing: 0.12em;
+          color: #111;
+        }
+        .sender-root .sender-addr-v {
+          writing-mode: vertical-rl;
+          -webkit-writing-mode: vertical-rl;
+          font-size: 7.5pt;
+          letter-spacing: 0.06em;
+          max-height: 32mm;
+        }
+        .sender-root .sender-sect {
+          font-size: 7.5pt;
+          letter-spacing: 0.06em;
+          max-height: 34mm;
+        }
+        .sender-root .sender-temple-line {
+          font-size: 8pt;
+          font-weight: 600;
+          letter-spacing: 0.12em;
+          max-height: 34mm;
+        }
+        .sender-root .sender-phone {
+          font-size: 7.5pt;
+          letter-spacing: 0.05em;
+          max-height: 38mm;
+        }
+        .sender-legacy {
+          position: absolute;
+          left: 6mm;
+          bottom: 6mm;
+          max-width: 34mm;
+          writing-mode: vertical-rl;
+          -webkit-writing-mode: vertical-rl;
+          font-size: 7.5pt;
+          line-height: 1.5;
+          letter-spacing: 0.06em;
+          color: #111;
+        }
+        .sender-legacy .sl-name {
+          font-size: 8.5pt;
+          font-weight: bold;
+          margin-bottom: 1.5mm;
+        }
+        .sender-legacy .sl-addr {
+          font-size: 7pt;
+          white-space: pre-line;
         }
       `}</style>
 
       <div className="no-print bg-stone-100 p-4 flex items-center gap-3 sticky top-0 z-10 border-b border-stone-200">
         <div className="text-sm text-stone-600">
-          {year}年{month}月 宛名 — {householders.length}世帯
+          {year}年{month}月 宛名（表面）— {householders.length}世帯
         </div>
         <button
           onClick={() => window.print()}
@@ -168,35 +291,79 @@ export default function NenkaihyoAddressPage() {
           <div className="no-print text-stone-500 py-12">該当する戸主はいません</div>
         )}
         {householders.map((h) => {
-          const zip = (h.postalCode ?? "").replace(/[^0-9]/g, "").padEnd(7, " ").slice(0, 7);
-          const addr = [h.address1, h.address2, h.address3].filter(Boolean).join("");
+          const zipDigits = (h.postalCode ?? "").replace(/[^0-9]/g, "");
+          const recvZipKanji = zipDigits
+            ? westernNumeralsToKanjiDigits(zipDigits)
+            : westernNumeralsToKanjiDigits((h.postalCode ?? "").replace(/[^0-9０-９]/g, ""));
+          const rawAddr = [h.address1, h.address2, h.address3].filter(Boolean).join("");
+          const addrKanji = westernNumeralsToKanjiDigits(rawAddr);
+
+          const senderZipDigits = (cfg.senderPostalCode ?? "").replace(/[^0-9]/g, "");
+          const senderZipKanji =
+            senderZipDigits.length >= 1 ? westernNumeralsToKanjiDigits(senderZipDigits) : "";
+          const senderLine1 = westernNumeralsToKanjiDigits(cfg.senderAddressLine1 ?? "");
+          const senderLine2 = westernNumeralsToKanjiDigits(cfg.senderAddressLine2 ?? "");
+          const senderAddrVertical = [senderLine1, senderLine2].filter(Boolean).join("");
+          const tel = cfg.phone?.trim() || cfg.mobile?.trim() || "";
+          const phoneKanji = tel
+            ? `（電話）${westernNumeralsToKanjiDigits(tel.replace(/\s/g, "").replace(/[-－ー]/g, "ー"))}`
+            : "";
+
+          const chiefLine = [cfg.chiefTitle?.trim(), cfg.chiefPriest?.trim()].filter(Boolean).join("　");
+
+          const hasStructuredSender =
+            !!senderZipKanji ||
+            !!senderAddrVertical ||
+            !!(cfg.sect?.trim() || cfg.ingo?.trim() || cfg.sango?.trim() || cfg.templeName?.trim()) ||
+            !!phoneKanji ||
+            !!chiefLine;
+
+          const sectText = [cfg.sect?.trim(), cfg.ingo?.trim()].filter(Boolean).join("　");
+
           return (
             <div
               key={h.id}
               className="postcard shadow border border-stone-300 print:shadow-none print:border-0"
             >
-              {/* 郵便番号 */}
-              <div className="postal-box">
-                <div className="digit">{zip[0]?.trim() || ""}</div>
-                <div className="digit">{zip[1]?.trim() || ""}</div>
-                <div className="digit">{zip[2]?.trim() || ""}</div>
-                <div className="sep" />
-                <div className="digit">{zip[3]?.trim() || ""}</div>
-                <div className="digit">{zip[4]?.trim() || ""}</div>
-                <div className="digit">{zip[5]?.trim() || ""}</div>
-                <div className="digit">{zip[6]?.trim() || ""}</div>
-              </div>
+              {recvZipKanji && <div className="recv-postal">{recvZipKanji}</div>}
 
-              {/* 住所(縦書き) */}
-              <div className="addr-block">{addr}</div>
-
-              {/* 氏名(中央大きく) */}
-              <div className="name-block">
-                <div>
+              <div className="recipient-area">
+                <div className="col col-address">{addrKanji}</div>
+                <div className="col col-name">
                   {h.familyName}　{h.givenName}
                   <span className="sama">　様</span>
                 </div>
               </div>
+
+              {hasStructuredSender ? (
+                <div className="sender-root">
+                  {(senderZipKanji || senderAddrVertical) && (
+                    <div className="sender-addr-stack">
+                      {senderZipKanji && <div className="sender-zip-h">{senderZipKanji}</div>}
+                      {senderAddrVertical && <div className="sender-addr-v">{senderAddrVertical}</div>}
+                    </div>
+                  )}
+                  {(cfg.sango?.trim() || cfg.templeName?.trim()) && (
+                    <div className="sender-col sender-temple-line">
+                      {[cfg.sango?.trim(), cfg.templeName?.trim()].filter(Boolean).join("　")}
+                    </div>
+                  )}
+                  {sectText && <div className="sender-col sender-sect">{sectText}</div>}
+                  {chiefLine && <div className="sender-col sender-sect">{chiefLine}</div>}
+                  {phoneKanji && <div className="sender-col sender-phone">{phoneKanji}</div>}
+                </div>
+              ) : (
+                (cfg.senderName?.trim() || cfg.senderAddress?.trim()) && (
+                  <div className="sender-legacy">
+                    {cfg.senderName?.trim() && (
+                      <div className="sl-name">{westernNumeralsToKanjiDigits(cfg.senderName.trim())}</div>
+                    )}
+                    {cfg.senderAddress?.trim() && (
+                      <div className="sl-addr">{westernNumeralsToKanjiDigits(cfg.senderAddress.trim())}</div>
+                    )}
+                  </div>
+                )
+              )}
             </div>
           );
         })}

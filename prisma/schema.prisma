@@ -183,11 +183,35 @@ model GraveContractHistory {
 /// アプリ全体の単一設定（id は常に "default"）
 model AppConfig {
   id                         String   @id
-  /// 年回案内ハガキ裏面の差出人名（寺院名など）
+  /// 年回案内ハガキ表面（宛名面）の差出人名（寺院名など）※従来・互換用
   nenkaiPostcardSenderName   String?
-  /// 差出人住所（複数行可）
+  /// 差出人住所（複数行可・表面に印字）※従来・互換用
   nenkaiPostcardSenderAddress String? @db.Text
   /// 裏面左下の連絡・案内文
   nenkaiPostcardFooter       String?  @db.Text
+  /// 宗派（表面・差出人欄）
+  nenkaiPostcardSect         String?
+  /// 院号
+  nenkaiPostcardIngo         String?
+  /// 山号
+  nenkaiPostcardSango        String?
+  /// 寺院名
+  nenkaiPostcardTempleName   String?
+  /// 住職氏名
+  nenkaiPostcardChiefPriest  String?
+  /// 役職（例: 住職）
+  nenkaiPostcardChiefTitle   String?
+  /// 差出人（寺院）郵便番号（表示は漢数字）
+  nenkaiPostcardSenderPostalCode String?
+  /// 差出人住所 行1（都道府県〜町名など）
+  nenkaiPostcardSenderAddressLine1 String? @db.Text
+  /// 差出人住所 行2（番地など）
+  nenkaiPostcardSenderAddressLine2 String?
+  /// 電話（表示は漢数字）
+  nenkaiPostcardPhone        String?
+  /// FAX
+  nenkaiPostcardFax          String?
+  /// 携帯
+  nenkaiPostcardMobile       String?
   updatedAt                  DateTime @updatedAt
 }
