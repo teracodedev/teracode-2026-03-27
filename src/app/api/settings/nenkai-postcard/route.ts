@@ -70,8 +70,12 @@ export async function GET() {
     return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
   }
 
-  const row = await prisma.appConfig.findUnique({ where: { id: CONFIG_ID } });
-  return NextResponse.json(jsonFromRow(row));
+  try {
+    const row = await prisma.appConfig.findUnique({ where: { id: CONFIG_ID } });
+    return NextResponse.json(jsonFromRow(row));
+  } catch {
+    return NextResponse.json({ error: "データの読み込みに失敗しました" }, { status: 500 });
+  }
 }
 
 /** 管理者のみ更新 */
@@ -108,45 +112,49 @@ export async function PUT(req: NextRequest) {
     footer = t === "" ? null : body.footer;
   }
 
-  await prisma.appConfig.upsert({
-    where: { id: CONFIG_ID },
-    create: {
-      id: CONFIG_ID,
-      nenkaiPostcardSenderName: senderName,
-      nenkaiPostcardSenderAddress: senderAddress,
-      nenkaiPostcardFooter: footer,
-      nenkaiPostcardSect: opt(body.sect),
-      nenkaiPostcardIngo: opt(body.ingo),
-      nenkaiPostcardSango: opt(body.sango),
-      nenkaiPostcardTempleName: opt(body.templeName),
-      nenkaiPostcardChiefPriest: opt(body.chiefPriest),
-      nenkaiPostcardChiefTitle: opt(body.chiefTitle),
-      nenkaiPostcardSenderPostalCode: opt(body.senderPostalCode),
-      nenkaiPostcardSenderAddressLine1: opt(body.senderAddressLine1),
-      nenkaiPostcardSenderAddressLine2: opt(body.senderAddressLine2),
-      nenkaiPostcardPhone: opt(body.phone),
-      nenkaiPostcardFax: opt(body.fax),
-      nenkaiPostcardMobile: opt(body.mobile),
-    },
-    update: {
-      nenkaiPostcardSenderName: senderName,
-      nenkaiPostcardSenderAddress: senderAddress,
-      nenkaiPostcardFooter: footer,
-      nenkaiPostcardSect: opt(body.sect),
-      nenkaiPostcardIngo: opt(body.ingo),
-      nenkaiPostcardSango: opt(body.sango),
-      nenkaiPostcardTempleName: opt(body.templeName),
-      nenkaiPostcardChiefPriest: opt(body.chiefPriest),
-      nenkaiPostcardChiefTitle: opt(body.chiefTitle),
-      nenkaiPostcardSenderPostalCode: opt(body.senderPostalCode),
-      nenkaiPostcardSenderAddressLine1: opt(body.senderAddressLine1),
-      nenkaiPostcardSenderAddressLine2: opt(body.senderAddressLine2),
-      nenkaiPostcardPhone: opt(body.phone),
-      nenkaiPostcardFax: opt(body.fax),
-      nenkaiPostcardMobile: opt(body.mobile),
-    },
-  });
+  try {
+    await prisma.appConfig.upsert({
+      where: { id: CONFIG_ID },
+      create: {
+        id: CONFIG_ID,
+        nenkaiPostcardSenderName: senderName,
+        nenkaiPostcardSenderAddress: senderAddress,
+        nenkaiPostcardFooter: footer,
+        nenkaiPostcardSect: opt(body.sect),
+        nenkaiPostcardIngo: opt(body.ingo),
+        nenkaiPostcardSango: opt(body.sango),
+        nenkaiPostcardTempleName: opt(body.templeName),
+        nenkaiPostcardChiefPriest: opt(body.chiefPriest),
+        nenkaiPostcardChiefTitle: opt(body.chiefTitle),
+        nenkaiPostcardSenderPostalCode: opt(body.senderPostalCode),
+        nenkaiPostcardSenderAddressLine1: opt(body.senderAddressLine1),
+        nenkaiPostcardSenderAddressLine2: opt(body.senderAddressLine2),
+        nenkaiPostcardPhone: opt(body.phone),
+        nenkaiPostcardFax: opt(body.fax),
+        nenkaiPostcardMobile: opt(body.mobile),
+      },
+      update: {
+        nenkaiPostcardSenderName: senderName,
+        nenkaiPostcardSenderAddress: senderAddress,
+        nenkaiPostcardFooter: footer,
+        nenkaiPostcardSect: opt(body.sect),
+        nenkaiPostcardIngo: opt(body.ingo),
+        nenkaiPostcardSango: opt(body.sango),
+        nenkaiPostcardTempleName: opt(body.templeName),
+        nenkaiPostcardChiefPriest: opt(body.chiefPriest),
+        nenkaiPostcardChiefTitle: opt(body.chiefTitle),
+        nenkaiPostcardSenderPostalCode: opt(body.senderPostalCode),
+        nenkaiPostcardSenderAddressLine1: opt(body.senderAddressLine1),
+        nenkaiPostcardSenderAddressLine2: opt(body.senderAddressLine2),
+        nenkaiPostcardPhone: opt(body.phone),
+        nenkaiPostcardFax: opt(body.fax),
+        nenkaiPostcardMobile: opt(body.mobile),
+      },
+    });
 
-  const row = await prisma.appConfig.findUnique({ where: { id: CONFIG_ID } });
-  return NextResponse.json(jsonFromRow(row));
+    const row = await prisma.appConfig.findUnique({ where: { id: CONFIG_ID } });
+    return NextResponse.json(jsonFromRow(row));
+  } catch {
+    return NextResponse.json({ error: "保存に失敗しました" }, { status: 500 });
+  }
 }
