@@ -189,6 +189,8 @@ model AppConfig {
   nenkaiPostcardSenderAddress String? @db.Text
   /// 裏面左下の連絡・案内文
   nenkaiPostcardFooter       String?  @db.Text
+  /// 裏面右側の案内文
+  nenkaiPostcardIntro        String?  @db.Text
   /// 宗派（表面・差出人欄）
   nenkaiPostcardSect         String?
   /// 院号

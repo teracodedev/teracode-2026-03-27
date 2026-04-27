@@ -2,7 +2,10 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-import { DEFAULT_NENKAI_POSTCARD_FOOTER } from "@/lib/nenkai-postcard-config";
+import {
+  DEFAULT_NENKAI_POSTCARD_FOOTER,
+  DEFAULT_NENKAI_POSTCARD_INTRO,
+} from "@/lib/nenkai-postcard-config";
 
 type NenkaiConfigResponse = {
   senderName: string | null;
@@ -19,6 +22,8 @@ type NenkaiConfigResponse = {
   phone: string | null;
   fax: string | null;
   mobile: string | null;
+  intro: string;
+  introIsDefault?: boolean;
   footer: string;
   footerIsDefault?: boolean;
   error?: string;
@@ -42,6 +47,7 @@ export default function BasicInfoSettingsPage() {
     phone: "",
     fax: "",
     mobile: "",
+    intro: "",
     footer: "",
   });
 
@@ -67,6 +73,7 @@ export default function BasicInfoSettingsPage() {
         phone: data.phone ?? "",
         fax: data.fax ?? "",
         mobile: data.mobile ?? "",
+        intro: data.intro ?? DEFAULT_NENKAI_POSTCARD_INTRO,
         footer: data.footer ?? DEFAULT_NENKAI_POSTCARD_FOOTER,
       });
     } catch {
@@ -104,6 +111,7 @@ export default function BasicInfoSettingsPage() {
           phone: form.phone,
           fax: form.fax,
           mobile: form.mobile,
+          intro: form.intro,
           footer: form.footer,
         }),
       });
@@ -126,6 +134,7 @@ export default function BasicInfoSettingsPage() {
         phone: data.phone ?? "",
         fax: data.fax ?? "",
         mobile: data.mobile ?? "",
+        intro: data.intro ?? DEFAULT_NENKAI_POSTCARD_INTRO,
         footer: data.footer ?? DEFAULT_NENKAI_POSTCARD_FOOTER,
       });
     } catch {
@@ -149,7 +158,7 @@ export default function BasicInfoSettingsPage() {
         </Link>
         <h1 className="text-2xl font-bold text-amber-700">基本情報設定</h1>
         <p className="text-stone-500 text-sm mt-1">
-          寺院情報・差出人の住所・連絡先を登録します。宛名面（表面）では番号を漢数字に変換して印字します。案内文は年回案内ハガキ裏面の左下に使います。
+          寺院情報・差出人の住所・連絡先を登録します。宛名面（表面）では番号を漢数字に変換して印字します。案内文は年回案内ハガキ裏面の右側文面・左下文面に使います。
         </p>
       </div>
 
@@ -287,7 +296,26 @@ export default function BasicInfoSettingsPage() {
               </div>
             </div>
 
-            <div className="bg-white rounded-xl shadow-sm border border-stone-200 p-6 space-y-4">
+            <div className="bg-white rounded-xl shadow-sm border border-stone-200 p-6 space-y-6">
+              <h2 className="text-lg font-semibold text-stone-800 border-b border-stone-100 pb-2">
+                案内文（ハガキ裏面）
+              </h2>
+              <div>
+                <label htmlFor="intro" className="block text-sm font-medium text-stone-700 mb-1">
+                  右の文面（2行）
+                </label>
+                <textarea
+                  id="intro"
+                  rows={6}
+                  className={`${inputCls} text-sm leading-relaxed min-h-[160px]`}
+                  value={form.intro}
+                  onChange={(e) => setForm((f) => ({ ...f, intro: e.target.value }))}
+                />
+                <p className="mt-1 text-xs text-stone-500">
+                  改行で2行にできます。空にして保存すると既定の文面が使われます。
+                </p>
+              </div>
+
               <h2 className="text-lg font-semibold text-stone-800 border-b border-stone-100 pb-2">
                 連絡・案内文（ハガキ裏面・左下）
               </h2>

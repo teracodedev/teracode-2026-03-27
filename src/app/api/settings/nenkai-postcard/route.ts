@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
-import { DEFAULT_NENKAI_POSTCARD_FOOTER } from "@/lib/nenkai-postcard-config";
+import {
+  DEFAULT_NENKAI_POSTCARD_FOOTER,
+  DEFAULT_NENKAI_POSTCARD_INTRO,
+} from "@/lib/nenkai-postcard-config";
 
 const CONFIG_ID = "default";
 
@@ -16,6 +19,13 @@ async function requireAdmin() {
 function resolveFooter(stored: string | null | undefined): string {
   if (stored === null || stored === undefined || stored.trim() === "") {
     return DEFAULT_NENKAI_POSTCARD_FOOTER;
+  }
+  return stored;
+}
+
+function resolveIntro(stored: string | null | undefined): string {
+  if (stored === null || stored === undefined || stored.trim() === "") {
+    return DEFAULT_NENKAI_POSTCARD_INTRO;
   }
   return stored;
 }
@@ -53,6 +63,11 @@ function jsonFromRow(row: Awaited<ReturnType<typeof prisma.appConfig.findUnique>
     phone: row?.nenkaiPostcardPhone?.trim() || null,
     fax: row?.nenkaiPostcardFax?.trim() || null,
     mobile: row?.nenkaiPostcardMobile?.trim() || null,
+    intro: resolveIntro(row?.nenkaiPostcardIntro),
+    introIsDefault:
+      row?.nenkaiPostcardIntro === null ||
+      row?.nenkaiPostcardIntro === undefined ||
+      (row.nenkaiPostcardIntro?.trim() ?? "") === "",
     footer: resolveFooter(row?.nenkaiPostcardFooter),
     footerIsDefault:
       row?.nenkaiPostcardFooter === null ||
@@ -98,6 +113,7 @@ export async function PUT(req: NextRequest) {
     phone?: string | null;
     fax?: string | null;
     mobile?: string | null;
+    intro?: string | null;
     footer?: string | null;
   };
 
@@ -111,6 +127,11 @@ export async function PUT(req: NextRequest) {
     const t = body.footer.trim();
     footer = t === "" ? null : body.footer;
   }
+  let intro: string | null = null;
+  if (typeof body.intro === "string") {
+    const t = body.intro.trim();
+    intro = t === "" ? null : body.intro;
+  }
 
   try {
     await prisma.appConfig.upsert({
@@ -120,6 +141,7 @@ export async function PUT(req: NextRequest) {
         nenkaiPostcardSenderName: senderName,
         nenkaiPostcardSenderAddress: senderAddress,
         nenkaiPostcardFooter: footer,
+        nenkaiPostcardIntro: intro,
         nenkaiPostcardSect: opt(body.sect),
         nenkaiPostcardIngo: opt(body.ingo),
         nenkaiPostcardSango: opt(body.sango),
@@ -137,6 +159,7 @@ export async function PUT(req: NextRequest) {
         nenkaiPostcardSenderName: senderName,
         nenkaiPostcardSenderAddress: senderAddress,
         nenkaiPostcardFooter: footer,
+        nenkaiPostcardIntro: intro,
         nenkaiPostcardSect: opt(body.sect),
         nenkaiPostcardIngo: opt(body.ingo),
         nenkaiPostcardSango: opt(body.sango),

@@ -2,7 +2,10 @@
 import { fetchWithAuth } from "@/lib/fetch-with-auth";
 import { compareHouseholderGojuon } from "@/lib/householder-sort";
 import { isoDateToWareki, numToKanji, yearToWareki } from "@/lib/kanji-num";
-import { DEFAULT_NENKAI_POSTCARD_FOOTER } from "@/lib/nenkai-postcard-config";
+import {
+  DEFAULT_NENKAI_POSTCARD_FOOTER,
+  DEFAULT_NENKAI_POSTCARD_INTRO,
+} from "@/lib/nenkai-postcard-config";
 import { Fragment, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
@@ -47,6 +50,7 @@ export default function NenkaihyoPostcardPage() {
   const [items, setItems] = useState<NenkaiItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [postcardFooter, setPostcardFooter] = useState(DEFAULT_NENKAI_POSTCARD_FOOTER);
+  const [postcardIntro, setPostcardIntro] = useState(DEFAULT_NENKAI_POSTCARD_INTRO);
 
   useEffect(() => {
     (async () => {
@@ -61,6 +65,7 @@ export default function NenkaihyoPostcardPage() {
         if (resCfg.ok) {
           const cfg = await resCfg.json();
           setPostcardFooter(typeof cfg.footer === "string" ? cfg.footer : DEFAULT_NENKAI_POSTCARD_FOOTER);
+          setPostcardIntro(typeof cfg.intro === "string" ? cfg.intro : DEFAULT_NENKAI_POSTCARD_INTRO);
         }
       } catch (e) {
         console.error(e);
@@ -105,7 +110,6 @@ export default function NenkaihyoPostcardPage() {
           .postcard {
             page-break-after: always;
             box-shadow: none !important;
-            border: none !important;
             margin: 0 !important;
           }
           .postcard:last-child { page-break-after: auto; }
@@ -114,7 +118,7 @@ export default function NenkaihyoPostcardPage() {
         .postcard {
           width: 100mm;
           height: 148mm;
-          padding: 10mm 6mm 9mm 6mm;
+          padding: 8mm 6mm 8mm 6mm;
           background: #fff;
           color: #000;
           box-sizing: border-box;
@@ -123,8 +127,9 @@ export default function NenkaihyoPostcardPage() {
           flex-direction: row-reverse;
           align-items: flex-start;
           justify-content: flex-start;
-          gap: 1.5mm;
+          gap: 1.2mm;
           overflow: hidden;
+          border: 0.25mm solid #222;
         }
         .postcard > .col-title,
         .postcard > .col-intro,
@@ -138,7 +143,7 @@ export default function NenkaihyoPostcardPage() {
 
         /* 右端: 年号＋見出し（上寄せ） */
         .col-title {
-          font-size: 14pt;
+          font-size: 16pt;
           font-weight: bold;
           letter-spacing: 0.2em;
           padding: 0 0.5mm 0 0.5mm;
@@ -146,15 +151,16 @@ export default function NenkaihyoPostcardPage() {
         }
         /* 導入文は1列にまとめる（縦に続けて折り返し） */
         .col-intro {
-          font-size: 9pt;
+          font-size: 9.5pt;
           letter-spacing: 0.05em;
           padding: 0 0.5mm 0 0.5mm;
-          max-width: 13mm;
+          max-width: 14mm;
           line-height: 1.82;
+          white-space: pre-line;
         }
         /* 回忌（ページ内で縦方向センター） */
         .col-kaiki {
-          font-size: 22pt;
+          font-size: 23pt;
           font-weight: bold;
           letter-spacing: 0.14em;
           padding: 0 0.5mm;
@@ -216,7 +222,7 @@ export default function NenkaihyoPostcardPage() {
         }
         /* 左端: 連絡（最小・上寄せ） */
         .col-footer {
-          font-size: 6.5pt;
+          font-size: 7pt;
           letter-spacing: 0.02em;
           line-height: 1.6;
           padding: 0 0.5mm;
@@ -254,16 +260,11 @@ export default function NenkaihyoPostcardPage() {
           >
             {/* 右端: タイトル */}
             <div className="col-title">
-              {warekiYear}
-              <br />
-              ご法事のご案内
+              {warekiYear}　ご法事のご案内
             </div>
 
             {/* 導入文（1列・縦書きで全文） */}
-            <div className="col-intro">
-              {warekiYear}の年回を左記のようにお迎えになっております。
-              ご法事を営まれ、ご仏縁を結ばれますようご案内申し上げます。
-            </div>
+            <div className="col-intro">{postcardIntro}</div>
 
             {/* 故人ごと: 回忌（縦中央）→ 法名・命日・俗名・享年の4列 */}
             {g.members.map((m) => (
