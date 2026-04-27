@@ -85,49 +85,54 @@ export default function BasicInfoSettingsPage() {
     setError("");
     setSuccess("");
     setSaving(true);
-    const res = await fetch("/api/settings/nenkai-postcard", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        senderName: null,
-        senderAddress: null,
-        sect: form.sect,
-        ingo: form.ingo,
-        sango: form.sango,
-        templeName: form.templeName,
-        chiefPriest: form.chiefPriest,
-        chiefTitle: form.chiefTitle,
-        senderPostalCode: form.senderPostalCode,
-        senderAddressLine1: form.senderAddressLine1,
-        senderAddressLine2: form.senderAddressLine2,
-        phone: form.phone,
-        fax: form.fax,
-        mobile: form.mobile,
-        footer: form.footer,
-      }),
-    });
-    const data = await res.json();
-    setSaving(false);
-    if (!res.ok) {
-      setError(data.error || "保存に失敗しました");
-      return;
+    try {
+      const res = await fetch("/api/settings/nenkai-postcard", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          senderName: null,
+          senderAddress: null,
+          sect: form.sect,
+          ingo: form.ingo,
+          sango: form.sango,
+          templeName: form.templeName,
+          chiefPriest: form.chiefPriest,
+          chiefTitle: form.chiefTitle,
+          senderPostalCode: form.senderPostalCode,
+          senderAddressLine1: form.senderAddressLine1,
+          senderAddressLine2: form.senderAddressLine2,
+          phone: form.phone,
+          fax: form.fax,
+          mobile: form.mobile,
+          footer: form.footer,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || "保存に失敗しました");
+        return;
+      }
+      setSuccess("保存しました");
+      setForm({
+        sect: data.sect ?? "",
+        ingo: data.ingo ?? "",
+        sango: data.sango ?? "",
+        templeName: data.templeName ?? "",
+        chiefPriest: data.chiefPriest ?? "",
+        chiefTitle: data.chiefTitle ?? "",
+        senderPostalCode: data.senderPostalCode ?? "",
+        senderAddressLine1: data.senderAddressLine1 ?? "",
+        senderAddressLine2: data.senderAddressLine2 ?? "",
+        phone: data.phone ?? "",
+        fax: data.fax ?? "",
+        mobile: data.mobile ?? "",
+        footer: data.footer ?? DEFAULT_NENKAI_POSTCARD_FOOTER,
+      });
+    } catch {
+      setError("保存に失敗しました");
+    } finally {
+      setSaving(false);
     }
-    setSuccess("保存しました");
-    setForm({
-      sect: data.sect ?? "",
-      ingo: data.ingo ?? "",
-      sango: data.sango ?? "",
-      templeName: data.templeName ?? "",
-      chiefPriest: data.chiefPriest ?? "",
-      chiefTitle: data.chiefTitle ?? "",
-      senderPostalCode: data.senderPostalCode ?? "",
-      senderAddressLine1: data.senderAddressLine1 ?? "",
-      senderAddressLine2: data.senderAddressLine2 ?? "",
-      phone: data.phone ?? "",
-      fax: data.fax ?? "",
-      mobile: data.mobile ?? "",
-      footer: data.footer ?? DEFAULT_NENKAI_POSTCARD_FOOTER,
-    });
   };
 
   const inputCls =
