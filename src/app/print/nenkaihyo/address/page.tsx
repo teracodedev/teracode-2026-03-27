@@ -180,9 +180,9 @@ export default function NenkaihyoAddressPage() {
           top: 50%;
         }
         .recipient-area .col-address {
-          right: 5mm;
+          right: 10mm;
           transform: translateY(-50%);
-          font-size: 11.5pt;
+          font-size: 13pt;
           line-height: 1.55;
           letter-spacing: 0.08em;
           max-height: 90mm;
@@ -219,16 +219,12 @@ export default function NenkaihyoAddressPage() {
           line-height: 1.4;
           white-space: nowrap;
         }
-        .sender-root .sender-addr-stack {
-          display: flex;
-          flex-direction: column;
-          align-items: flex-end;
-          gap: 0.5mm;
-        }
         .sender-root .sender-zip-h {
           writing-mode: horizontal-tb;
           font-size: 7pt;
           letter-spacing: 0.12em;
+          flex-shrink: 0;
+          white-space: nowrap;
         }
         .sender-root .sender-addr-v {
           writing-mode: vertical-rl;
@@ -299,9 +295,15 @@ export default function NenkaihyoAddressPage() {
             .filter(Boolean)
             .map((p) => westernNumeralsToKanjiDigits(p!));
 
-          const senderZipDigits = (cfg.senderPostalCode ?? "").replace(/[^0-9]/g, "");
-          const senderZipKanji =
-            senderZipDigits.length >= 1 ? westernNumeralsToKanjiDigits(senderZipDigits) : "";
+          const senderZipDigits = (cfg.senderPostalCode ?? "")
+            .replace(/[０-９]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0xfee0))
+            .replace(/[^0-9]/g, "");
+          const senderZip =
+            senderZipDigits.length === 7
+              ? `〒${senderZipDigits.slice(0, 3)}-${senderZipDigits.slice(3)}`
+              : senderZipDigits
+              ? `〒${senderZipDigits}`
+              : "";
           const senderLine1 = westernNumeralsToKanjiDigits(cfg.senderAddressLine1 ?? "");
           const senderLine2 = westernNumeralsToKanjiDigits(cfg.senderAddressLine2 ?? "");
           const senderAddrVertical = [senderLine1, senderLine2].filter(Boolean).join("");
@@ -311,7 +313,7 @@ export default function NenkaihyoAddressPage() {
             : "";
 
           const hasStructuredSender =
-            !!senderZipKanji ||
+            !!senderZip ||
             !!senderAddrVertical ||
             !!(cfg.sect?.trim() || cfg.ingo?.trim() || cfg.sango?.trim() || cfg.templeName?.trim()) ||
             !!phoneKanji;
@@ -346,12 +348,8 @@ export default function NenkaihyoAddressPage() {
                       {[cfg.sango?.trim(), cfg.templeName?.trim()].filter(Boolean).join("　")}
                     </div>
                   )}
-                  {(senderZipKanji || senderAddrVertical) && (
-                    <div className="sender-addr-stack">
-                      {senderZipKanji && <div className="sender-zip-h">〒{senderZipKanji}</div>}
-                      {senderAddrVertical && <div className="sender-addr-v">{senderAddrVertical}</div>}
-                    </div>
-                  )}
+                  {senderZip && <div className="sender-zip-h">{senderZip}</div>}
+                  {senderAddrVertical && <div className="sender-col sender-addr-v">{senderAddrVertical}</div>}
                 </div>
               ) : (
                 (cfg.senderName?.trim() || cfg.senderAddress?.trim()) && (
