@@ -202,50 +202,50 @@ export default function NenkaihyoAddressPage() {
         .recipient-area .col-name .sama {
           margin-top: 2mm;
         }
-        /* 差出人（左下・筆まめ風：左から 電話→宗派→寺院名→住所） */
+        /* 差出人（画像レイアウト準拠：上に郵便番号、下に住所→宗派→山号寺号） */
         .sender-root {
           position: absolute;
-          left: 4mm;
-          bottom: 5mm;
+          left: 8mm;
+          bottom: 18mm;
+          display: flex;
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 1mm;
+        }
+        .sender-root .sender-cols {
           display: flex;
           flex-direction: row;
-          align-items: flex-end;
-          gap: 2mm;
+          align-items: flex-start;
+          gap: 1.8mm;
         }
         .sender-root .sender-col {
           writing-mode: vertical-rl;
           -webkit-writing-mode: vertical-rl;
           flex-shrink: 0;
-          line-height: 1.4;
+          line-height: 1.45;
           white-space: nowrap;
         }
-        .sender-root .sender-zip-h {
+        .sender-root .sender-zip {
           writing-mode: horizontal-tb;
           font-size: 7pt;
-          letter-spacing: 0.12em;
+          letter-spacing: 0.08em;
           flex-shrink: 0;
           white-space: nowrap;
         }
         .sender-root .sender-addr-v {
-          writing-mode: vertical-rl;
-          -webkit-writing-mode: vertical-rl;
-          font-size: 7.5pt;
-          letter-spacing: 0.05em;
-          line-height: 1.4;
-          white-space: nowrap;
+          font-size: 8pt;
+          letter-spacing: 0.06em;
         }
         .sender-root .sender-sect {
           font-size: 7pt;
           letter-spacing: 0.06em;
+          margin-top: 20mm;
         }
         .sender-root .sender-temple-line {
-          font-size: 8.5pt;
+          font-size: 8pt;
           font-weight: 600;
-          letter-spacing: 0.1em;
-        }
-        .sender-root .sender-phone {
-          font-size: 7pt;
-          letter-spacing: 0.05em;
+          letter-spacing: 0.08em;
+          margin-top: 22mm;
         }
         .sender-legacy {
           position: absolute;
@@ -298,27 +298,16 @@ export default function NenkaihyoAddressPage() {
           const senderZipDigits = (cfg.senderPostalCode ?? "")
             .replace(/[０-９]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0xfee0))
             .replace(/[^0-9]/g, "");
-          const senderZip =
-            senderZipDigits.length === 7
-              ? `〒${senderZipDigits.slice(0, 3)}-${senderZipDigits.slice(3)}`
-              : senderZipDigits
-              ? `〒${senderZipDigits}`
-              : "";
+          const senderZip = senderZipDigits;
           const senderLine1 = westernNumeralsToKanjiDigits(cfg.senderAddressLine1 ?? "");
           const senderLine2 = westernNumeralsToKanjiDigits(cfg.senderAddressLine2 ?? "");
           const senderAddrVertical = [senderLine1, senderLine2].filter(Boolean).join("");
-          const tel = cfg.phone?.trim() || cfg.mobile?.trim() || "";
-          const phoneKanji = tel
-            ? `（電話）${westernNumeralsToKanjiDigits(tel.replace(/\s/g, "").replace(/[-－ー]/g, "ー"))}`
-            : "";
-
           const hasStructuredSender =
             !!senderZip ||
             !!senderAddrVertical ||
-            !!(cfg.sect?.trim() || cfg.ingo?.trim() || cfg.sango?.trim() || cfg.templeName?.trim()) ||
-            !!phoneKanji;
+            !!(cfg.sect?.trim() || cfg.sango?.trim() || cfg.templeName?.trim());
 
-          const sectText = [cfg.sect?.trim(), cfg.ingo?.trim()].filter(Boolean).join("　");
+          const sectText = cfg.sect?.trim() ?? "";
 
           return (
             <div
@@ -341,15 +330,16 @@ export default function NenkaihyoAddressPage() {
 
               {hasStructuredSender ? (
                 <div className="sender-root">
-                  {phoneKanji && <div className="sender-col sender-phone">{phoneKanji}</div>}
-                  {sectText && <div className="sender-col sender-sect">{sectText}</div>}
-                  {(cfg.sango?.trim() || cfg.templeName?.trim()) && (
-                    <div className="sender-col sender-temple-line">
-                      {[cfg.sango?.trim(), cfg.templeName?.trim()].filter(Boolean).join("　")}
-                    </div>
-                  )}
-                  {senderZip && <div className="sender-zip-h">{senderZip}</div>}
-                  {senderAddrVertical && <div className="sender-col sender-addr-v">{senderAddrVertical}</div>}
+                  {senderZip && <div className="sender-zip">{senderZip}</div>}
+                  <div className="sender-cols">
+                    {(cfg.sango?.trim() || cfg.templeName?.trim()) && (
+                      <div className="sender-col sender-temple-line">
+                        {[cfg.sango?.trim(), cfg.templeName?.trim()].filter(Boolean).join("　")}
+                      </div>
+                    )}
+                    {sectText && <div className="sender-col sender-sect">{sectText}</div>}
+                    {senderAddrVertical && <div className="sender-col sender-addr-v">{senderAddrVertical}</div>}
+                  </div>
                 </div>
               ) : (
                 (cfg.senderName?.trim() || cfg.senderAddress?.trim()) && (
