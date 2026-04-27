@@ -155,13 +155,14 @@ export default function NenkaihyoAddressPage() {
           font-family: "Yu Mincho", "YuMincho", "Hiragino Mincho ProN", "MS Mincho", serif;
           position: relative;
         }
-        /* 宛先 郵便番号（右上・横書き・アラビア数字） */
+        /* 宛先 郵便番号（右上・横書き・アラビア数字・官製ハガキ枠合わせ） */
         .recv-postal {
           position: absolute;
-          top: 6mm;
-          right: 8mm;
-          font-size: 10.5pt;
-          letter-spacing: 0.18em;
+          top: 5mm;
+          right: 9mm;
+          font-size: 12pt;
+          letter-spacing: 4.5mm;
+          font-family: "Arial", "Helvetica Neue", sans-serif;
           writing-mode: horizontal-tb;
         }
         /* 宛名・住所のブロック */
@@ -193,7 +194,7 @@ export default function NenkaihyoAddressPage() {
           font-weight: 500;
           letter-spacing: 0.22em;
           line-height: 1.45;
-          max-height: 100mm;
+          white-space: nowrap;
         }
         .recipient-area .col-name .sama {
           margin-top: 2mm;
@@ -293,12 +294,10 @@ export default function NenkaihyoAddressPage() {
           const zipDigits = (h.postalCode ?? "")
             .replace(/[０-９]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0xfee0))
             .replace(/[^0-9]/g, "");
-          const recvZip =
-            zipDigits.length === 7
-              ? `${zipDigits.slice(0, 3)}-${zipDigits.slice(3)}`
-              : zipDigits;
-          const rawAddr = [h.address1, h.address2, h.address3].filter(Boolean).join("");
-          const addrKanji = westernNumeralsToKanjiDigits(rawAddr);
+          const recvZip = zipDigits;
+          const addrParts = [h.address1, h.address2, h.address3]
+            .filter(Boolean)
+            .map((p) => westernNumeralsToKanjiDigits(p!));
 
           const senderZipDigits = (cfg.senderPostalCode ?? "").replace(/[^0-9]/g, "");
           const senderZipKanji =
@@ -330,7 +329,11 @@ export default function NenkaihyoAddressPage() {
               {recvZip && <div className="recv-postal">{recvZip}</div>}
 
               <div className="recipient-area">
-                <div className="col col-address">{addrKanji}</div>
+                <div className="col col-address">
+                  {addrParts.map((part, i) => (
+                    <div key={i}>{part}</div>
+                  ))}
+                </div>
                 <div className="col col-name">
                   {h.familyName}　{h.givenName}
                   <span className="sama">　様</span>
