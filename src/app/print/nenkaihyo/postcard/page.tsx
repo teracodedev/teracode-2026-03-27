@@ -146,7 +146,7 @@ export default function NenkaihyoPostcardPage() {
           font-size: 16pt;
           font-weight: bold;
           letter-spacing: 0.2em;
-          padding: 0 0.5mm 0 0.5mm;
+          padding: 15mm 0.5mm 0 0.5mm;
           max-width: 15mm;
         }
         /* 導入文は1列にまとめる（縦に続けて折り返し） */
@@ -187,22 +187,22 @@ export default function NenkaihyoPostcardPage() {
         }
         .col-houmyou {
           align-self: flex-start;
-          padding-top: 5mm;
+          padding-top: 10mm;
           max-width: 11mm;
+        }
+        .col-zokumei {
+          align-self: flex-start;
+          padding-top: 10mm;
+          max-width: 13mm;
         }
         .col-meinichi {
           align-self: flex-start;
-          padding-top: 20mm;
-          max-width: 13mm;
-        }
-        .col-zokumei {
-          align-self: flex-end;
-          padding-bottom: 16mm;
+          padding-top: 10mm;
           max-width: 13mm;
         }
         .col-kyounen {
-          align-self: flex-end;
-          padding-bottom: 16mm;
+          align-self: flex-start;
+          padding-top: 10mm;
           max-width: 10mm;
         }
         /* 複数故人のときはやや詰める */
@@ -214,11 +214,12 @@ export default function NenkaihyoPostcardPage() {
           font-size: 18pt;
         }
         .postcard.multi-member .col-meinichi {
-          padding-top: 16mm;
+          padding-top: 8mm;
         }
+        .postcard.multi-member .col-houmyou,
         .postcard.multi-member .col-zokumei,
         .postcard.multi-member .col-kyounen {
-          padding-bottom: 12mm;
+          padding-top: 8mm;
         }
         /* 左端: 連絡（最小・上寄せ） */
         .col-footer {
@@ -272,10 +273,10 @@ export default function NenkaihyoPostcardPage() {
                 <div className="col-kaiki">{m.kaikiLabel}</div>
                 <div className="detail-cluster">
                   {m.dharmaName && <div className="col-houmyou">法名　{m.dharmaName}</div>}
-                  <div className="col-meinichi">命日　{isoDateToWareki(m.deathDate)}</div>
                   <div className="col-zokumei">
                     俗名　{[m.familyName, m.givenName].filter(Boolean).join("　")}　様
                   </div>
+                  <div className="col-meinichi">命日　{isoDateToWareki(m.deathDate)}</div>
                   {m.ageAtDeath && (
                     <div className="col-kyounen">享年　{ageToKanji(m.ageAtDeath)}歳</div>
                   )}
