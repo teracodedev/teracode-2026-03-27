@@ -155,7 +155,7 @@ export default function NenkaihyoAddressPage() {
           font-family: "Yu Mincho", "YuMincho", "Hiragino Mincho ProN", "MS Mincho", serif;
           position: relative;
         }
-        /* 宛先 郵便番号（右上・横書き・漢数字） */
+        /* 宛先 郵便番号（右上・横書き・アラビア数字） */
         .recv-postal {
           position: absolute;
           top: 6mm;
@@ -164,31 +164,31 @@ export default function NenkaihyoAddressPage() {
           letter-spacing: 0.18em;
           writing-mode: horizontal-tb;
         }
-        /* 宛名・住所のブロック（右寄りだがカード中央付近にまとまる） */
+        /* 宛名・住所のブロック */
         .recipient-area {
           position: absolute;
           top: 16mm;
-          left: 8mm;
-          right: 8mm;
+          left: 0;
+          right: 0;
           bottom: 40mm;
-          display: flex;
-          flex-direction: row-reverse;
-          justify-content: center;
-          align-items: center;
-          gap: 5mm;
         }
         .recipient-area > .col {
+          position: absolute;
           writing-mode: vertical-rl;
           -webkit-writing-mode: vertical-rl;
-          flex-shrink: 0;
+          top: 50%;
         }
         .recipient-area .col-address {
+          right: 5mm;
+          transform: translateY(-50%);
           font-size: 11.5pt;
           line-height: 1.55;
           letter-spacing: 0.08em;
-          max-height: 108mm;
+          max-height: 90mm;
         }
         .recipient-area .col-name {
+          left: 50%;
+          transform: translate(-50%, -50%);
           font-size: 20pt;
           font-weight: 500;
           letter-spacing: 0.22em;
@@ -196,7 +196,6 @@ export default function NenkaihyoAddressPage() {
           max-height: 100mm;
         }
         .recipient-area .col-name .sama {
-          font-size: 13pt;
           margin-top: 2mm;
         }
         /* 差出人（左下・Access 風：右から 住所+郵便、山号寺院、宗派…、電話） */
@@ -291,10 +290,13 @@ export default function NenkaihyoAddressPage() {
           <div className="no-print text-stone-500 py-12">該当する戸主はいません</div>
         )}
         {householders.map((h) => {
-          const zipDigits = (h.postalCode ?? "").replace(/[^0-9]/g, "");
-          const recvZipKanji = zipDigits
-            ? westernNumeralsToKanjiDigits(zipDigits)
-            : westernNumeralsToKanjiDigits((h.postalCode ?? "").replace(/[^0-9０-９]/g, ""));
+          const zipDigits = (h.postalCode ?? "")
+            .replace(/[０-９]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0xfee0))
+            .replace(/[^0-9]/g, "");
+          const recvZip =
+            zipDigits.length === 7
+              ? `${zipDigits.slice(0, 3)}-${zipDigits.slice(3)}`
+              : zipDigits;
           const rawAddr = [h.address1, h.address2, h.address3].filter(Boolean).join("");
           const addrKanji = westernNumeralsToKanjiDigits(rawAddr);
 
@@ -325,7 +327,7 @@ export default function NenkaihyoAddressPage() {
               key={h.id}
               className="postcard shadow border border-stone-300 print:shadow-none print:border-0"
             >
-              {recvZipKanji && <div className="recv-postal">{recvZipKanji}</div>}
+              {recvZip && <div className="recv-postal">{recvZip}</div>}
 
               <div className="recipient-area">
                 <div className="col col-address">{addrKanji}</div>
