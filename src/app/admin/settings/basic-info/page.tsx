@@ -47,29 +47,33 @@ export default function BasicInfoSettingsPage() {
 
   const load = useCallback(async () => {
     setError("");
-    const res = await fetch("/api/settings/nenkai-postcard");
-    const data = (await res.json()) as NenkaiConfigResponse;
-    if (!res.ok) {
-      setError(data.error || "読み込みに失敗しました");
+    try {
+      const res = await fetch("/api/settings/nenkai-postcard");
+      const data = (await res.json()) as NenkaiConfigResponse;
+      if (!res.ok) {
+        setError(data.error || "読み込みに失敗しました");
+        return;
+      }
+      setForm({
+        sect: data.sect ?? "",
+        ingo: data.ingo ?? "",
+        sango: data.sango ?? "",
+        templeName: data.templeName ?? "",
+        chiefPriest: data.chiefPriest ?? "",
+        chiefTitle: data.chiefTitle ?? "",
+        senderPostalCode: data.senderPostalCode ?? "",
+        senderAddressLine1: data.senderAddressLine1 ?? "",
+        senderAddressLine2: data.senderAddressLine2 ?? "",
+        phone: data.phone ?? "",
+        fax: data.fax ?? "",
+        mobile: data.mobile ?? "",
+        footer: data.footer ?? DEFAULT_NENKAI_POSTCARD_FOOTER,
+      });
+    } catch {
+      setError("読み込みに失敗しました");
+    } finally {
       setLoading(false);
-      return;
     }
-    setForm({
-      sect: data.sect ?? "",
-      ingo: data.ingo ?? "",
-      sango: data.sango ?? "",
-      templeName: data.templeName ?? "",
-      chiefPriest: data.chiefPriest ?? "",
-      chiefTitle: data.chiefTitle ?? "",
-      senderPostalCode: data.senderPostalCode ?? "",
-      senderAddressLine1: data.senderAddressLine1 ?? "",
-      senderAddressLine2: data.senderAddressLine2 ?? "",
-      phone: data.phone ?? "",
-      fax: data.fax ?? "",
-      mobile: data.mobile ?? "",
-      footer: data.footer ?? DEFAULT_NENKAI_POSTCARD_FOOTER,
-    });
-    setLoading(false);
   }, []);
 
   useEffect(() => {

@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@/generated/prisma";
+import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { DEFAULT_NENKAI_POSTCARD_FOOTER } from "@/lib/nenkai-postcard-config";
-
-const prisma = new PrismaClient();
 
 const CONFIG_ID = "default";
 
