@@ -79,11 +79,9 @@ else
   echo "[3/5] Prisma クライアント生成 skip..."
 fi
 
-# マイグレーションファイルが変更された場合、DBスキーマを更新する
-if [ "$need_prisma_generate" = true ]; then
-  echo "[3b/5] Prisma マイグレーション適用..."
-  npx prisma migrate deploy
-fi
+# 未適用マイグレーションを常に適用する（idempotent なので毎回実行しても安全）
+echo "[3b/5] Prisma マイグレーション適用..."
+npx prisma migrate deploy
 
 echo "[4/5] PM2 停止..."
 pm2 stop teracode 2>/dev/null || true
