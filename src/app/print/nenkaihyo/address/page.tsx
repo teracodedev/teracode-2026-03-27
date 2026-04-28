@@ -239,7 +239,7 @@ export default function NenkaihyoAddressPage() {
         .sender-root .sender-sect {
           font-size: 9pt;
           letter-spacing: 0.06em;
-          margin-top: 20mm;
+          margin-top: 13mm;
         }
         .sender-root .sender-temple-line {
           font-size: 10pt;
