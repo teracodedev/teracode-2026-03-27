@@ -4,7 +4,7 @@ const settingsItems = [
   {
     href: "/admin/settings/basic-info",
     title: "基本情報設定",
-    description: "宛名面の差出人・住所と裏面の連絡案内を設定します。",
+    description: "宛名面（表面）の差出人・住所・連絡先を設定します。",
   },
   {
     href: "/admin/import",
