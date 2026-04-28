@@ -158,8 +158,8 @@ export default function NenkaihyoAddressPage() {
         /* 宛先 郵便番号（右上・横書き・アラビア数字・官製ハガキ枠合わせ） */
         .recv-postal {
           position: absolute;
-          top: 12mm;
-          right: 6mm;
+          top: 13mm;
+          right: 5mm;
           font-size: 12pt;
           letter-spacing: 4.5mm;
           font-family: "Arial", "Helvetica Neue", sans-serif;
@@ -227,22 +227,22 @@ export default function NenkaihyoAddressPage() {
         }
         .sender-root .sender-zip {
           writing-mode: horizontal-tb;
-          font-size: 7pt;
+          font-size: 9pt;
           letter-spacing: 0.08em;
           flex-shrink: 0;
           white-space: nowrap;
         }
         .sender-root .sender-addr-v {
-          font-size: 8pt;
+          font-size: 10pt;
           letter-spacing: 0.06em;
         }
         .sender-root .sender-sect {
-          font-size: 7pt;
+          font-size: 9pt;
           letter-spacing: 0.06em;
           margin-top: 20mm;
         }
         .sender-root .sender-temple-line {
-          font-size: 8pt;
+          font-size: 10pt;
           font-weight: 600;
           letter-spacing: 0.08em;
           margin-top: 22mm;
@@ -254,18 +254,18 @@ export default function NenkaihyoAddressPage() {
           max-width: 34mm;
           writing-mode: vertical-rl;
           -webkit-writing-mode: vertical-rl;
-          font-size: 7.5pt;
+          font-size: 9.5pt;
           line-height: 1.5;
           letter-spacing: 0.06em;
           color: #111;
         }
         .sender-legacy .sl-name {
-          font-size: 8.5pt;
+          font-size: 10.5pt;
           font-weight: bold;
           margin-bottom: 1.5mm;
         }
         .sender-legacy .sl-addr {
-          font-size: 7pt;
+          font-size: 9pt;
           white-space: pre-line;
         }
       `}</style>
@@ -298,7 +298,9 @@ export default function NenkaihyoAddressPage() {
           const senderZipDigits = (cfg.senderPostalCode ?? "")
             .replace(/[０-９]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0xfee0))
             .replace(/[^0-9]/g, "");
-          const senderZip = senderZipDigits;
+          const senderZip = senderZipDigits.length === 7
+            ? `〒${senderZipDigits.slice(0, 3)}-${senderZipDigits.slice(3)}`
+            : senderZipDigits ? `〒${senderZipDigits}` : "";
           const senderLine1 = westernNumeralsToKanjiDigits(cfg.senderAddressLine1 ?? "");
           const senderLine2 = westernNumeralsToKanjiDigits(cfg.senderAddressLine2 ?? "");
           const senderAddrVertical = [senderLine1, senderLine2].filter(Boolean).join("");
