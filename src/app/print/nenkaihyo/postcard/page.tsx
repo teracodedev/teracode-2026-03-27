@@ -151,16 +151,16 @@ export default function NenkaihyoPostcardPage() {
         }
         /* 導入文は1列にまとめる（縦に続けて折り返し） */
         .col-intro {
-          font-size: 9.5pt;
+          font-size: 11pt;
           letter-spacing: 0.05em;
           padding: 0 0.5mm 0 0.5mm;
-          max-width: 14mm;
+          max-width: 16mm;
           line-height: 1.82;
           white-space: pre-line;
         }
         /* 回忌（ページ内で縦方向センター） */
         .col-kaiki {
-          font-size: 23pt;
+          font-size: 16pt;
           font-weight: bold;
           letter-spacing: 0.14em;
           padding: 0 0.5mm;
@@ -181,7 +181,7 @@ export default function NenkaihyoPostcardPage() {
         .detail-cluster > div {
           writing-mode: vertical-rl;
           -webkit-writing-mode: vertical-rl;
-          font-size: 10pt;
+          font-size: 12pt;
           letter-spacing: 0.07em;
           line-height: 1.65;
         }
@@ -211,7 +211,7 @@ export default function NenkaihyoPostcardPage() {
           max-height: 108mm;
         }
         .postcard.multi-member .col-kaiki {
-          font-size: 18pt;
+          font-size: 13pt;
         }
         .postcard.multi-member .col-meinichi {
           padding-top: 8mm;
@@ -223,7 +223,7 @@ export default function NenkaihyoPostcardPage() {
         }
         /* 左端: 連絡（最小・上寄せ） */
         .col-footer {
-          font-size: 7pt;
+          font-size: 9pt;
           letter-spacing: 0.02em;
           line-height: 1.6;
           padding: 0 0.5mm;
