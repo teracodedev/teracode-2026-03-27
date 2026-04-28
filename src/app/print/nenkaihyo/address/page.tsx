@@ -158,8 +158,8 @@ export default function NenkaihyoAddressPage() {
         /* 宛先 郵便番号（右上・横書き・アラビア数字・官製ハガキ枠合わせ） */
         .recv-postal {
           position: absolute;
-          top: 5mm;
-          right: 9mm;
+          top: 12mm;
+          right: 6mm;
           font-size: 12pt;
           letter-spacing: 4.5mm;
           font-family: "Arial", "Helvetica Neue", sans-serif;
