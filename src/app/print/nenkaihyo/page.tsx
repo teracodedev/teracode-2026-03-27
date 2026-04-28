@@ -1,5 +1,9 @@
 "use client";
 import { fetchWithAuth } from "@/lib/fetch-with-auth";
+import {
+  DEFAULT_NENKAI_POSTCARD_FOOTER,
+  DEFAULT_NENKAI_POSTCARD_INTRO,
+} from "@/lib/nenkai-postcard-config";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
@@ -27,6 +31,23 @@ interface NenkaiItem {
   };
 }
 
+type PostcardConfig = {
+  sect: string | null;
+  ingo: string | null;
+  sango: string | null;
+  templeName: string | null;
+  chiefPriest: string | null;
+  chiefTitle: string | null;
+  senderPostalCode: string | null;
+  senderAddressLine1: string | null;
+  senderAddressLine2: string | null;
+  phone: string | null;
+  fax: string | null;
+  mobile: string | null;
+  intro: string;
+  footer: string;
+};
+
 function formatMD(iso: string): string {
   const d = new Date(iso);
   return d.getMonth() + 1 + "月" + d.getDate() + "日";
@@ -40,6 +61,15 @@ export default function NenkaihyoPrintPage() {
   const [items, setItems] = useState<NenkaiItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [loaded, setLoaded] = useState(false);
+
+  const [showNoticeModal, setShowNoticeModal] = useState(false);
+  const [noticeLoading, setNoticeLoading] = useState(false);
+  const [noticeSaving, setNoticeSaving] = useState(false);
+  const [noticeError, setNoticeError] = useState("");
+  const [noticeSuccess, setNoticeSuccess] = useState("");
+  const [noticeIntro, setNoticeIntro] = useState("");
+  const [noticeFooter, setNoticeFooter] = useState("");
+  const [fullConfig, setFullConfig] = useState<PostcardConfig | null>(null);
 
   const fetchItems = useCallback(async () => {
     setLoading(true);
@@ -66,7 +96,69 @@ export default function NenkaihyoPrintPage() {
     return arr;
   }, [initialYear]);
 
+  const openNoticeModal = async () => {
+    setShowNoticeModal(true);
+    setNoticeLoading(true);
+    setNoticeError("");
+    setNoticeSuccess("");
+    try {
+      const res = await fetchWithAuth("/api/settings/nenkai-postcard");
+      const data = await res.json();
+      setFullConfig(data);
+      setNoticeIntro(data.intro ?? DEFAULT_NENKAI_POSTCARD_INTRO);
+      setNoticeFooter(data.footer ?? DEFAULT_NENKAI_POSTCARD_FOOTER);
+    } catch {
+      setNoticeError("読み込みに失敗しました");
+    } finally {
+      setNoticeLoading(false);
+    }
+  };
+
+  const saveNotice = async () => {
+    setNoticeSaving(true);
+    setNoticeError("");
+    setNoticeSuccess("");
+    try {
+      const res = await fetchWithAuth("/api/settings/nenkai-postcard", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          senderName: null,
+          senderAddress: null,
+          sect: fullConfig?.sect ?? "",
+          ingo: fullConfig?.ingo ?? "",
+          sango: fullConfig?.sango ?? "",
+          templeName: fullConfig?.templeName ?? "",
+          chiefPriest: fullConfig?.chiefPriest ?? "",
+          chiefTitle: fullConfig?.chiefTitle ?? "",
+          senderPostalCode: fullConfig?.senderPostalCode ?? "",
+          senderAddressLine1: fullConfig?.senderAddressLine1 ?? "",
+          senderAddressLine2: fullConfig?.senderAddressLine2 ?? "",
+          phone: fullConfig?.phone ?? "",
+          fax: fullConfig?.fax ?? "",
+          mobile: fullConfig?.mobile ?? "",
+          intro: noticeIntro,
+          footer: noticeFooter,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setNoticeError(data.error || "保存に失敗しました");
+        return;
+      }
+      setNoticeSuccess("保存しました");
+      setFullConfig(data);
+    } catch {
+      setNoticeError("保存に失敗しました");
+    } finally {
+      setNoticeSaving(false);
+    }
+  };
+
   const qs = `?year=${year}&month=${month}`;
+
+  const inputCls =
+    "w-full rounded-lg border border-stone-300 px-3 py-2 text-stone-800 focus:ring-2 focus:ring-amber-500 focus:border-amber-500";
 
   return (
     <div className="space-y-6">
@@ -106,7 +198,13 @@ export default function NenkaihyoPrintPage() {
             ))}
           </select>
         </div>
-        <div className="ml-auto flex gap-2">
+        <div className="ml-auto flex gap-2 flex-wrap">
+          <button
+            onClick={openNoticeModal}
+            className="px-4 py-2 rounded-lg font-medium border border-amber-300 text-amber-700 hover:bg-amber-50"
+          >
+            文面の編集
+          </button>
           <Link
             href={`/print/nenkaihyo/postcard${qs}`}
             target="_blank"
@@ -184,6 +282,87 @@ export default function NenkaihyoPrintPage() {
           ← 各種印刷へ戻る
         </Link>
       </div>
+
+      {showNoticeModal && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl border border-stone-200 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="p-6 space-y-5">
+              <div className="flex justify-between items-center">
+                <h2 className="text-lg font-bold text-amber-700">案内文面の編集（ハガキ裏面）</h2>
+                <button
+                  onClick={() => setShowNoticeModal(false)}
+                  className="text-stone-400 hover:text-stone-600 text-xl leading-none"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {noticeError && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                  {noticeError}
+                </div>
+              )}
+              {noticeSuccess && (
+                <div className="p-3 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm">
+                  {noticeSuccess}
+                </div>
+              )}
+
+              {noticeLoading ? (
+                <div className="text-stone-400 text-sm py-4">読み込み中...</div>
+              ) : (
+                <div className="space-y-5">
+                  <div>
+                    <label className="block text-sm font-medium text-stone-700 mb-1">
+                      右の文面（2行）
+                    </label>
+                    <textarea
+                      rows={6}
+                      className={`${inputCls} text-sm leading-relaxed`}
+                      value={noticeIntro}
+                      onChange={(e) => setNoticeIntro(e.target.value)}
+                    />
+                    <p className="mt-1 text-xs text-stone-500">
+                      改行で2行にできます。空にして保存すると既定の文面が使われます。
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-stone-700 mb-1">
+                      連絡・案内文（左下）
+                    </label>
+                    <textarea
+                      rows={10}
+                      className={`${inputCls} text-sm leading-relaxed`}
+                      value={noticeFooter}
+                      onChange={(e) => setNoticeFooter(e.target.value)}
+                    />
+                    <p className="mt-1 text-xs text-stone-500">
+                      電話・メール・予約案内など。空にして保存すると既定の文面が使われます。
+                    </p>
+                  </div>
+
+                  <div className="flex gap-3 pt-2">
+                    <button
+                      onClick={saveNotice}
+                      disabled={noticeSaving}
+                      className="px-5 py-2.5 bg-amber-700 hover:bg-amber-800 disabled:opacity-50 text-white rounded-lg text-sm font-medium"
+                    >
+                      {noticeSaving ? "保存中..." : "保存"}
+                    </button>
+                    <button
+                      onClick={() => setShowNoticeModal(false)}
+                      className="px-5 py-2.5 border border-stone-300 hover:bg-stone-50 text-stone-700 rounded-lg text-sm font-medium"
+                    >
+                      閉じる
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

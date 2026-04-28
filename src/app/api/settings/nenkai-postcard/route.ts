@@ -122,57 +122,46 @@ export async function PUT(req: NextRequest) {
 
   const senderName = opt(body.senderName);
   const senderAddress = typeof body.senderAddress === "string" ? trimOrNull(body.senderAddress) : null;
-  let footer: string | null = null;
-  if (typeof body.footer === "string") {
-    const t = body.footer.trim();
-    footer = t === "" ? null : body.footer;
-  }
-  let intro: string | null = null;
-  if (typeof body.intro === "string") {
-    const t = body.intro.trim();
-    intro = t === "" ? null : body.intro;
-  }
+
+  const footerUpdate =
+    body.footer === undefined
+      ? {}
+      : {
+          nenkaiPostcardFooter:
+            typeof body.footer === "string" && body.footer.trim() !== "" ? body.footer : null,
+        };
+  const introUpdate =
+    body.intro === undefined
+      ? {}
+      : {
+          nenkaiPostcardIntro:
+            typeof body.intro === "string" && body.intro.trim() !== "" ? body.intro : null,
+        };
+
+  const sharedFields = {
+    nenkaiPostcardSenderName: senderName,
+    nenkaiPostcardSenderAddress: senderAddress,
+    nenkaiPostcardSect: opt(body.sect),
+    nenkaiPostcardIngo: opt(body.ingo),
+    nenkaiPostcardSango: opt(body.sango),
+    nenkaiPostcardTempleName: opt(body.templeName),
+    nenkaiPostcardChiefPriest: opt(body.chiefPriest),
+    nenkaiPostcardChiefTitle: opt(body.chiefTitle),
+    nenkaiPostcardSenderPostalCode: opt(body.senderPostalCode),
+    nenkaiPostcardSenderAddressLine1: opt(body.senderAddressLine1),
+    nenkaiPostcardSenderAddressLine2: opt(body.senderAddressLine2),
+    nenkaiPostcardPhone: opt(body.phone),
+    nenkaiPostcardFax: opt(body.fax),
+    nenkaiPostcardMobile: opt(body.mobile),
+    ...introUpdate,
+    ...footerUpdate,
+  };
 
   try {
     await prisma.appConfig.upsert({
       where: { id: CONFIG_ID },
-      create: {
-        id: CONFIG_ID,
-        nenkaiPostcardSenderName: senderName,
-        nenkaiPostcardSenderAddress: senderAddress,
-        nenkaiPostcardFooter: footer,
-        nenkaiPostcardIntro: intro,
-        nenkaiPostcardSect: opt(body.sect),
-        nenkaiPostcardIngo: opt(body.ingo),
-        nenkaiPostcardSango: opt(body.sango),
-        nenkaiPostcardTempleName: opt(body.templeName),
-        nenkaiPostcardChiefPriest: opt(body.chiefPriest),
-        nenkaiPostcardChiefTitle: opt(body.chiefTitle),
-        nenkaiPostcardSenderPostalCode: opt(body.senderPostalCode),
-        nenkaiPostcardSenderAddressLine1: opt(body.senderAddressLine1),
-        nenkaiPostcardSenderAddressLine2: opt(body.senderAddressLine2),
-        nenkaiPostcardPhone: opt(body.phone),
-        nenkaiPostcardFax: opt(body.fax),
-        nenkaiPostcardMobile: opt(body.mobile),
-      },
-      update: {
-        nenkaiPostcardSenderName: senderName,
-        nenkaiPostcardSenderAddress: senderAddress,
-        nenkaiPostcardFooter: footer,
-        nenkaiPostcardIntro: intro,
-        nenkaiPostcardSect: opt(body.sect),
-        nenkaiPostcardIngo: opt(body.ingo),
-        nenkaiPostcardSango: opt(body.sango),
-        nenkaiPostcardTempleName: opt(body.templeName),
-        nenkaiPostcardChiefPriest: opt(body.chiefPriest),
-        nenkaiPostcardChiefTitle: opt(body.chiefTitle),
-        nenkaiPostcardSenderPostalCode: opt(body.senderPostalCode),
-        nenkaiPostcardSenderAddressLine1: opt(body.senderAddressLine1),
-        nenkaiPostcardSenderAddressLine2: opt(body.senderAddressLine2),
-        nenkaiPostcardPhone: opt(body.phone),
-        nenkaiPostcardFax: opt(body.fax),
-        nenkaiPostcardMobile: opt(body.mobile),
-      },
+      create: { id: CONFIG_ID, ...sharedFields },
+      update: sharedFields,
     });
 
     const row = await prisma.appConfig.findUnique({ where: { id: CONFIG_ID } });
