@@ -274,7 +274,7 @@ export default function NenkaihyoPostcardPage() {
                 <div className="detail-cluster">
                   {m.dharmaName && <div className="col-houmyou">法名　{m.dharmaName}</div>}
                   <div className="col-zokumei">
-                    俗名　{[m.familyName, m.givenName].filter(Boolean).join("　")}　様
+                    俗名　{[m.familyName, m.givenName].filter(Boolean).join("　")}
                   </div>
                   <div className="col-meinichi">命日　{isoDateToWareki(m.deathDate)}</div>
                   {m.ageAtDeath && (
