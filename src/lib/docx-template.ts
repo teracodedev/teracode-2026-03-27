@@ -239,6 +239,12 @@ export function getNextMemorialLabel(deathDate: Date): string {
     const d = addYears(deathDate, years);
     d.setHours(0, 0, 0, 0);
     if (d >= today) return key;
+    // 一周忌以外は当日を過ぎても1年間は同じ年回を表示
+    if (key !== "一周忌") {
+      const oneYearAfter = new Date(d);
+      oneYearAfter.setFullYear(oneYearAfter.getFullYear() + 1);
+      if (today < oneYearAfter) return key;
+    }
   }
   return "五十回忌";
 }
@@ -260,6 +266,12 @@ export function getNenkaiLabel(deathDate: Date): string {
     const d = addYears(deathDate, years);
     d.setHours(0, 0, 0, 0);
     if (d >= today) return key;
+    // 一周忌以外は当日を過ぎても1年間は同じ年回を表示
+    if (key !== "一周忌") {
+      const oneYearAfter = new Date(d);
+      oneYearAfter.setFullYear(oneYearAfter.getFullYear() + 1);
+      if (today < oneYearAfter) return key;
+    }
   }
   return "五十回忌";
 }
