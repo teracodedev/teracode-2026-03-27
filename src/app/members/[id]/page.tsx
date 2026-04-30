@@ -179,13 +179,15 @@ function getNextCeremony(deathDate: string): { label: string; date: string } | n
     if (d >= today) {
       return { label: nk.label, date: addYears(deathDate, nk.years) };
     }
-    // 一周忌以外は当日を過ぎても1年間は同じ年回を表示
-    if (nk.label !== "一周忌") {
-      const oneYearAfter = new Date(d);
-      oneYearAfter.setFullYear(oneYearAfter.getFullYear() + 1);
-      if (today < oneYearAfter) {
-        return { label: nk.label, date: addYears(deathDate, nk.years) };
-      }
+    // 一周忌は当日を過ぎても1ヶ月間、それ以外は1年間は同じ年回を表示
+    const grace = new Date(d);
+    if (nk.label === "一周忌") {
+      grace.setMonth(grace.getMonth() + 1);
+    } else {
+      grace.setFullYear(grace.getFullYear() + 1);
+    }
+    if (today < grace) {
+      return { label: nk.label, date: addYears(deathDate, nk.years) };
     }
   }
 
