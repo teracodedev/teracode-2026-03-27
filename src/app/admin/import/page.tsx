@@ -7,6 +7,12 @@ type HouseholderImportResult = {
   members: number;
   errors: number;
   errorDetails: string[];
+  debug?: {
+    householderAnnaiFuyoCol: string | null;
+    familyAnnaiFuyoCol: string | null;
+    familyColumns: string[];
+    householderColumns: string[];
+  };
 };
 
 type GraveImportResult = {
@@ -247,6 +253,19 @@ export default function MdbImportPage() {
               {householderResult.errors === 0 && (
                 <div className="p-3 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm">
                   インポートが完了しました。戸主 {householderResult.householders} 件・家族員 {householderResult.members} 件を登録しました。
+                </div>
+              )}
+
+              {householderResult.debug && (
+                <div className="space-y-1">
+                  <p className="text-xs font-medium text-stone-500">案内不要 列検出:</p>
+                  <div className="bg-stone-50 border border-stone-200 rounded-lg p-3 text-xs font-mono text-stone-600 space-y-0.5">
+                    <p>家族テーブル: {householderResult.debug.familyAnnaiFuyoCol ?? "（見つかりません）"}</p>
+                    <p>戸主テーブル: {householderResult.debug.householderAnnaiFuyoCol ?? "（見つかりません）"}</p>
+                    {!householderResult.debug.familyAnnaiFuyoCol && householderResult.debug.familyColumns.length > 0 && (
+                      <p className="text-stone-400">家族列一覧: {householderResult.debug.familyColumns.join(", ")}</p>
+                    )}
+                  </div>
                 </div>
               )}
 

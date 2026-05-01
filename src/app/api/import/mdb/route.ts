@@ -131,9 +131,19 @@ export async function POST(req: NextRequest) {
   }
 
   // 戸主テーブルを読み込む
-  const householderRows = reader.getTable("UTB001_戸主").getData();
+  const householderTable = reader.getTable("UTB001_戸主");
+  const householderRows = householderTable.getData();
+  const householderColumns = householderTable.getColumnNames();
   // 家族テーブルを読み込む（存在する場合）
-  const familyRows = hasFamily ? reader.getTable("UTB002_家族").getData() : [];
+  const familyTable = hasFamily ? reader.getTable("UTB002_家族") : null;
+  const familyRows = familyTable ? familyTable.getData() : [];
+  const familyColumns = familyTable ? familyTable.getColumnNames() : [];
+
+  // 「案内不要」に対応する列名を検索（戸主・家族それぞれ）
+  const findAnnaiFuyoColumn = (columns: string[]): string | null =>
+    columns.find(c => c === "案内不要" || c === "案内不用" || c.includes("案内")) ?? null;
+  const householderAnnaiFuyoCol = findAnnaiFuyoColumn(householderColumns);
+  const familyAnnaiFuyoCol = findAnnaiFuyoColumn(familyColumns);
   // 家族住所テーブルを読み込む（存在する場合）
   const hasAddress = tableNames.includes("UTB003_家族住所");
   const addressRows = hasAddress ? reader.getTable("UTB003_家族住所").getData() : [];
@@ -280,7 +290,7 @@ export async function POST(req: NextRequest) {
           relation: str(row["続柄"]),
           note: str(row["個人備考"]),
           domicile: str(row["本籍"]),
-          annaiFuyo: row["案内不要"] === true || row["案内不要"] === 1 || row["案内不要"] === "1",
+          annaiFuyo: familyAnnaiFuyoCol ? (row[familyAnnaiFuyoCol] === true || row[familyAnnaiFuyoCol] === 1 || row[familyAnnaiFuyoCol] === "1" || row[familyAnnaiFuyoCol] === -1) : false,
           // UTB003_家族住所 のデータがあれば住所・電話を設定
           postalCode: addr ? str(addr["〒"]) : null,
           address1: addr ? str(addr["住所1"]) : null,
@@ -301,6 +311,12 @@ export async function POST(req: NextRequest) {
     householders: householderCount,
     members: memberCount,
     errors: errorList.length,
-    errorDetails: errorList.slice(0, 50), // 最大50件のエラー詳細を返す
+    errorDetails: errorList.slice(0, 50),
+    debug: {
+      householderAnnaiFuyoCol,
+      familyAnnaiFuyoCol,
+      familyColumns,
+      householderColumns,
+    },
   });
 }
