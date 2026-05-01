@@ -76,16 +76,9 @@ export default function NenkaihyoPostcardPage() {
   }, [year, month]);
 
   const grouped = useMemo(() => {
-    const map = new Map<string, { householder: NenkaiItem["householder"]; members: NenkaiItem[] }>();
-    for (const it of items) {
-      const key = it.householder.id;
-      const cur = map.get(key);
-      if (cur) cur.members.push(it);
-      else map.set(key, { householder: it.householder, members: [it] });
-    }
-    return Array.from(map.values()).sort((a, b) =>
-      compareHouseholderGojuon(a.householder, b.householder),
-    );
+    return items
+      .map((it) => ({ householder: it.householder, members: [it] }))
+      .sort((a, b) => compareHouseholderGojuon(a.householder, b.householder));
   }, [items]);
 
   const warekiYear = yearToWareki(year);
@@ -237,7 +230,7 @@ export default function NenkaihyoPostcardPage() {
 
       <div className="no-print bg-stone-100 p-4 flex items-center gap-3 sticky top-0 z-10 border-b border-stone-200">
         <div className="text-sm text-stone-600">
-          {year}年{month}月 案内ハガキ(裏面) — {grouped.length}世帯 / {items.length}名
+          {year}年{month}月 案内ハガキ(裏面) — {grouped.length}枚 / {items.length}名
         </div>
         <button
           onClick={() => window.print()}
