@@ -64,8 +64,12 @@ export async function GET(request: NextRequest) {
       },
     };
 
+    // HouseholderMember 向けの where: 案内不要フラグが立っている故人は除外
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const memberWhere: any = { ...where, annaiFuyo: false };
+
     const memberRecords = (await memberDelegate.findMany({
-      where,
+      where: memberWhere,
       include: {
         [relationName]: {
           select: {
