@@ -636,13 +636,13 @@ export default function MemberDetailPage({ params }: { params: Promise<{ id: str
         {nextCeremony ? (() => {
           const householderName = member.householder.familyName + member.householder.givenName;
           const rel = member.relation || "";
-          const relationPart = rel ? ` （${rel}）` : "";
+          const relationPart = rel ? `（${rel}）` : "";
           const fullName = member.familyName + (member.givenName ? ` ${member.givenName}` : "");
           const ceremonyLabel = `${fullName}の${nextCeremony.label}`;
           const addr = [member.householder.address1, member.householder.address2, member.householder.address3].filter(Boolean).join("");
           const phone = member.householder.phone1 || "";
-          const homeText = `<至法>${ceremonyTime}${householderName}${relationPart}${ceremonyLabel}＠自宅［${addr}、、${phone}］至法受付`;
-          const templeText = `<至法>${ceremonyTime}${householderName}${relationPart}${ceremonyLabel}＠善法寺本堂名至法受付`;
+          const homeText = `<至法>${ceremonyTime} ${householderName}${relationPart}${ceremonyLabel}＠自宅［${addr}、、${phone}］至法受付`;
+          const templeText = `<至法>${ceremonyTime} ${householderName}${relationPart}${ceremonyLabel}＠善法寺本堂 名 至法受付`;
           return (
             <div className="space-y-4">
               <p className="text-sm text-red-600 font-medium">
