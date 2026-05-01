@@ -95,6 +95,7 @@ model HouseholderMember {
   email             String?
   notePrintDisabled Boolean     @default(false)
   meinichiFusho     Boolean     @default(false)
+  annaiFuyo         Boolean     @default(false)
   householder       Householder @relation(fields: [householderId], references: [id], onDelete: Cascade)
   tags              MemberTag[]
 }

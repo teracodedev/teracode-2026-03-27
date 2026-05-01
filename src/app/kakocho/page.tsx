@@ -24,6 +24,7 @@ interface KakochoRecord {
   dharmaName: string | null;
   dharmaNameKana: string | null;
   note: string | null;
+  annaiFuyo: boolean;
   tags?: { tag: Tag }[];
   householder: {
     id: string;
@@ -64,6 +65,20 @@ export default function KakochoPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [filterTagIds, setFilterTagIds] = useState<string[]>([]);
   const [filterNotTagIds, setFilterNotTagIds] = useState<string[]>([]);
+
+  const toggleAnnaiFuyo = useCallback(async (id: string, current: boolean) => {
+    setRecords(prev => prev.map(r => r.id === id ? { ...r, annaiFuyo: !current } : r));
+    try {
+      await fetchWithAuth(`/api/kakocho/${id}/flags`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ annaiFuyo: !current }),
+      });
+    } catch (err) {
+      console.error(err);
+      setRecords(prev => prev.map(r => r.id === id ? { ...r, annaiFuyo: current } : r));
+    }
+  }, []);
 
   const fetchRecords = useCallback(async () => {
     setLoading(true);
@@ -209,7 +224,16 @@ export default function KakochoPage() {
                         </div>
                       )}
                     </div>
-                    <div className="shrink-0 text-right" onClick={(e) => e.stopPropagation()}>
+                    <div className="shrink-0 text-right flex flex-col items-end gap-2" onClick={(e) => e.stopPropagation()}>
+                      <label className="flex items-center gap-1 text-xs text-stone-500 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={record.annaiFuyo}
+                          onChange={() => toggleAnnaiFuyo(record.id, record.annaiFuyo)}
+                          className="w-4 h-4 accent-amber-600"
+                        />
+                        案内不要
+                      </label>
                       <Link href={"/householder/" + record.householder.id} className="text-sm text-stone-500 hover:underline">
                         {record.householder.familyName} {record.householder.givenName}
                       </Link>
@@ -244,6 +268,7 @@ export default function KakochoPage() {
                   <th className="text-left px-4 py-3 text-stone-600 font-medium">享年</th>
                   <th className="text-left px-4 py-3 text-stone-600 font-medium">続柄</th>
                   <th className="text-left px-4 py-3 text-stone-600 font-medium">タグ</th>
+                  <th className="text-center px-4 py-3 text-stone-600 font-medium whitespace-nowrap">案内不要</th>
                   <th className="px-4 py-3"></th>
                 </tr>
               </thead>
@@ -267,6 +292,15 @@ export default function KakochoPage() {
                         <div className="flex flex-wrap gap-1">
                           {record.tags?.map((t) => <TagBadge key={t.tag.id} tag={t.tag} />)}
                         </div>
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <input
+                          type="checkbox"
+                          checked={record.annaiFuyo}
+                          onChange={() => toggleAnnaiFuyo(record.id, record.annaiFuyo)}
+                          className="w-4 h-4 accent-amber-600 cursor-pointer"
+                          title="案内不要"
+                        />
                       </td>
                       <td className="px-4 py-3 text-sm whitespace-nowrap">
                         <Link href={"/members/" + record.id} className="text-amber-700 hover:text-amber-800 hover:underline">

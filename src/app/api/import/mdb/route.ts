@@ -280,6 +280,7 @@ export async function POST(req: NextRequest) {
           relation: str(row["続柄"]),
           note: str(row["個人備考"]),
           domicile: str(row["本籍"]),
+          annaiFuyo: row["案内不要"] === true || row["案内不要"] === 1 || row["案内不要"] === "1",
           // UTB003_家族住所 のデータがあれば住所・電話を設定
           postalCode: addr ? str(addr["〒"]) : null,
           address1: addr ? str(addr["住所1"]) : null,

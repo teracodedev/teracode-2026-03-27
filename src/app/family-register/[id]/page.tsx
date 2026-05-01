@@ -53,6 +53,7 @@ interface Member {
   address3: string | null;
   note: string | null;
   householderId: string;
+  annaiFuyo?: boolean;
 }
 
 interface Householder {
@@ -325,6 +326,33 @@ export default function FamilyRegisterDetailPage({ params }: { params: Promise<{
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, []);
+
+  const toggleAnnaiFuyo = async (memberId: string, current: boolean) => {
+    setData(prev => {
+      if (!prev) return prev;
+      const hs = toHouseholderList(prev.householders).map(h => ({
+        ...h,
+        members: h.members.map(m => m.id === memberId ? { ...m, annaiFuyo: !current } : m),
+      }));
+      return { ...prev, householders: hs };
+    });
+    try {
+      await fetchWithAuth(`/api/kakocho/${memberId}/flags`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ annaiFuyo: !current }),
+      });
+    } catch {
+      setData(prev => {
+        if (!prev) return prev;
+        const hs = toHouseholderList(prev.householders).map(h => ({
+          ...h,
+          members: h.members.map(m => m.id === memberId ? { ...m, annaiFuyo: current } : m),
+        }));
+        return { ...prev, householders: hs };
+      });
+    }
+  };
 
   const handleDelete = async () => {
     if (!confirm("この台帳を削除しますか？（戸主データは削除されません）")) return;
@@ -1024,6 +1052,7 @@ export default function FamilyRegisterDetailPage({ params }: { params: Promise<{
                       <th className="text-left px-3 py-2 font-medium text-stone-600 whitespace-nowrap">命日</th>
                       <th className="text-left px-3 py-2 font-medium text-stone-600 whitespace-nowrap">享年</th>
                       <th className="text-left px-3 py-2 font-medium text-stone-600 whitespace-nowrap">続柄</th>
+                      <th className="text-center px-3 py-2 font-medium text-stone-600 whitespace-nowrap">案内不要</th>
                       <th className="sticky right-0 bg-stone-50 px-3 py-2"></th>
                     </tr>
                   </thead>
@@ -1046,6 +1075,15 @@ export default function FamilyRegisterDetailPage({ params }: { params: Promise<{
                         <td className="px-3 py-2.5 text-stone-500 whitespace-nowrap">{formatDate(m.deathDate)}</td>
                         <td className="px-3 py-2.5 text-stone-500 whitespace-nowrap">{formatAge(m)}</td>
                         <td className="px-3 py-2.5 text-stone-500 whitespace-nowrap">{m.relation || "-"}</td>
+                        <td className="px-3 py-2.5 text-center">
+                          <input
+                            type="checkbox"
+                            checked={m.annaiFuyo ?? false}
+                            onChange={() => toggleAnnaiFuyo(m.id, m.annaiFuyo ?? false)}
+                            className="w-4 h-4 accent-amber-600 cursor-pointer"
+                            title="案内不要"
+                          />
+                        </td>
                         <td className="sticky right-0 bg-white px-3 py-2.5 whitespace-nowrap">
                           <Link href={`/members/${m.id}`}
                             className="border border-stone-300 rounded px-2 py-1 text-xs text-stone-600 hover:bg-stone-100">
