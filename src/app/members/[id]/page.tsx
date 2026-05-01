@@ -620,7 +620,7 @@ export default function MemberDetailPage({ params }: { params: Promise<{ id: str
           href="/kakocho"
           className="text-xs px-3 py-1.5 bg-stone-100 hover:bg-stone-200 text-stone-600 rounded border border-stone-300"
         >
-          過去帳（物故者リスト）と戻る
+          過去帳（物故者リスト）に戻る
         </Link>
       </div>
 
