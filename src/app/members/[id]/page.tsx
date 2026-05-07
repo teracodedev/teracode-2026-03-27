@@ -637,7 +637,7 @@ export default function MemberDetailPage({ params }: { params: Promise<{ id: str
           const householderName = member.householder.familyName + member.householder.givenName;
           const rel = member.relation || "";
           const relationPart = rel ? `（${rel}）` : "";
-          const fullName = member.familyName + (member.givenName ? ` ${member.givenName}` : "");
+          const fullName = member.familyName + (member.givenName || "");
           const ceremonyLabel = `${fullName}の${nextCeremony.label}`;
           const addr = [member.householder.address1, member.householder.address2, member.householder.address3].filter(Boolean).join("");
           const phone = member.householder.phone1 || "";
