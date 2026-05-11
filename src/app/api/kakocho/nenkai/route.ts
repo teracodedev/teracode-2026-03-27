@@ -116,6 +116,8 @@ export async function GET(request: NextRequest) {
         id: `householder:${String(h.id)}`,
         familyName: h.familyName,
         givenName: h.givenName,
+        familyNameKana: h.familyNameKana,
+        givenNameKana: h.givenNameKana,
         dharmaName: h.dharmaName,
         relation: "戸主",
         ageAtDeath: h.ageAtDeath,
@@ -139,6 +141,8 @@ export async function GET(request: NextRequest) {
       memberId: string;
       familyName: string;
       givenName: string | null;
+      familyNameKana: string | null;
+      givenNameKana: string | null;
       dharmaName: string | null;
       relation: string | null;
       ageAtDeath: string | null;
@@ -173,6 +177,8 @@ export async function GET(request: NextRequest) {
         memberId: String(r.id),
         familyName: String(r.familyName ?? ""),
         givenName: (r.givenName as string) ?? null,
+        familyNameKana: (r.familyNameKana as string) ?? null,
+        givenNameKana: (r.givenNameKana as string) ?? null,
         dharmaName: (r.dharmaName as string) ?? null,
         relation: (r.relation as string) ?? null,
         ageAtDeath: (r.ageAtDeath as string) ?? null,
@@ -194,10 +200,19 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // 戸主の五十音順 → 同一世帯内は命日（日付）昇順
+    const deceasedSortKey = (it: Item) => ({
+      familyNameKana: it.familyNameKana,
+      givenNameKana: it.givenNameKana,
+      familyName: it.familyName,
+      givenName: it.givenName ?? "",
+    });
+
+    // 戸主の五十音昇順 → 同一世帯内は物故者の五十音昇順 → それでも同等なら命日昇順（裏面 PDF の並び）
     items.sort((a, b) => {
       const byH = compareHouseholderGojuon(a.householder, b.householder);
       if (byH !== 0) return byH;
+      const byM = compareHouseholderGojuon(deceasedSortKey(a), deceasedSortKey(b));
+      if (byM !== 0) return byM;
       return new Date(a.deathDate).getTime() - new Date(b.deathDate).getTime();
     });
 

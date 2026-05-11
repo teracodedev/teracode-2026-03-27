@@ -11,6 +11,8 @@ interface NenkaiItem {
   memberId: string;
   familyName: string;
   givenName: string | null;
+  familyNameKana?: string | null;
+  givenNameKana?: string | null;
   dharmaName: string | null;
   relation: string | null;
   ageAtDeath: string | null;

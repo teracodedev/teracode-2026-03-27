@@ -3,20 +3,8 @@ import { fetchWithAuth } from "@/lib/fetch-with-auth";
 import { compareHouseholderGojuon } from "@/lib/householder-sort";
 import { westernNumeralsToKanjiDigits } from "@/lib/kanji-digits";
 import { useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "next/navigation";
 
-interface NenkaiItem {
-  memberId: string;
-  familyName: string;
-  givenName: string | null;
-  familyNameKana?: string | null;
-  givenNameKana?: string | null;
-  dharmaName: string | null;
-  relation: string | null;
-  ageAtDeath: string | null;
-  deathDate: string;
-  kaiki: number;
-  kaikiLabel: string;
+interface HatsubonItem {
   householder: {
     id: string;
     code: string;
@@ -65,12 +53,8 @@ const emptyConfig: PostcardConfig = {
   mobile: null,
 };
 
-export default function NenkaihyoAddressPage() {
-  const sp = useSearchParams();
-  const year = parseInt(sp.get("year") ?? String(new Date().getFullYear()), 10);
-  const month = parseInt(sp.get("month") ?? String(new Date().getMonth() + 1), 10);
-
-  const [items, setItems] = useState<NenkaiItem[]>([]);
+export default function HatsubonAddressPage() {
+  const [items, setItems] = useState<HatsubonItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [cfg, setCfg] = useState<PostcardConfig>(emptyConfig);
 
@@ -78,8 +62,8 @@ export default function NenkaihyoAddressPage() {
     (async () => {
       try {
         const [resItems, resCfg] = await Promise.all([
-          fetchWithAuth(`/api/kakocho/nenkai?year=${year}&month=${month}`),
-          fetchWithAuth(`/api/settings/nenkai-postcard`),
+          fetchWithAuth("/api/hatsubon"),
+          fetchWithAuth("/api/settings/nenkai-postcard"),
         ]);
         const data = await resItems.json();
         setItems(Array.isArray(data?.items) ? data.items : []);
@@ -109,26 +93,14 @@ export default function NenkaihyoAddressPage() {
         setLoading(false);
       }
     })();
-  }, [year, month]);
+  }, []);
 
-  /** 裏面と同じ物故者単位で1枚。戸主・物故者とも五十音の逆順（裏面の昇順と逆） */
-  const surfaceItems = useMemo(() => {
-    const deceasedKey = (it: NenkaiItem) => ({
-      familyNameKana: it.familyNameKana ?? null,
-      givenNameKana: it.givenNameKana ?? null,
-      familyName: it.familyName,
-      givenName: it.givenName ?? "",
-    });
-    return [...items].sort((a, b) => {
-      const byH = compareHouseholderGojuon(b.householder, a.householder);
-      if (byH !== 0) return byH;
-      return compareHouseholderGojuon(deceasedKey(b), deceasedKey(a));
-    });
-  }, [items]);
-
-  const surfaceHouseholdCount = useMemo(
-    () => new Set(surfaceItems.map((it) => it.householder.id)).size,
-    [surfaceItems],
+  const surfaceItems = useMemo(
+    () =>
+      [...items].sort((a, b) =>
+        compareHouseholderGojuon(b.householder, a.householder),
+      ),
+    [items],
   );
 
   if (loading) return <div className="p-8 text-stone-500">読み込み中...</div>;
@@ -169,7 +141,6 @@ export default function NenkaihyoAddressPage() {
           font-family: "Yu Mincho", "YuMincho", "Hiragino Mincho ProN", "MS Mincho", serif;
           position: relative;
         }
-        /* 宛先 郵便番号（右上・横書き・アラビア数字・官製ハガキ枠合わせ） */
         .recv-postal {
           position: absolute;
           top: 13mm;
@@ -179,7 +150,6 @@ export default function NenkaihyoAddressPage() {
           font-family: "Arial", "Helvetica Neue", sans-serif;
           writing-mode: horizontal-tb;
         }
-        /* 宛名・住所のブロック */
         .recipient-area {
           position: absolute;
           top: 16mm;
@@ -216,7 +186,6 @@ export default function NenkaihyoAddressPage() {
         .recipient-area .col-name .sama {
           margin-top: 2mm;
         }
-        /* 差出人（画像レイアウト準拠：上に郵便番号、下に住所→宗派→山号寺号） */
         .sender-root {
           position: absolute;
           left: 8mm;
@@ -286,7 +255,7 @@ export default function NenkaihyoAddressPage() {
 
       <div className="no-print bg-stone-100 p-4 flex items-center gap-3 sticky top-0 z-10 border-b border-stone-200">
         <div className="text-sm text-stone-600">
-          {year}年{month}月 宛名（表面）— {surfaceItems.length}枚 / {surfaceHouseholdCount}世帯
+          初盆 宛名（表面）— {surfaceItems.length}枚
         </div>
         <button
           onClick={() => window.print()}
@@ -328,7 +297,7 @@ export default function NenkaihyoAddressPage() {
 
           return (
             <div
-              key={it.memberId}
+              key={h.id}
               className="postcard shadow border border-stone-300 print:shadow-none print:border-0"
             >
               {recvZip && <div className="recv-postal">{recvZip}</div>}

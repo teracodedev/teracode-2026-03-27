@@ -13,6 +13,8 @@ interface NenkaiItem {
   memberId: string;
   familyName: string;
   givenName: string | null;
+  familyNameKana?: string | null;
+  givenNameKana?: string | null;
   dharmaName: string | null;
   relation: string | null;
   ageAtDeath: string | null;
@@ -76,9 +78,23 @@ export default function NenkaihyoPostcardPage() {
   }, [year, month]);
 
   const grouped = useMemo(() => {
+    const deceasedKey = (it: NenkaiItem) => ({
+      familyNameKana: it.familyNameKana ?? null,
+      givenNameKana: it.givenNameKana ?? null,
+      familyName: it.familyName,
+      givenName: it.givenName ?? "",
+    });
     return items
       .map((it) => ({ householder: it.householder, members: [it] }))
-      .sort((a, b) => compareHouseholderGojuon(a.householder, b.householder));
+      .sort((a, b) => {
+        const ma = a.members[0];
+        const mb = b.members[0];
+        const byH = compareHouseholderGojuon(a.householder, b.householder);
+        if (byH !== 0) return byH;
+        const byM = compareHouseholderGojuon(deceasedKey(ma), deceasedKey(mb));
+        if (byM !== 0) return byM;
+        return new Date(ma.deathDate).getTime() - new Date(mb.deathDate).getTime();
+      });
   }, [items]);
 
   const warekiYear = yearToWareki(year);

@@ -21,6 +21,11 @@ const printItems = [
     title: "年回表の印刷",
     description: "該当年の年回(法要)対象者一覧を印刷します。",
   },
+  {
+    href: "/print/hatsubon",
+    title: "初盆の印刷",
+    description: "初盆を迎える物故者のいる戸主へのハガキ宛名を印刷します。",
+  },
 ] as const;
 
 export default function PrintMenuPage() {
