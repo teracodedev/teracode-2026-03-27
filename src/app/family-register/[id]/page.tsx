@@ -677,9 +677,11 @@ export default function FamilyRegisterDetailPage({ params }: { params: Promise<{
                       className="border border-stone-300 text-stone-600 px-3 py-1 rounded-lg text-sm font-medium hover:bg-stone-50">
                       編集
                     </Link>
-                    <span className={`text-sm px-3 py-1 rounded-full font-medium ${h.isActive ? "bg-green-100 text-green-700" : "bg-stone-100 text-stone-500"}`}>
-                      {h.isActive ? "在籍" : "離檀"}
-                    </span>
+                    {!h.isActive && (
+                      <span className="text-sm px-3 py-1 rounded-full font-medium bg-stone-100 text-stone-500">
+                        離檀
+                      </span>
+                    )}
                   </div>
                 </div>
 
