@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation";
 import { useSharedSearch } from "@/lib/use-shared-search";
 import { TagFilter } from "@/components/TagFilter";
 import { TagBadge, type Tag } from "@/components/TagBadge";
+import { getUpcomingNenkaiLabel } from "@/lib/upcoming-nenkai";
 
 interface KakochoRecord {
   id: string;
@@ -195,7 +196,9 @@ export default function KakochoPage() {
       ) : (
         <>
           <div className="md:hidden space-y-2">
-            {records.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE).map((record) => (
+            {records.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE).map((record) => {
+              const nenkaiLabel = getUpcomingNenkaiLabel(record.deathDate);
+              return (
               <div
                 key={record.id}
                 className="bg-white rounded-xl border border-stone-200 shadow-sm overflow-hidden cursor-pointer active:bg-stone-50"
@@ -204,6 +207,13 @@ export default function KakochoPage() {
                 <div className="px-4 py-3">
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
+                      {nenkaiLabel ? (
+                        <div className="mb-1.5">
+                          <span className="inline-block px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 text-xs font-medium">
+                            {nenkaiLabel}
+                          </span>
+                        </div>
+                      ) : null}
                       <div className="font-medium text-stone-800 text-base">
                         {[record.familyName, record.givenName].filter(Boolean).join(" ")}
                       </div>
@@ -253,7 +263,8 @@ export default function KakochoPage() {
                   </div>
                 )}
               </div>
-            ))}
+              );
+            })}
             <div className="text-sm text-stone-400 px-1 pt-1">{records.length}件中 {Math.min((currentPage - 1) * PAGE_SIZE + 1, records.length)}〜{Math.min(currentPage * PAGE_SIZE, records.length)}件表示</div>
           </div>
 
@@ -261,6 +272,7 @@ export default function KakochoPage() {
             <table className="w-full text-base">
               <thead className="bg-stone-50 border-b border-stone-200">
                 <tr>
+                  <th className="text-left px-4 py-3 text-stone-600 font-medium whitespace-nowrap">年回</th>
                   <th className="text-left px-4 py-3 text-stone-600 font-medium">フリガナ</th>
                   <th className="text-left px-4 py-3 text-stone-600 font-medium">氏名</th>
                   <th className="text-left px-4 py-3 text-stone-600 font-medium">法名</th>
@@ -276,6 +288,18 @@ export default function KakochoPage() {
                 {records.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE).map((record) => (
                   <Fragment key={record.id}>
                     <tr className="hover:bg-stone-50">
+                      <td className="px-4 py-3 text-stone-700 text-sm whitespace-nowrap">
+                        {(() => {
+                          const nl = getUpcomingNenkaiLabel(record.deathDate);
+                          return nl ? (
+                            <span className="inline-block px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 text-xs font-medium">
+                              {nl}
+                            </span>
+                          ) : (
+                            <span className="text-stone-400">-</span>
+                          );
+                        })()}
+                      </td>
                       <td className="px-4 py-3 text-stone-600 text-sm">
                         {[record.familyNameKana, record.givenNameKana].filter(Boolean).join(" ") || "-"}
                       </td>
