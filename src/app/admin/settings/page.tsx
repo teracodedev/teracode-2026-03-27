@@ -7,6 +7,11 @@ const settingsItems = [
     description: "宛名面（表面）の差出人・住所・連絡先を設定します。",
   },
   {
+    href: "/admin/settings/tags",
+    title: "タグの管理",
+    description: "戸主・世帯員用タグの一覧、新規作成、名前・色の変更、削除を行います。",
+  },
+  {
     href: "/admin/import",
     title: "データインポート",
     description: "MDB ファイルから戸主・家族・墓地データを一括取り込みします。",
