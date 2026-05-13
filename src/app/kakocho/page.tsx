@@ -281,7 +281,7 @@ export default function KakochoPage() {
                   <th className="text-left px-4 py-3 text-stone-600 font-medium">続柄</th>
                   <th className="text-left px-4 py-3 text-stone-600 font-medium">タグ</th>
                   <th className="text-center px-4 py-3 text-stone-600 font-medium whitespace-nowrap">案内不要</th>
-                  <th className="px-4 py-3"></th>
+                  <th className="text-left px-4 py-3 text-stone-600 font-medium whitespace-nowrap">詳細・編集</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-stone-100">
