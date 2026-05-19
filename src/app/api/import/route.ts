@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAuth } from "@/lib/require-auth";
+import { requireAdmin } from "@/lib/require-auth";
 import { parseYaml, yamlDateToDate, toFullWidthKatakana } from "@/lib/yaml-utils";
 
 export const runtime = "nodejs";
 
 export async function POST(req: NextRequest) {
-  const unauth = await requireAuth();
-  if (unauth) return unauth;
+  const denied = await requireAdmin();
+  if (denied) return denied;
 
   const formData = await req.formData();
   const files = formData.getAll("files") as File[];

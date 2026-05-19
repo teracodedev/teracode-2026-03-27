@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { requireAuth } from "@/lib/require-auth";
 
 // メンバーのタグ一覧取得
 export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const unauth = await requireAuth();
+  if (unauth) return unauth;
+
   const { id } = await params;
   const tags = await prisma.memberTag.findMany({
     where: { memberId: id },
@@ -20,6 +24,9 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const unauth = await requireAuth();
+  if (unauth) return unauth;
+
   const { id } = await params;
   const { tagId } = await request.json();
   if (!tagId) {
@@ -38,6 +45,9 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const unauth = await requireAuth();
+  if (unauth) return unauth;
+
   const { id } = await params;
   const { tagId } = await request.json();
   if (!tagId) {

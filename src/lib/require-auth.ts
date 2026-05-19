@@ -16,3 +16,17 @@ export async function requireAuth(): Promise<NextResponse | null> {
   }
   return null;
 }
+
+/**
+ * 管理者権限を要求する。未ログインは 401、一般ユーザーは 403。
+ */
+export async function requireAdmin(): Promise<NextResponse | null> {
+  const session = await auth();
+  if (!session?.user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  if (!session.user.isAdmin) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+  return null;
+}

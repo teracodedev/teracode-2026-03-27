@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAuth } from "@/lib/require-auth";
+import { requireAdmin } from "@/lib/require-auth";
 import { toFullWidthKatakana } from "@/lib/yaml-utils";
 import MDBReader from "mdb-reader";
 
@@ -90,8 +90,8 @@ function pickAgeAtDeath(row: Record<string, unknown>): string | null {
 }
 
 export async function POST(req: NextRequest) {
-  const unauth = await requireAuth();
-  if (unauth) return unauth;
+  const denied = await requireAdmin();
+  if (denied) return denied;
 
   const formData = await req.formData();
   const file = formData.get("file") as File | null;

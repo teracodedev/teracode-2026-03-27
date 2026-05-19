@@ -1,17 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@/generated/prisma";
 import bcrypt from "bcryptjs";
-import { auth } from "@/auth";
+import { requireAdmin } from "@/lib/require-auth";
 
 const prisma = new PrismaClient();
-
-async function requireAdmin() {
-  const session = await auth();
-  if (!session?.user?.isAdmin) {
-    return NextResponse.json({ error: "権限がありません" }, { status: 403 });
-  }
-  return null;
-}
 
 export async function GET() {
   const denied = await requireAdmin();

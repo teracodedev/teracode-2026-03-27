@@ -1,20 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
+import { requireAdmin as requireAdminSession } from "@/lib/require-auth";
 import {
   DEFAULT_NENKAI_POSTCARD_FOOTER,
   DEFAULT_NENKAI_POSTCARD_INTRO,
 } from "@/lib/nenkai-postcard-config";
 
 const CONFIG_ID = "default";
-
-async function requireAdmin() {
-  const session = await auth();
-  if (!session?.user?.isAdmin) {
-    return NextResponse.json({ error: "権限がありません" }, { status: 403 });
-  }
-  return null;
-}
 
 function resolveFooter(stored: string | null | undefined): string {
   if (stored === null || stored === undefined || stored.trim() === "") {
@@ -95,7 +88,7 @@ export async function GET() {
 
 /** 管理者のみ更新 */
 export async function PUT(req: NextRequest) {
-  const denied = await requireAdmin();
+  const denied = await requireAdminSession();
   if (denied) return denied;
 
   const body = (await req.json()) as {

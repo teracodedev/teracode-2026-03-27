@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireAuth } from "@/lib/require-auth";
 
 // 都道府県ごとの郵便番号3桁プレフィックス範囲
 const PREF_RANGES: Record<string, [number, number]> = {
@@ -75,6 +76,9 @@ async function fetchYubinbango(prefix3: string): Promise<Record<string, [number,
 }
 
 export async function GET(req: NextRequest) {
+  const unauth = await requireAuth();
+  if (unauth) return unauth;
+
   const pref = req.nextUrl.searchParams.get("pref") ?? "";
   const city = req.nextUrl.searchParams.get("city") ?? "";
   if (!pref || !city) return NextResponse.json([]);

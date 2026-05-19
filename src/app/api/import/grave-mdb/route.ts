@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAuth } from "@/lib/require-auth";
+import { requireAdmin } from "@/lib/require-auth";
 import MDBReader from "mdb-reader";
 
 export const runtime = "nodejs";
@@ -36,8 +36,8 @@ function earlierDate(current: Date | null, next: Date | null): Date | null {
 }
 
 export async function POST(req: NextRequest) {
-  const unauth = await requireAuth();
-  if (unauth) return unauth;
+  const denied = await requireAdmin();
+  if (denied) return denied;
 
   const formData = await req.formData();
   const file = formData.get("file") as File | null;

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAuth } from "@/lib/require-auth";
+import { requireAdmin } from "@/lib/require-auth";
 import * as yaml from "js-yaml";
 import JSZip from "jszip";
 
@@ -17,8 +17,8 @@ function toISODateOrNull(d: Date | null | undefined): string | null {
 }
 
 export async function GET() {
-  const unauth = await requireAuth();
-  if (unauth) return unauth;
+  const denied = await requireAdmin();
+  if (denied) return denied;
 
   // --- 全データ取得 ---
   const [

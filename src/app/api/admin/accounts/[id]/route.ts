@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@/generated/prisma";
 import { auth } from "@/auth";
+import { requireAdmin } from "@/lib/require-auth";
 
 const prisma = new PrismaClient();
 
@@ -8,15 +9,14 @@ export async function DELETE(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await auth();
-  if (!session?.user?.isAdmin) {
-    return NextResponse.json({ error: "権限がありません" }, { status: 403 });
-  }
+  const denied = await requireAdmin();
+  if (denied) return denied;
 
+  const session = await auth();
   const { id } = await params;
 
   // 自分自身は削除できない
-  if (id === session.user.id) {
+  if (id === session!.user!.id) {
     return NextResponse.json({ error: "自分自身のアカウントは削除できません" }, { status: 400 });
   }
 

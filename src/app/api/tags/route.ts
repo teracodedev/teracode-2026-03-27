@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { requireAuth } from "@/lib/require-auth";
 
 // タグ一覧取得
 export async function GET() {
+  const unauth = await requireAuth();
+  if (unauth) return unauth;
   const tags = await prisma.tag.findMany({
     orderBy: { name: "asc" },
     include: {
@@ -15,6 +18,9 @@ export async function GET() {
 
 // タグ作成
 export async function POST(request: NextRequest) {
+  const unauth = await requireAuth();
+  if (unauth) return unauth;
+
   const { name, color } = await request.json();
   if (!name || typeof name !== "string" || !name.trim()) {
     return NextResponse.json({ error: "name is required" }, { status: 400 });
