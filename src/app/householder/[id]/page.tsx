@@ -2,6 +2,7 @@
 import { fetchWithAuth } from "@/lib/fetch-with-auth";
 
 import { useRouteParams } from "@/lib/use-route-params";
+import { safeToDateInput } from "@/lib/safe-date-input";
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -94,10 +95,6 @@ function formatDate(dateStr: string | null) {
   return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日`;
 }
 
-function toInputDate(dateStr: string | null): string {
-  if (!dateStr) return "";
-  return new Date(dateStr).toISOString().split("T")[0];
-}
 
 const emptyMemberForm = {
   familyName: "", givenName: "", familyNameKana: "", givenNameKana: "",
@@ -304,7 +301,7 @@ export default function HouseholderDetailPage({ params }: { params: Promise<{ id
   const [householderEditError, setHouseholderEditError] = useState("");
 
   const fetchHouseholder = () => {
-    fetch(`/api/householder/${id}`)
+    fetchWithAuth(`/api/householder/${id}`)
       .then(async (res) => {
         const data = await res.json();
         const ok =
@@ -377,8 +374,8 @@ export default function HouseholderDetailPage({ params }: { params: Promise<{ id
       phone2: member.phone2 || "",
       fax: member.fax || "",
       domicile: member.domicile || "",
-      birthDate: toInputDate(member.birthDate),
-      deathDate: toInputDate(member.deathDate),
+      birthDate: safeToDateInput(member.birthDate),
+      deathDate: safeToDateInput(member.deathDate),
       dharmaName: member.dharmaName || "",
       dharmaNameKana: member.dharmaNameKana || "",
       note: member.note || "",
@@ -462,8 +459,8 @@ export default function HouseholderDetailPage({ params }: { params: Promise<{ id
       email: householder.email || "",
       domicile: householder.domicile || "",
       note: householder.note || "",
-      joinedAt: toInputDate(householder.joinedAt),
-      leftAt: toInputDate(householder.leftAt),
+      joinedAt: safeToDateInput(householder.joinedAt),
+      leftAt: safeToDateInput(householder.leftAt),
       isActive: householder.isActive,
     });
     setIsEditing(true);
@@ -480,8 +477,16 @@ export default function HouseholderDetailPage({ params }: { params: Promise<{ id
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(householderEditForm),
       });
-      const data = await res.json();
-      if (!res.ok) { setHouseholderEditError(data.error || "更新に失敗しました"); return; }
+      let data: { error?: string } | null = null;
+      try {
+        data = await res.json();
+      } catch {
+        data = null;
+      }
+      if (!res.ok) {
+        setHouseholderEditError(data?.error || "更新に失敗しました");
+        return;
+      }
       setIsEditing(false);
       fetchHouseholder();
     } catch { setHouseholderEditError("ネットワークエラーが発生しました"); }

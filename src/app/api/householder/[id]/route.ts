@@ -7,6 +7,13 @@ export const runtime = "nodejs";
 
 type Params = { params: Promise<{ id: string }> };
 
+function parseOptionalDate(value: unknown): Date | null {
+  if (value === null || value === undefined || value === "") return null;
+  const d = new Date(String(value));
+  if (Number.isNaN(d.getTime())) return null;
+  return d;
+}
+
 // 戸主詳細取得
 export async function GET(_request: NextRequest, { params }: Params) {
   const unauth = await requireAuth();
@@ -95,8 +102,8 @@ export async function PUT(request: NextRequest, { params }: Params) {
         fax: fax || null,
         email: email || null,
         note: note || null,
-        joinedAt: joinedAt ? new Date(joinedAt) : null,
-        leftAt: leftAt ? new Date(leftAt) : null,
+        joinedAt: parseOptionalDate(joinedAt),
+        leftAt: parseOptionalDate(leftAt),
         isActive: isActive ?? true,
         relation: relation || null,
       };

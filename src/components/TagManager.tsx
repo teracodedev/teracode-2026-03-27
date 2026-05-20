@@ -34,12 +34,19 @@ export function TagManager({
       : `/api/members/${entityId}/tags`;
 
   const loadTags = useCallback(async () => {
-    const [assigned, all] = await Promise.all([
-      fetchWithAuth(tagsUrl).then((r) => r.json()),
-      fetchWithAuth("/api/tags").then((r) => r.json()),
-    ]);
-    setAssignedTags(assigned);
-    setAllTags(all);
+    try {
+      const [assignedRes, allRes] = await Promise.all([
+        fetchWithAuth(tagsUrl),
+        fetchWithAuth("/api/tags"),
+      ]);
+      const assigned = assignedRes.ok ? await assignedRes.json() : [];
+      const all = allRes.ok ? await allRes.json() : [];
+      setAssignedTags(Array.isArray(assigned) ? assigned : []);
+      setAllTags(Array.isArray(all) ? all : []);
+    } catch {
+      setAssignedTags([]);
+      setAllTags([]);
+    }
   }, [tagsUrl]);
 
   useEffect(() => {

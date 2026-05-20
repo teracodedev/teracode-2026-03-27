@@ -2,8 +2,8 @@
 import { fetchWithAuth } from "@/lib/fetch-with-auth";
 
 import { useRouteParams } from "@/lib/use-route-params";
+import { safeToDateInput } from "@/lib/safe-date-input";
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { PostalCodeSearch } from "@/components/PostalCodeSearch";
 import { TagManager } from "@/components/TagManager";
@@ -56,14 +56,14 @@ interface AddressHistory {
   note: string | null;
 }
 
-function toDateInput(dateStr: string | null) {
-  if (!dateStr) return "";
-  return new Date(dateStr).toISOString().split("T")[0];
+function formatMovedAt(dateStr: string) {
+  const d = new Date(dateStr);
+  if (Number.isNaN(d.getTime())) return "";
+  return d.toLocaleDateString("ja-JP");
 }
 
 export default function EditHouseholderPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = useRouteParams(params);
-  const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [loadError, setLoadError] = useState("");
@@ -92,7 +92,7 @@ export default function EditHouseholderPage({ params }: { params: Promise<{ id: 
   });
 
   useEffect(() => {
-    fetch(`/api/householder/${id}`)
+    fetchWithAuth(`/api/householder/${id}`)
       .then(async (res) => {
         const data = await res.json();
         const ok =
@@ -117,8 +117,8 @@ export default function EditHouseholderPage({ params }: { params: Promise<{ id: 
             email: data.email || "",
             domicile: data.domicile || "",
             note: data.note || "",
-            joinedAt: toDateInput(data.joinedAt),
-            leftAt: toDateInput(data.leftAt),
+            joinedAt: safeToDateInput(data.joinedAt),
+            leftAt: safeToDateInput(data.leftAt),
             isActive: Boolean(data.isActive),
           });
         } else {
@@ -196,13 +196,19 @@ export default function EditHouseholderPage({ params }: { params: Promise<{ id: 
         body: JSON.stringify(form),
       });
 
+      let data: { error?: string } | null = null;
+      try {
+        data = await res.json();
+      } catch {
+        data = null;
+      }
       if (!res.ok) {
-        const data = await res.json();
-        setError(data.error || "更新に失敗しました");
+        setError(data?.error || "更新に失敗しました");
         return;
       }
 
-      router.push(`/householder/${id}`);
+      // クライアント遷移でチャンク不整合が起きる環境向けにフルリロードで詳細へ戻る
+      window.location.assign(`/householder/${id}`);
     } catch (err) {
       console.error(err);
       setError("ネットワークエラーが発生しました");
@@ -367,7 +373,7 @@ export default function EditHouseholderPage({ params }: { params: Promise<{ id: 
                   {addressHistories.map((h) => (
                     <li key={h.id} className="px-3 py-2 bg-stone-50 text-sm text-stone-600">
                       <span className="text-xs text-stone-400 mr-2">
-                        {new Date(h.movedAt).toLocaleDateString("ja-JP")}
+                        {formatMovedAt(h.movedAt)}
                       </span>
                       {[h.postalCode ? `〒${h.postalCode}` : null, h.address1, h.address2, h.address3]
                         .filter(Boolean)
