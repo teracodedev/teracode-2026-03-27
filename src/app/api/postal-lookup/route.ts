@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAuth } from "@/lib/require-auth";
 
-/** 郵便番号から都道府県・市区町村を返す（zipcloud プロキシ） */
+/** 郵便番号から住所1相当（都道府県・市区町村・町域）を返す（zipcloud プロキシ） */
 export async function GET(req: NextRequest) {
   const unauth = await requireAuth();
   if (unauth) return unauth;
@@ -20,7 +20,10 @@ export async function GET(req: NextRequest) {
     const data = await res.json();
     if (data.results?.length > 0) {
       const r = data.results[0];
-      const address = ((r.address1 as string) || "") + ((r.address2 as string) || "");
+      const address =
+        ((r.address1 as string) || "") +
+        ((r.address2 as string) || "") +
+        ((r.address3 as string) || "");
       return NextResponse.json({ address });
     }
     return NextResponse.json({ address: null });
