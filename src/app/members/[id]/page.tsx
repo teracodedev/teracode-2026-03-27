@@ -7,6 +7,7 @@ import { fetchWithAuth } from "@/lib/fetch-with-auth";
 import { PostalCodeSearch } from "@/components/PostalCodeSearch";
 import { RelationInput } from "@/components/RelationInput";
 import { TagManager } from "@/components/TagManager";
+import { formatPostalCode, lookupPostalCode } from "@/lib/postal-code";
 
 interface MemberDetail {
   id: string;
@@ -242,26 +243,6 @@ export default function MemberDetailPage({ params }: { params: Promise<{ id: str
       setCopiedId(id);
       setTimeout(() => setCopiedId(null), 2000);
     });
-  }
-
-  function formatPostalCode(value: string): string {
-    const digits = value.replace(/\D/g, "").slice(0, 7);
-    return digits.length > 3 ? digits.slice(0, 3) + "-" + digits.slice(3) : digits;
-  }
-
-  // 編集モーダル
-  async function lookupPostalCode(zip: string): Promise<string | null> {
-    const code = zip.replace(/-/g, "");
-    if (code.length !== 7 || !/^\d{7}$/.test(code)) return null;
-    try {
-      const res = await fetch(`https://zipcloud.ibsnet.co.jp/api/search?zipcode=${code}`);
-      const data = await res.json();
-      if (data.results && data.results.length > 0) {
-        const r = data.results[0];
-        return (r.address1 || "") + (r.address2 || "") + (r.address3 || "");
-      }
-    } catch { /* 検索失敗時は無視 */ }
-    return null;
   }
 
   const [isEditing, setIsEditing] = useState(false);

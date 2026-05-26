@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation";
 import { PostalCodeSearch } from "@/components/PostalCodeSearch";
 import { RelationInput } from "@/components/RelationInput";
 import { TagManager } from "@/components/TagManager";
+import { formatPostalCode, lookupPostalCode } from "@/lib/postal-code";
 
 interface Member {
   id: string;
@@ -109,6 +110,12 @@ type TabId = "info" | "detail";
 
 function MemberFormFields({ form, onChange, householderName }: { form: MemberForm; onChange: (f: MemberForm) => void; householderName?: string }) {
   const set = (k: keyof MemberForm, v: string) => onChange({ ...form, [k]: v });
+  const handlePostalChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const postalCode = formatPostalCode(e.target.value);
+    onChange({ ...form, postalCode });
+    const address = await lookupPostalCode(postalCode);
+    if (address) onChange({ ...form, postalCode, address1: address });
+  };
   const cls = "w-full border border-stone-300 rounded px-3 py-1.5 text-base focus:outline-none focus:ring-2 focus:ring-stone-400";
   return (
     <div className="grid grid-cols-2 gap-3 mt-3">
@@ -134,7 +141,7 @@ function MemberFormFields({ form, onChange, householderName }: { form: MemberFor
       </div>
       <div>
         <label className="block text-sm text-stone-500 mb-1">郵便番号</label>
-        <input type="text" value={form.postalCode} onChange={(e) => set("postalCode", e.target.value)} placeholder="123-4567" className={cls} />
+        <input type="text" value={form.postalCode} onChange={handlePostalChange} placeholder="123-4567" className={cls} />
       </div>
       <div className="col-span-2">
         <label className="block text-sm text-stone-500 mb-1">住所1（都道府県・市区町村）</label>
@@ -442,6 +449,13 @@ export default function HouseholderDetailPage({ params }: { params: Promise<{ id
     setContactError("");
   };
 
+  const handleHouseholderPostalChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const postalCode = formatPostalCode(e.target.value);
+    setHouseholderEditForm(f => ({ ...f, postalCode }));
+    const address = await lookupPostalCode(postalCode);
+    if (address) setHouseholderEditForm(f => ({ ...f, postalCode, address1: address }));
+  };
+
   const startEditHouseholder = () => {
     if (!householder) return;
     setHouseholderEditForm({
@@ -620,7 +634,8 @@ export default function HouseholderDetailPage({ params }: { params: Promise<{ id
             <div className="grid grid-cols-3 gap-4">
               <div>
                 <label className="block text-sm font-medium text-stone-600 mb-1">郵便番号</label>
-                <input type="text" value={householderEditForm.postalCode} onChange={(e) => setHouseholderEditForm({ ...householderEditForm, postalCode: e.target.value })}
+                <input type="text" value={householderEditForm.postalCode} onChange={handleHouseholderPostalChange}
+                  placeholder="123-4567"
                   className="w-full border border-stone-300 rounded-lg px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-stone-400" />
               </div>
               <div className="col-span-2">
@@ -629,7 +644,7 @@ export default function HouseholderDetailPage({ params }: { params: Promise<{ id
                   className="w-full border border-stone-300 rounded-lg px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-stone-400" />
               </div>
               <div className="col-span-3">
-                <PostalCodeSearch onSelect={(zip, addr) => setHouseholderEditForm(f => ({ ...f, postalCode: zip, address1: addr }))} />
+                <PostalCodeSearch onSelect={(zip, addr) => setHouseholderEditForm(f => ({ ...f, postalCode: formatPostalCode(zip), address1: addr }))} />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">

@@ -6,25 +6,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { PostalCodeSearch } from "@/components/PostalCodeSearch";
 import { RelationInput } from "@/components/RelationInput";
-
-function formatPostalCode(value: string): string {
-  const digits = value.replace(/\D/g, "").slice(0, 7);
-  return digits.length > 3 ? digits.slice(0, 3) + "-" + digits.slice(3) : digits;
-}
-
-async function lookupPostalCode(zip: string): Promise<string | null> {
-  const code = zip.replace(/-/g, "");
-  if (code.length !== 7 || !/^\d{7}$/.test(code)) return null;
-  try {
-    const res = await fetch(`https://zipcloud.ibsnet.co.jp/api/search?zipcode=${code}`);
-    const data = await res.json();
-    if (data.results && data.results.length > 0) {
-      const r = data.results[0];
-      return (r.address1 || "") + (r.address2 || "") + (r.address3 || "");
-    }
-  } catch { /* 検索失敗時は無視 */ }
-  return null;
-}
+import { formatPostalCode, lookupPostalCode } from "@/lib/postal-code";
 
 interface MemberForm {
   familyName: string;
@@ -65,12 +47,14 @@ export default function NewHouseholderPage() {
 
   const handleChange = async (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    const formatted = name === "postalCode" ? formatPostalCode(value) : value;
-    setForm(f => ({ ...f, [name]: formatted }));
     if (name === "postalCode") {
+      const formatted = formatPostalCode(value);
+      setForm(f => ({ ...f, postalCode: formatted }));
       const address = await lookupPostalCode(formatted);
-      if (address) setForm(f => ({ ...f, address1: address }));
+      if (address) setForm(f => ({ ...f, postalCode: formatted, address1: address }));
+      return;
     }
+    setForm(f => ({ ...f, [name]: value }));
   };
 
   const addMember = () => {
