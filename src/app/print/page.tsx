@@ -12,6 +12,11 @@ const printItems = [
     description: "封筒・ラベルなど宛名書類を印刷します。",
   },
   {
+    href: "/print/address/tag",
+    title: "タグで抽出して印刷",
+    description: "タグ条件（AND / NOT）で戸主を抽出し、宛名を印刷します。",
+  },
+  {
     href: "/print/kakocho",
     title: "過去帳の印刷",
     description: "過去帳を年月・家別などで印刷します。",

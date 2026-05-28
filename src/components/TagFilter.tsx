@@ -26,7 +26,11 @@ export function TagFilter({
   useEffect(() => {
     fetchWithAuth("/api/tags")
       .then((r) => r.json())
-      .then(setTags);
+      .then(setTags)
+      .catch((err) => {
+        console.error("タグ一覧の取得に失敗しました:", err);
+        setTags([]);
+      });
   }, []);
 
   if (tags.length === 0) return null;

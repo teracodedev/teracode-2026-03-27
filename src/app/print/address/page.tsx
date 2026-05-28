@@ -10,7 +10,15 @@ export default function AddressPrintPage() {
         </p>
       </div>
       <div className="rounded-xl border border-stone-200 bg-white p-6 shadow-sm">
-        <p className="text-stone-600">準備中です。</p>
+        <p className="text-stone-600 mb-3">
+          宛名印刷は「タグで抽出して印刷」から実行できます。
+        </p>
+        <Link
+          href="/print/address/tag"
+          className="inline-block px-4 py-2 rounded-lg bg-amber-700 text-white hover:bg-amber-800 text-sm font-medium"
+        >
+          タグで抽出して印刷を開く
+        </Link>
       </div>
       <div>
         <Link
