@@ -4,6 +4,9 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { TagFilter } from "@/components/TagFilter";
 import { fetchWithAuth } from "@/lib/fetch-with-auth";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+
+const STORAGE_KEY = "teracode_print_address_tag_filters";
 
 interface Householder {
   id: string;
@@ -18,11 +21,83 @@ interface Householder {
 }
 
 export default function TagAddressPrintPage() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [items, setItems] = useState<Householder[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
   const [notTagIds, setNotTagIds] = useState<string[]>([]);
   const [query, setQuery] = useState("");
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  useEffect(() => {
+    const q = (searchParams.get("q") ?? "").trim();
+    const tags = (searchParams.get("tags") ?? "")
+      .split(",")
+      .map((v) => v.trim())
+      .filter(Boolean);
+    const notTags = (searchParams.get("notTags") ?? "")
+      .split(",")
+      .map((v) => v.trim())
+      .filter(Boolean);
+
+    if (q || tags.length > 0 || notTags.length > 0) {
+      setQuery(q);
+      setSelectedTagIds(tags);
+      setNotTagIds(notTags);
+      setIsInitialized(true);
+      return;
+    }
+
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw) as {
+          q?: string;
+          tags?: string[];
+          notTags?: string[];
+        };
+        setQuery((parsed.q ?? "").trim());
+        setSelectedTagIds(Array.isArray(parsed.tags) ? parsed.tags : []);
+        setNotTagIds(Array.isArray(parsed.notTags) ? parsed.notTags : []);
+      }
+    } catch {
+      // ignore storage parse errors
+    }
+    setIsInitialized(true);
+  }, [searchParams]);
+
+  useEffect(() => {
+    if (!isInitialized) return;
+    const sp = new URLSearchParams();
+    if (query.trim()) sp.set("q", query.trim());
+    if (selectedTagIds.length > 0) sp.set("tags", selectedTagIds.join(","));
+    if (notTagIds.length > 0) sp.set("notTags", notTagIds.join(","));
+    const qs = sp.toString();
+    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+  }, [isInitialized, notTagIds, pathname, query, router, selectedTagIds]);
+
+  useEffect(() => {
+    if (!isInitialized) return;
+    try {
+      const hasCondition = query.trim() || selectedTagIds.length > 0 || notTagIds.length > 0;
+      if (!hasCondition) {
+        localStorage.removeItem(STORAGE_KEY);
+        return;
+      }
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({
+          q: query.trim(),
+          tags: selectedTagIds,
+          notTags: notTagIds,
+        }),
+      );
+    } catch {
+      // ignore storage write errors
+    }
+  }, [isInitialized, notTagIds, query, selectedTagIds]);
 
   const fetchItems = useCallback(async () => {
     setLoading(true);
