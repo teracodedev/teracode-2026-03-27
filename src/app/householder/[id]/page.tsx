@@ -10,6 +10,7 @@ import { PostalCodeSearch } from "@/components/PostalCodeSearch";
 import { RelationInput } from "@/components/RelationInput";
 import { TagManager } from "@/components/TagManager";
 import { formatPostalCode, lookupPostalCode } from "@/lib/postal-code";
+import { GENDER_SELECT_OPTIONS, genderFromDb, genderToDb, formatGenderLabel } from "@/lib/gender";
 
 interface Member {
   id: string;
@@ -50,6 +51,7 @@ interface HouseholderDetail {
   fax: string | null;
   email: string | null;
   domicile: string | null;
+  gender: string | null;
   note: string | null;
   joinedAt: string | null;
   leftAt: string | null;
@@ -84,6 +86,7 @@ interface HouseholderEditForm {
   phone2: string;
   email: string;
   domicile: string;
+  gender: string;
   note: string;
   joinedAt: string;
   leftAt: string;
@@ -301,7 +304,7 @@ export default function HouseholderDetailPage({ params }: { params: Promise<{ id
     familyName: "", givenName: "", familyNameKana: "", givenNameKana: "",
     relation: "",
     postalCode: "", address1: "", address2: "", address3: "",
-    phone1: "", phone2: "", email: "", domicile: "", note: "",
+    phone1: "", phone2: "", email: "", domicile: "", gender: "", note: "",
     joinedAt: "", leftAt: "", isActive: true,
   });
   const [householderEditSubmitting, setHouseholderEditSubmitting] = useState(false);
@@ -472,6 +475,7 @@ export default function HouseholderDetailPage({ params }: { params: Promise<{ id
       phone2: householder.phone2 || "",
       email: householder.email || "",
       domicile: householder.domicile || "",
+      gender: genderFromDb(householder.gender),
       note: householder.note || "",
       joinedAt: safeToDateInput(householder.joinedAt),
       leftAt: safeToDateInput(householder.leftAt),
@@ -489,7 +493,10 @@ export default function HouseholderDetailPage({ params }: { params: Promise<{ id
       const res = await fetchWithAuth(`/api/householder/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(householderEditForm),
+        body: JSON.stringify({
+          ...householderEditForm,
+          gender: genderToDb(householderEditForm.gender),
+        }),
       });
       let data: { error?: string } | null = null;
       try {
@@ -521,6 +528,7 @@ export default function HouseholderDetailPage({ params }: { params: Promise<{ id
           familyNameKana: householder!.familyNameKana,
           givenNameKana: householder!.givenNameKana,
           email: householder!.email,
+          gender: householder!.gender,
           joinedAt: householder!.joinedAt,
           leftAt: householder!.leftAt,
           isActive: householder!.isActive,
@@ -683,6 +691,20 @@ export default function HouseholderDetailPage({ params }: { params: Promise<{ id
                   className="w-full border border-stone-300 rounded-lg px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-stone-400" />
               </div>
             </div>
+            <div>
+              <label className="block text-sm font-medium text-stone-600 mb-1">性別</label>
+              <select
+                value={householderEditForm.gender}
+                onChange={(e) => setHouseholderEditForm({ ...householderEditForm, gender: e.target.value })}
+                className="w-full max-w-xs border border-stone-300 rounded-lg px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-stone-400 bg-white"
+              >
+                {GENDER_SELECT_OPTIONS.map((opt) => (
+                  <option key={opt.value || "unknown"} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+            </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-stone-600 mb-1">入檀日</label>
@@ -813,6 +835,10 @@ export default function HouseholderDetailPage({ params }: { params: Promise<{ id
               <tr className="border-b border-stone-100">
                 <td className="px-4 py-2.5 text-stone-500">駐車場</td>
                 <td className="px-4 py-2.5 text-stone-700"></td>
+              </tr>
+              <tr className="border-b border-stone-100">
+                <td className="px-4 py-2.5 text-stone-500">性別</td>
+                <td className="px-4 py-2.5 text-stone-700">{formatGenderLabel(householder.gender)}</td>
               </tr>
               <tr>
                 <td className="px-4 py-2.5 text-stone-500">本籍地</td>

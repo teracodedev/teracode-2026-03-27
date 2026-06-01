@@ -20,3 +20,11 @@ export function genderToDb(g: string | null | undefined): string | null {
   if (g === "M" || g === "F" || g === "O") return g;
   return null;
 }
+
+/** 表示用ラベル */
+export function formatGenderLabel(g: string | null | undefined): string {
+  if (g === "M") return "男性";
+  if (g === "F") return "女性";
+  if (g === "O" || (g && g !== "U")) return "その他";
+  return "不明";
+}

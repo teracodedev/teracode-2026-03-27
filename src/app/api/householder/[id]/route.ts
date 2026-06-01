@@ -91,9 +91,6 @@ export async function PUT(request: NextRequest, { params }: Params) {
       gender,
     } = body;
 
-    const normalizedGender =
-      gender === "M" || gender === "F" || gender === "O" ? gender : null;
-
     const data: Record<string, unknown> = {
         familyName,
         givenName,
@@ -111,8 +108,12 @@ export async function PUT(request: NextRequest, { params }: Params) {
         leftAt: parseOptionalDate(leftAt),
         isActive: isActive ?? true,
         relation: relation || null,
-        gender: normalizedGender,
       };
+
+    if (gender !== undefined) {
+      data.gender =
+        gender === "M" || gender === "F" || gender === "O" ? gender : null;
+    }
 
     if (fields.phoneSub) {
       data[fields.phoneSub] = phone2 || null;
