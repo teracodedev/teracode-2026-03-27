@@ -102,7 +102,11 @@ export async function POST(request: NextRequest) {
       note,
       joinedAt,
       members,
+      gender,
     } = body;
+
+    const normalizedGender =
+      gender === "M" || gender === "F" || gender === "O" ? gender : null;
 
     if (!familyName || !givenName) {
       return NextResponse.json(
@@ -117,6 +121,7 @@ export async function POST(request: NextRequest) {
         familyNameKana: familyNameKana || null,
         givenNameKana: givenNameKana || null,
         relation: relation || null,
+        gender: normalizedGender,
         postalCode: postalCode || null,
         address1: address1 || null,
         address2: address2 || null,

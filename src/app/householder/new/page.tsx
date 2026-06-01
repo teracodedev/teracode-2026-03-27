@@ -7,6 +7,7 @@ import Link from "next/link";
 import { PostalCodeSearch } from "@/components/PostalCodeSearch";
 import { RelationInput } from "@/components/RelationInput";
 import { formatPostalCode, lookupPostalCode } from "@/lib/postal-code";
+import { GENDER_SELECT_OPTIONS, genderToDb } from "@/lib/gender";
 
 interface MemberForm {
   familyName: string;
@@ -28,6 +29,7 @@ export default function NewHouseholderPage() {
   const [form, setForm] = useState({
     familyName: "",
     givenName: "",
+    gender: "",
     familyNameKana: "",
     givenNameKana: "",
     relation: "",
@@ -45,7 +47,9 @@ export default function NewHouseholderPage() {
 
   const [members, setMembers] = useState<MemberForm[]>([]);
 
-  const handleChange = async (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = async (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => {
     const { name, value } = e.target;
     if (name === "postalCode") {
       const formatted = formatPostalCode(value);
@@ -83,7 +87,11 @@ export default function NewHouseholderPage() {
       const res = await fetchWithAuth("/api/householder", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, members: members.filter((m) => m.familyName) }),
+        body: JSON.stringify({
+          ...form,
+          gender: genderToDb(form.gender),
+          members: members.filter((m) => m.familyName),
+        }),
       });
 
       if (!res.ok) {
@@ -150,6 +158,22 @@ export default function NewHouseholderPage() {
                 className="w-full border border-stone-300 rounded-lg px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-stone-400"
               />
             </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-stone-600 mb-1">性別</label>
+            <select
+              name="gender"
+              value={form.gender}
+              onChange={handleChange}
+              className="w-full max-w-xs border border-stone-300 rounded-lg px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-stone-400 bg-white"
+            >
+              {GENDER_SELECT_OPTIONS.map((opt) => (
+                <option key={opt.value || "unknown"} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div className="grid grid-cols-2 gap-4">

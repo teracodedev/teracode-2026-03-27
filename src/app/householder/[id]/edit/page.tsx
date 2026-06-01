@@ -8,10 +8,12 @@ import Link from "next/link";
 import { PostalCodeSearch } from "@/components/PostalCodeSearch";
 import { TagManager } from "@/components/TagManager";
 import { formatPostalCode, lookupPostalCode } from "@/lib/postal-code";
+import { GENDER_SELECT_OPTIONS, genderFromDb, genderToDb } from "@/lib/gender";
 
 interface HouseholderForm {
   familyName: string;
   givenName: string;
+  gender: string;
   familyNameKana: string;
   givenNameKana: string;
   postalCode: string;
@@ -57,6 +59,7 @@ export default function EditHouseholderPage({ params }: { params: Promise<{ id: 
   const [form, setForm] = useState<HouseholderForm>({
     familyName: "",
     givenName: "",
+    gender: "",
     familyNameKana: "",
     givenNameKana: "",
     postalCode: "",
@@ -88,6 +91,7 @@ export default function EditHouseholderPage({ params }: { params: Promise<{ id: 
           setForm({
             familyName: data.familyName || "",
             givenName: data.givenName || "",
+            gender: genderFromDb(data.gender),
             familyNameKana: data.familyNameKana || "",
             givenNameKana: data.givenNameKana || "",
             postalCode: data.postalCode || "",
@@ -155,7 +159,9 @@ export default function EditHouseholderPage({ params }: { params: Promise<{ id: 
     }
   };
 
-  const handleChange = async (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = async (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => {
     const target = e.target as HTMLInputElement;
     const rawValue = target.type === "checkbox" ? target.checked : target.value;
     const value = target.name === "postalCode" && typeof rawValue === "string" ? formatPostalCode(rawValue) : rawValue;
@@ -177,7 +183,10 @@ export default function EditHouseholderPage({ params }: { params: Promise<{ id: 
       const res = await fetchWithAuth(`/api/householder/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify({
+          ...form,
+          gender: genderToDb(form.gender),
+        }),
       });
 
       let data: { error?: string } | null = null;
@@ -262,6 +271,22 @@ export default function EditHouseholderPage({ params }: { params: Promise<{ id: 
                 className="w-full border border-stone-300 rounded-lg px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-stone-400"
               />
             </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-stone-600 mb-1">性別</label>
+            <select
+              name="gender"
+              value={form.gender}
+              onChange={handleChange}
+              className="w-full max-w-xs border border-stone-300 rounded-lg px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-stone-400 bg-white"
+            >
+              {GENDER_SELECT_OPTIONS.map((opt) => (
+                <option key={opt.value || "unknown"} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
