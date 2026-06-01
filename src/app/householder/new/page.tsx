@@ -160,22 +160,6 @@ export default function NewHouseholderPage() {
             </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-stone-600 mb-1">性別</label>
-            <select
-              name="gender"
-              value={form.gender}
-              onChange={handleChange}
-              className="w-full max-w-xs border border-stone-300 rounded-lg px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-stone-400 bg-white"
-            >
-              {GENDER_SELECT_OPTIONS.map((opt) => (
-                <option key={opt.value || "unknown"} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-stone-600 mb-1">姓（カナ）</label>
@@ -317,6 +301,22 @@ export default function NewHouseholderPage() {
               placeholder="東京都千代田区〇〇番地"
               className="w-full border border-stone-300 rounded-lg px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-stone-400"
             />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-stone-600 mb-1">性別</label>
+            <select
+              name="gender"
+              value={form.gender}
+              onChange={handleChange}
+              className="w-full max-w-xs border border-stone-300 rounded-lg px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-stone-400 bg-white"
+            >
+              {GENDER_SELECT_OPTIONS.map((opt) => (
+                <option key={opt.value || "unknown"} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div>
