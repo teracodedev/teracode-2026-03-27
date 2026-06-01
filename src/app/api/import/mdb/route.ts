@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/require-auth";
+import { buildFamilyRegisterName, buildFamilyRegisterNameKana } from "@/lib/family-register-names";
 import { toFullWidthKatakana } from "@/lib/yaml-utils";
 import MDBReader from "mdb-reader";
 
@@ -232,14 +233,10 @@ export async function POST(req: NextRequest) {
       });
 
       // 家族・親族台帳を自動作成して紐付け
-      const familyNameKana = toFullWidthKatakana(familyNameKanaRaw) || "";
-      const givenNameKana = toFullWidthKatakana(givenNameKanaRaw) || "";
-      const kanaPrefix = `${familyNameKana}${givenNameKana}`;
-      const registerNameKana = kanaPrefix ? `${kanaPrefix}ノカゾク・シンゾク` : null;
       const familyRegister = await prisma.familyRegister.create({
         data: {
-          name: `${familyName}${givenName}の家族・親族台帳`,
-          nameKana: registerNameKana || null,
+          name: buildFamilyRegisterName(familyName, givenName),
+          nameKana: buildFamilyRegisterNameKana(familyNameKanaRaw, givenNameKanaRaw),
         },
       });
       await prisma.householder.update({

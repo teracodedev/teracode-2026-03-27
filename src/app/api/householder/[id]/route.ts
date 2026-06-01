@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getHouseholderDelegate, getHouseholderFieldMap, getHouseholderModelKind } from "@/lib/prisma-models";
 import { requireAuth } from "@/lib/require-auth";
+import { buildFamilyRegisterName, buildFamilyRegisterNameKana } from "@/lib/family-register-names";
 import { prisma } from "@/lib/prisma";
 
 export const runtime = "nodejs";
@@ -132,10 +133,8 @@ export async function PUT(request: NextRequest, { params }: Params) {
         await prisma.familyRegister.update({
           where: { id: current.familyRegisterId },
           data: {
-            name: `${familyName}${givenName}の家族・親族台帳`,
-            nameKana: (familyNameKana || givenNameKana)
-              ? `${familyNameKana ?? ""}${givenNameKana ?? ""}の家族・親族台帳`
-              : null,
+            name: buildFamilyRegisterName(familyName, givenName),
+            nameKana: buildFamilyRegisterNameKana(familyNameKana, givenNameKana),
           },
         });
       }
