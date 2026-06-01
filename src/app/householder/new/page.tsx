@@ -203,13 +203,13 @@ export default function NewHouseholderPage() {
               />
             </div>
             <div className="col-span-2">
-              <label className="block text-sm font-medium text-stone-600 mb-1">住所1（都道府県・市区町村）</label>
+              <label className="block text-sm font-medium text-stone-600 mb-1">住所1（都道府県・市区町村・町名）</label>
               <input
                 type="text"
                 name="address1"
                 value={form.address1}
                 onChange={handleChange}
-                placeholder="東京都渋谷区"
+                placeholder="東京都渋谷区神南"
                 className="w-full border border-stone-300 rounded-lg px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-stone-400"
               />
             </div>
