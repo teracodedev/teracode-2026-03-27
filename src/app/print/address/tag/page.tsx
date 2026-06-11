@@ -29,6 +29,7 @@ export default function TagAddressPrintPage() {
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
   const [notTagIds, setNotTagIds] = useState<string[]>([]);
   const [query, setQuery] = useState("");
+  const [excludedIds, setExcludedIds] = useState<Set<string>>(new Set());
   const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
@@ -133,13 +134,34 @@ export default function TagAddressPrintPage() {
     });
   }, [items]);
 
+  const toggleExcluded = useCallback((id: string) => {
+    setExcludedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  }, []);
+
+  const printableItems = useMemo(
+    () => sortedItems.filter((h) => !excludedIds.has(h.id)),
+    [sortedItems, excludedIds],
+  );
+
   const printHref = useMemo(() => {
     const sp = new URLSearchParams();
     if (query.trim()) sp.set("q", query.trim());
     if (selectedTagIds.length > 0) sp.set("tags", selectedTagIds.join(","));
     if (notTagIds.length > 0) sp.set("notTags", notTagIds.join(","));
+    const excluded = sortedItems
+      .filter((h) => excludedIds.has(h.id))
+      .map((h) => h.id);
+    if (excluded.length > 0) sp.set("exclude", excluded.join(","));
     return `/print/address/tag/surface?${sp.toString()}`;
-  }, [notTagIds, query, selectedTagIds]);
+  }, [excludedIds, notTagIds, query, selectedTagIds, sortedItems]);
 
   return (
     <div className="space-y-6">
@@ -171,7 +193,11 @@ export default function TagAddressPrintPage() {
         </div>
         <div className="flex items-center gap-3">
           <span className="text-sm text-stone-500">
-            {loading ? "抽出中..." : `${sortedItems.length}件`}
+            {loading
+              ? "抽出中..."
+              : excludedIds.size > 0
+                ? `${sortedItems.length}件中 ${printableItems.length}件を印刷`
+                : `${sortedItems.length}件`}
           </span>
           <a
             href={printHref}
@@ -179,7 +205,7 @@ export default function TagAddressPrintPage() {
             rel="noopener noreferrer"
             className={
               "ml-auto inline-block px-4 py-2 rounded-lg text-white font-medium " +
-              (sortedItems.length === 0
+              (printableItems.length === 0
                 ? "bg-stone-300 pointer-events-none"
                 : "bg-amber-700 hover:bg-amber-800")
             }
@@ -200,15 +226,30 @@ export default function TagAddressPrintPage() {
           <table className="w-full text-sm">
             <thead className="bg-stone-50 border-b border-stone-200">
               <tr>
+                <th className="text-center px-4 py-3 text-stone-600 font-medium whitespace-nowrap">印刷不要</th>
                 <th className="text-left px-4 py-3 text-stone-600 font-medium">戸主</th>
                 <th className="text-left px-4 py-3 text-stone-600 font-medium">郵便番号</th>
                 <th className="text-left px-4 py-3 text-stone-600 font-medium">住所</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-stone-100">
-              {sortedItems.map((h) => (
-                <tr key={h.id} className="hover:bg-stone-50">
-                  <td className="px-4 py-3 text-stone-800">
+              {sortedItems.map((h) => {
+                const excluded = excludedIds.has(h.id);
+                return (
+                <tr
+                  key={h.id}
+                  className={excluded ? "bg-stone-50 text-stone-400" : "hover:bg-stone-50"}
+                >
+                  <td className="px-4 py-3 text-center">
+                    <input
+                      type="checkbox"
+                      checked={excluded}
+                      onChange={() => toggleExcluded(h.id)}
+                      aria-label="印刷不要"
+                      className="h-4 w-4 accent-amber-700 cursor-pointer"
+                    />
+                  </td>
+                  <td className={"px-4 py-3 " + (excluded ? "text-stone-400 line-through" : "text-stone-800")}>
                     {h.familyName} {h.givenName}
                   </td>
                   <td className="px-4 py-3 text-stone-600">{h.postalCode || "-"}</td>
@@ -216,7 +257,8 @@ export default function TagAddressPrintPage() {
                     {[h.address1, h.address2, h.address3].filter(Boolean).join("") || "-"}
                   </td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
         </div>

@@ -57,6 +57,7 @@ export default function TagAddressPrintSurfacePage() {
   const q = sp.get("q") ?? "";
   const tags = sp.get("tags") ?? "";
   const notTags = sp.get("notTags") ?? "";
+  const exclude = sp.get("exclude") ?? "";
 
   const [items, setItems] = useState<Householder[]>([]);
   const [loading, setLoading] = useState(true);
@@ -105,9 +106,23 @@ export default function TagAddressPrintSurfacePage() {
     })();
   }, [notTags, q, tags]);
 
+  const excludedIds = useMemo(
+    () =>
+      new Set(
+        exclude
+          .split(",")
+          .map((v) => v.trim())
+          .filter(Boolean),
+      ),
+    [exclude],
+  );
+
   const surfaceItems = useMemo(
-    () => [...items].sort((a, b) => compareHouseholderGojuon(b, a)),
-    [items],
+    () =>
+      items
+        .filter((h) => !excludedIds.has(h.id))
+        .sort((a, b) => compareHouseholderGojuon(b, a)),
+    [items, excludedIds],
   );
 
   if (loading) return <div className="p-8 text-stone-500">読み込み中...</div>;
