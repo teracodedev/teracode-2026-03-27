@@ -201,8 +201,8 @@ export default function TagAddressPrintPage() {
             <thead className="bg-stone-50 border-b border-stone-200">
               <tr>
                 <th className="text-left px-4 py-3 text-stone-600 font-medium">戸主</th>
-                <th className="text-left px-4 py-3 text-stone-600 font-medium">住所</th>
                 <th className="text-left px-4 py-3 text-stone-600 font-medium">郵便番号</th>
+                <th className="text-left px-4 py-3 text-stone-600 font-medium">住所</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-stone-100">
@@ -211,10 +211,10 @@ export default function TagAddressPrintPage() {
                   <td className="px-4 py-3 text-stone-800">
                     {h.familyName} {h.givenName}
                   </td>
+                  <td className="px-4 py-3 text-stone-600">{h.postalCode || "-"}</td>
                   <td className="px-4 py-3 text-stone-600">
                     {[h.address1, h.address2, h.address3].filter(Boolean).join("") || "-"}
                   </td>
-                  <td className="px-4 py-3 text-stone-600">{h.postalCode || "-"}</td>
                 </tr>
               ))}
             </tbody>
