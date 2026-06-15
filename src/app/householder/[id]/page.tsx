@@ -807,9 +807,13 @@ export default function HouseholderDetailPage({ params }: { params: Promise<{ id
                 <td className="px-4 py-2.5 text-stone-500">電話番号1</td>
                 <td className="px-4 py-2.5 text-stone-700">{householder.phone1 || ""}</td>
               </tr>
-              <tr>
+              <tr className="border-b border-stone-100">
                 <td className="px-4 py-2.5 text-stone-500">電話番号2</td>
                 <td className="px-4 py-2.5 text-stone-700">{householder.phone2 || ""}</td>
+              </tr>
+              <tr>
+                <td className="px-4 py-2.5 text-stone-500">メールアドレス</td>
+                <td className="px-4 py-2.5 text-stone-700">{householder.email || ""}</td>
               </tr>
             </tbody>
           </table>
