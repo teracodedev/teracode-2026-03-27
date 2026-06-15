@@ -278,12 +278,12 @@ export default function HouseholderPage() {
                   <th className="text-left px-4 py-3 text-stone-600 font-medium whitespace-nowrap">電話番号1</th>
                   <th className="text-left px-4 py-3 text-stone-600 font-medium whitespace-nowrap">電話番号2</th>
                   <th className="text-left px-4 py-3 text-stone-600 font-medium whitespace-nowrap">タグ</th>
-                  <th className="text-left px-4 py-3 text-stone-600 font-medium whitespace-nowrap">詳細・編集</th>
+                  <th className="sticky right-0 z-10 bg-stone-50 text-left px-4 py-3 text-stone-600 font-medium whitespace-nowrap">詳細・編集</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-stone-100">
                 {householderList.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE).map((householder) => (
-                  <tr key={householder.id} className="hover:bg-stone-50">
+                  <tr key={householder.id} className="hover:bg-stone-50 group">
                     <td className="px-4 py-3 text-stone-800 whitespace-nowrap">
                       {householder.familyName} {householder.givenName}
                     </td>
@@ -316,7 +316,7 @@ export default function HouseholderPage() {
                         ))}
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-sm whitespace-nowrap">
+                    <td className="sticky right-0 z-10 bg-white group-hover:bg-stone-50 px-4 py-3 text-sm whitespace-nowrap">
                       <Link href={`/householder/${householder.id}`} className="text-amber-700 hover:text-amber-800 hover:underline">
                         詳細・編集
                       </Link>
