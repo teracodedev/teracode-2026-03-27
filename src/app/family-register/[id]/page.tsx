@@ -1026,7 +1026,7 @@ export default function FamilyRegisterDetailPage({ params }: { params: Promise<{
                 <div className="col-span-2">
                   <label className="block text-xs text-stone-500 mb-1">法名フリガナ</label>
                   <input value={deceasedForm.dharmaNameKana} onChange={e => setDeceasedForm(f => ({ ...f, dharmaNameKana: e.target.value }))}
-                    className={inputCls} placeholder="○○イン○○コジ" />
+                    className={inputCls} placeholder="○○イン○○" />
                 </div>
               </div>
               <div className="flex gap-2 justify-end pt-1">
