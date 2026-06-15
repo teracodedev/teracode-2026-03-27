@@ -6,6 +6,13 @@ export const runtime = "nodejs";
 
 type Params = { params: Promise<{ id: string }> };
 
+function calcAgeAtDeathFromDates(birthDate: Date, deathDate: Date): number {
+  let age = deathDate.getFullYear() - birthDate.getFullYear();
+  const m = deathDate.getMonth() - birthDate.getMonth();
+  if (m < 0 || (m === 0 && deathDate.getDate() < birthDate.getDate())) age--;
+  return age;
+}
+
 export async function GET(_request: NextRequest, { params }: Params) {
   const unauth = await requireAuth();
   if (unauth) return unauth;
@@ -55,7 +62,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     const body = await request.json();
     const {
       familyName, givenName, familyNameKana, givenNameKana,
-      relation, gender, birthDate, deathDate,
+      relation, gender, birthDate, deathDate, ageAtDeath,
       dharmaName, dharmaNameKana, note,
       postalCode, address1, address2, address3,
       phone1, phone2, fax, domicile, email,
@@ -89,6 +96,14 @@ export async function PATCH(request: NextRequest, { params }: Params) {
       domicile: domicile || null,
       email: email || null,
     };
+
+    if (ageAtDeath !== undefined) {
+      if (updateData.birthDate && updateData.deathDate) {
+        updateData.ageAtDeath = String(calcAgeAtDeathFromDates(updateData.birthDate, updateData.deathDate));
+      } else {
+        updateData.ageAtDeath = ageAtDeath ? String(ageAtDeath).replace(/[才歳]/g, "") : null;
+      }
+    }
 
     if (annaiFuyo         !== undefined) updateData.annaiFuyo         = Boolean(annaiFuyo);
     if (keijiFuyo         !== undefined) updateData.keijiFuyo         = Boolean(keijiFuyo);

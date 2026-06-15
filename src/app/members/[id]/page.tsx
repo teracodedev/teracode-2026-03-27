@@ -124,14 +124,32 @@ function addYears(dateStr: string, years: number): string {
   return d.toISOString();
 }
 
-function calcAgeAtDeath(birthDateStr: string | null, deathDateStr: string | null): string {
-  if (!birthDateStr || !deathDateStr) return "-";
+function calcAgeAtDeathNumeric(birthDateStr: string | null, deathDateStr: string | null): number | null {
+  if (!birthDateStr || !deathDateStr) return null;
   const birth = new Date(birthDateStr);
   const death = new Date(deathDateStr);
   let age = death.getFullYear() - birth.getFullYear();
   const m = death.getMonth() - birth.getMonth();
   if (m < 0 || (m === 0 && death.getDate() < birth.getDate())) age--;
-  return age + "才";
+  return age;
+}
+
+function formatAgeAtDeathDisplay(
+  birthDate: string | null,
+  deathDate: string | null,
+  ageAtDeath: string | null
+): string {
+  const calculated = calcAgeAtDeathNumeric(birthDate, deathDate);
+  if (calculated !== null) return String(calculated) + "才";
+  if (ageAtDeath) return ageAtDeath.replace(/[才歳]$/, "") + "才";
+  return "-";
+}
+
+function resolveAgeAtDeathForSave(birthDate: string, deathDate: string, ageAtDeath: string): string | null {
+  const calculated = calcAgeAtDeathNumeric(birthDate || null, deathDate || null);
+  if (calculated !== null) return String(calculated);
+  const trimmed = ageAtDeath.trim().replace(/[才歳]/g, "");
+  return trimmed || null;
 }
 
 // 年回表データ
@@ -249,7 +267,7 @@ export default function MemberDetailPage({ params }: { params: Promise<{ id: str
   const [editForm, setEditForm] = useState({
     familyName: "", givenName: "", familyNameKana: "", givenNameKana: "",
     dharmaName: "", dharmaNameKana: "",
-    deathDate: "", birthDate: "",
+    deathDate: "", birthDate: "", ageAtDeath: "",
     relation: "", note: "",
     postalCode: "", address1: "", address2: "", address3: "",
     phone1: "", phone2: "", fax: "", domicile: "", email: "",
@@ -280,6 +298,11 @@ export default function MemberDetailPage({ params }: { params: Promise<{ id: str
       dharmaNameKana: member.dharmaNameKana || "",
       deathDate: toDateInputValue(member.deathDate),
       birthDate: toDateInputValue(member.birthDate),
+      ageAtDeath: (() => {
+        const calculated = calcAgeAtDeathNumeric(member.birthDate, member.deathDate);
+        if (calculated !== null) return String(calculated);
+        return member.ageAtDeath?.replace(/[才歳]/g, "") || "";
+      })(),
       relation: member.relation || "",
       note: member.note || "",
       postalCode: member.postalCode || "",
@@ -312,6 +335,7 @@ export default function MemberDetailPage({ params }: { params: Promise<{ id: str
           dharmaNameKana: editForm.dharmaNameKana || null,
           deathDate: editForm.deathDate || null,
           birthDate: editForm.birthDate || null,
+          ageAtDeath: resolveAgeAtDeathForSave(editForm.birthDate, editForm.deathDate, editForm.ageAtDeath),
           relation: editForm.relation || null,
           note: editForm.note || null,
           postalCode: editForm.postalCode || null,
@@ -787,7 +811,7 @@ export default function MemberDetailPage({ params }: { params: Promise<{ id: str
           </div>
           <div>
             <div className="text-xs text-stone-500 font-medium whitespace-nowrap">享年</div>
-            <div className="text-stone-600 whitespace-nowrap">{member.ageAtDeath || calcAgeAtDeath(member.birthDate, member.deathDate)}</div>
+            <div className="text-stone-600 whitespace-nowrap">{formatAgeAtDeathDisplay(member.birthDate, member.deathDate, member.ageAtDeath)}</div>
           </div>
           <div>
             <div className="text-xs text-stone-500 font-medium whitespace-nowrap">続柄</div>
@@ -947,7 +971,12 @@ export default function MemberDetailPage({ params }: { params: Promise<{ id: str
                   <input
                     type="date"
                     value={editForm.deathDate}
-                    onChange={e => setEditForm(f => ({ ...f, deathDate: e.target.value }))}
+                    onChange={e => setEditForm(f => {
+                      const next = { ...f, deathDate: e.target.value };
+                      const calculated = calcAgeAtDeathNumeric(next.birthDate, next.deathDate);
+                      if (calculated !== null) next.ageAtDeath = String(calculated);
+                      return next;
+                    })}
                     className="w-full border border-stone-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
                   />
                 </div>
@@ -956,9 +985,26 @@ export default function MemberDetailPage({ params }: { params: Promise<{ id: str
                   <input
                     type="date"
                     value={editForm.birthDate}
-                    onChange={e => setEditForm(f => ({ ...f, birthDate: e.target.value }))}
+                    onChange={e => setEditForm(f => {
+                      const next = { ...f, birthDate: e.target.value };
+                      const calculated = calcAgeAtDeathNumeric(next.birthDate, next.deathDate);
+                      if (calculated !== null) next.ageAtDeath = String(calculated);
+                      return next;
+                    })}
                     className="w-full border border-stone-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
                   />
+                </div>
+                <div>
+                  <label className="block text-xs text-stone-500 mb-1">享年</label>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={editForm.ageAtDeath}
+                    onChange={e => setEditForm(f => ({ ...f, ageAtDeath: e.target.value.replace(/[^0-9]/g, "") }))}
+                    placeholder="例: 85"
+                    className="w-full border border-stone-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
+                  />
+                  <p className="text-xs text-stone-400 mt-1">生年月日・命日が両方入力されている場合は自動計算値が優先されます</p>
                 </div>
               </div>
               <div>

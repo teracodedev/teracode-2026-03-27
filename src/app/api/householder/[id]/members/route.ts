@@ -6,6 +6,26 @@ export const runtime = "nodejs";
 
 type Params = { params: Promise<{ id: string }> };
 
+function calcAgeAtDeathFromDates(birthDate: Date, deathDate: Date): number {
+  let age = deathDate.getFullYear() - birthDate.getFullYear();
+  const m = deathDate.getMonth() - birthDate.getMonth();
+  if (m < 0 || (m === 0 && deathDate.getDate() < birthDate.getDate())) age--;
+  return age;
+}
+
+function resolveAgeAtDeath(
+  birthDate: Date | null,
+  deathDate: Date | null,
+  ageAtDeath: unknown
+): string | null {
+  if (birthDate && deathDate) {
+    return String(calcAgeAtDeathFromDates(birthDate, deathDate));
+  }
+  if (ageAtDeath == null || ageAtDeath === "") return null;
+  const trimmed = String(ageAtDeath).replace(/[才歳]/g, "");
+  return trimmed || null;
+}
+
 // 世帯員追加
 export async function POST(request: NextRequest, { params }: Params) {
   const unauth = await requireAuth();
@@ -23,11 +43,14 @@ export async function POST(request: NextRequest, { params }: Params) {
     const body = await request.json();
     const { familyName, givenName, familyNameKana, givenNameKana, relation,
             postalCode, address1, address2, address3, phone1, phone2, fax, domicile,
-            birthDate, deathDate, dharmaName, dharmaNameKana, note } = body;
+            birthDate, deathDate, ageAtDeath, dharmaName, dharmaNameKana, note } = body;
 
     if (!familyName) {
       return NextResponse.json({ error: "姓は必須です" }, { status: 400 });
     }
+
+    const birthDateObj = birthDate ? new Date(birthDate) : null;
+    const deathDateObj = deathDate ? new Date(deathDate) : null;
 
     const member = await memberDelegate.create({
       data: {
@@ -45,8 +68,9 @@ export async function POST(request: NextRequest, { params }: Params) {
         phone2: phone2 || null,
         fax: fax || null,
         domicile: domicile || null,
-        birthDate: birthDate ? new Date(birthDate) : null,
-        deathDate: deathDate ? new Date(deathDate) : null,
+        birthDate: birthDateObj,
+        deathDate: deathDateObj,
+        ageAtDeath: resolveAgeAtDeath(birthDateObj, deathDateObj, ageAtDeath),
         dharmaName: dharmaName || null,
         dharmaNameKana: dharmaNameKana || null,
         note: note || null,

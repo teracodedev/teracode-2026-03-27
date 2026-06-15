@@ -56,6 +56,17 @@ function calcAge(birthDate: string | null, deathDate: string | null): string {
   return age + "歳";
 }
 
+function formatAgeAtDeath(
+  birthDate: string | null,
+  deathDate: string | null,
+  ageAtDeath: string | null
+): string {
+  const fromDates = calcAge(birthDate, deathDate);
+  if (fromDates !== "-") return fromDates;
+  if (ageAtDeath) return ageAtDeath + "歳";
+  return "-";
+}
+
 const PAGE_SIZE = 10;
 
 export default function KakochoPage() {
@@ -130,7 +141,7 @@ export default function KakochoPage() {
               r.familyNameKana || "", r.givenNameKana || "",
               r.dharmaName || "", r.dharmaNameKana || "",
               r.deathDate ? new Date(r.deathDate).toISOString().slice(0, 10) : "",
-              r.ageAtDeath ? r.ageAtDeath + "歳" : calcAge(r.birthDate, r.deathDate),
+              formatAgeAtDeath(r.birthDate, r.deathDate, r.ageAtDeath),
               r.birthDate ? new Date(r.birthDate).toISOString().slice(0, 10) : "",
               r.relation || "",
               r.householder.familyName, r.householder.givenName, r.householder.householderCode,
@@ -146,7 +157,7 @@ export default function KakochoPage() {
               r.familyNameKana || "", r.givenNameKana || "",
               r.dharmaName || "", r.dharmaNameKana || "",
               r.deathDate ? new Date(r.deathDate).toISOString().slice(0, 10) : "",
-              r.ageAtDeath ? r.ageAtDeath + "歳" : calcAge(r.birthDate, r.deathDate),
+              formatAgeAtDeath(r.birthDate, r.deathDate, r.ageAtDeath),
               r.birthDate ? new Date(r.birthDate).toISOString().slice(0, 10) : "",
               r.relation || "",
               r.householder.familyName, r.householder.givenName, r.householder.householderCode,
@@ -223,7 +234,7 @@ export default function KakochoPage() {
                       <div className="text-sm text-stone-500 mt-1 flex flex-wrap gap-x-2">
                         {record.relation && <span>{record.relation}</span>}
                         {record.deathDate && <span>命日: {formatDate(record.deathDate)}</span>}
-                        <span>享年: {(record.ageAtDeath ? record.ageAtDeath + "歳" : calcAge(record.birthDate, record.deathDate))}</span>
+                        <span>享年: {formatAgeAtDeath(record.birthDate, record.deathDate, record.ageAtDeath)}</span>
                       </div>
                       {record.dharmaName && (
                         <div className="text-sm text-stone-600 mt-0.5">法名: {record.dharmaName}</div>
@@ -310,7 +321,7 @@ export default function KakochoPage() {
                         {record.dharmaName || <span className="text-stone-300">未登録</span>}
                       </td>
                       <td className="px-4 py-3 text-stone-600 text-sm">{formatDate(record.deathDate)}</td>
-                      <td className="px-4 py-3 text-stone-600 text-sm">{(record.ageAtDeath ? record.ageAtDeath + "歳" : calcAge(record.birthDate, record.deathDate))}</td>
+                      <td className="px-4 py-3 text-stone-600 text-sm">{formatAgeAtDeath(record.birthDate, record.deathDate, record.ageAtDeath)}</td>
                       <td className="px-4 py-3 text-stone-600 text-sm">{record.relation || "-"}</td>
                       <td className="px-4 py-3">
                         <div className="flex flex-wrap gap-1">

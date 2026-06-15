@@ -146,6 +146,13 @@ function formatAge(member: { ageAtDeath: string | null; birthDate: string | null
   return "-";
 }
 
+function resolveAgeAtDeathForSave(birthDate: string, deathDate: string, ageAtDeath: string): string | null {
+  const calculated = calcAge(birthDate || null, deathDate || null);
+  if (calculated !== null) return String(calculated);
+  const trimmed = ageAtDeath.trim().replace(/[才歳]/g, "");
+  return trimmed || null;
+}
+
 function formatGender(g: string | null) {
   if (g === "M") return "男性";
   if (g === "F") return "女性";
@@ -156,7 +163,7 @@ function formatGender(g: string | null) {
 type TabId = "householders" | "genzaicho" | "kakocho" | "bochi";
 
 const EMPTY_LIVING = { familyName: "", givenName: "", familyNameKana: "", givenNameKana: "", relation: "", birthDate: "" };
-const EMPTY_DECEASED = { familyName: "", givenName: "", familyNameKana: "", givenNameKana: "", relation: "", birthDate: "", deathDate: "", dharmaName: "", dharmaNameKana: "" };
+const EMPTY_DECEASED = { familyName: "", givenName: "", familyNameKana: "", givenNameKana: "", relation: "", birthDate: "", deathDate: "", ageAtDeath: "", dharmaName: "", dharmaNameKana: "" };
 const EMPTY_GRAVE_CONTRACT_FORM = {
   gravePlotId: "",
   plotQuery: "",
@@ -381,6 +388,7 @@ export default function FamilyRegisterDetailPage({ params }: { params: Promise<{
         relation: deceasedForm.relation || null,
         birthDate: deceasedForm.birthDate || null,
         deathDate: deceasedForm.deathDate || null,
+        ageAtDeath: resolveAgeAtDeathForSave(deceasedForm.birthDate, deceasedForm.deathDate, deceasedForm.ageAtDeath),
         dharmaName: deceasedForm.dharmaName || null,
         dharmaNameKana: deceasedForm.dharmaNameKana || null,
       }),
@@ -980,13 +988,35 @@ export default function FamilyRegisterDetailPage({ params }: { params: Promise<{
                 </div>
                 <div>
                   <label className="block text-xs text-stone-500 mb-1">生年月日</label>
-                  <input type="date" value={deceasedForm.birthDate} onChange={e => setDeceasedForm(f => ({ ...f, birthDate: e.target.value }))}
+                  <input type="date" value={deceasedForm.birthDate} onChange={e => setDeceasedForm(f => {
+                    const next = { ...f, birthDate: e.target.value };
+                    const calculated = calcAge(next.birthDate || null, next.deathDate || null);
+                    if (calculated !== null) next.ageAtDeath = String(calculated);
+                    return next;
+                  })}
                     className={inputCls} />
                 </div>
                 <div>
                   <label className="block text-xs text-stone-500 mb-1">命日</label>
-                  <input type="date" value={deceasedForm.deathDate} onChange={e => setDeceasedForm(f => ({ ...f, deathDate: e.target.value }))}
+                  <input type="date" value={deceasedForm.deathDate} onChange={e => setDeceasedForm(f => {
+                    const next = { ...f, deathDate: e.target.value };
+                    const calculated = calcAge(next.birthDate || null, next.deathDate || null);
+                    if (calculated !== null) next.ageAtDeath = String(calculated);
+                    return next;
+                  })}
                     className={inputCls} />
+                </div>
+                <div>
+                  <label className="block text-xs text-stone-500 mb-1">享年</label>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={deceasedForm.ageAtDeath}
+                    onChange={e => setDeceasedForm(f => ({ ...f, ageAtDeath: e.target.value.replace(/[^0-9]/g, "") }))}
+                    placeholder="例: 85"
+                    className={inputCls}
+                  />
+                  <p className="text-xs text-stone-400 mt-1">生年月日・命日が両方入力されている場合は自動計算値が優先されます</p>
                 </div>
                 <div>
                   <label className="block text-xs text-stone-500 mb-1">法名</label>
