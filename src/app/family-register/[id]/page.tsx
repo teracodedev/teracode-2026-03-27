@@ -7,6 +7,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { RelationInput } from "@/components/RelationInput";
 import { graveContractPeriodGaSentence } from "@/lib/grave-contract-period-text";
 import { getUpcomingNenkaiLabel } from "@/lib/upcoming-nenkai";
+import { willInheritTransferPhone1 } from "@/lib/phone-utils";
 
 interface GraveContract {
   id: string;
@@ -488,12 +489,18 @@ export default function FamilyRegisterDetailPage({ params }: { params: Promise<{
     memberId: string,
     householderId: string,
     memberName: string,
-    options?: { willInheritAddress?: boolean; oldAddressLabel?: string }
+    options?: { willInheritAddress?: boolean; oldAddressLabel?: string; willInheritPhone1?: boolean; oldPhone1?: string }
   ) => {
     if (!confirm(`${memberName} を新しい戸主に交代しますか？\n現在の戸主は現在帳に移ります。`)) return;
     if (options?.willInheritAddress) {
       const addressText = options.oldAddressLabel || "（住所未設定）";
       if (!confirm(`${memberName} は住所が未設定のため、旧戸主の住所を引き継ぎます。\n引き継ぎ住所: ${addressText}\nこの内容で実行しますか？`)) {
+        return;
+      }
+    }
+    if (options?.willInheritPhone1) {
+      const phoneText = options.oldPhone1 || "（電話番号未設定）";
+      if (!confirm(`${memberName} は電話番号1が未設定のため、旧戸主の固定電話を引き継ぎます。\n引き継ぎ電話番号1: ${phoneText}\nこの内容で実行しますか？`)) {
         return;
       }
     }
@@ -893,6 +900,8 @@ export default function FamilyRegisterDetailPage({ params }: { params: Promise<{
                                   handleTransfer(m.id, m.householderId, memberName, {
                                     willInheritAddress: !hasOwnAddress,
                                     oldAddressLabel,
+                                    willInheritPhone1: willInheritTransferPhone1(m.phone1, oldHouseholder?.phone1),
+                                    oldPhone1: oldHouseholder?.phone1 || undefined,
                                   });
                                 }}
                                 className="w-full text-left px-4 py-2 text-sm text-stone-700 hover:bg-stone-50">

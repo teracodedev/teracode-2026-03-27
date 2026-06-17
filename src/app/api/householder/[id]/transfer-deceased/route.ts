@@ -11,6 +11,7 @@
  */
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { resolveTransferPhone1 } from "@/lib/phone-utils";
 import { requireAuth } from "@/lib/require-auth";
 
 export const runtime = "nodejs";
@@ -64,6 +65,7 @@ export async function POST(req: NextRequest, { params }: Params) {
       const address1   = hasOwnAddress ? member.address1   || null : oldHouseholder.address1   || null;
       const address2   = hasOwnAddress ? member.address2   || null : oldHouseholder.address2   || null;
       const address3   = hasOwnAddress ? member.address3   || null : oldHouseholder.address3   || null;
+      const phone1     = resolveTransferPhone1(member.phone1, oldHouseholder.phone1);
 
       // 1. 新しい戸主を作成
       const newHouseholder = await tx.householder.create({
@@ -78,7 +80,7 @@ export async function POST(req: NextRequest, { params }: Params) {
           address1,
           address2,
           address3,
-          phone1:          member.phone1    || null,
+          phone1,
           phone2:          member.phone2    || null,
           fax:             member.fax       || null,
           email:           member.email     || null,
