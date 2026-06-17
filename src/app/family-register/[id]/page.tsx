@@ -726,16 +726,14 @@ export default function FamilyRegisterDetailPage({ params }: { params: Promise<{
                       <dd className="text-sm text-stone-800">〒{h.postalCode}</dd>
                     </div>
                   )}
-                  {address && (
+                  {(address || h.phone1) && (
                     <div className="flex px-4 py-2.5">
                       <dt className="w-28 shrink-0 text-sm text-stone-400">住所</dt>
-                      <dd className="text-sm text-stone-800">{address}</dd>
-                    </div>
-                  )}
-                  {h.phone1 && (
-                    <div className="flex px-4 py-2.5">
-                      <dt className="w-28 shrink-0 text-sm text-stone-400">電話番号１</dt>
-                      <dd className="text-sm text-stone-800">{h.phone1}</dd>
+                      <dd className="text-sm text-stone-800">
+                        {address}
+                        {address && h.phone1 && "　"}
+                        {h.phone1}
+                      </dd>
                     </div>
                   )}
                   {h.phone2 && (
@@ -760,12 +758,6 @@ export default function FamilyRegisterDetailPage({ params }: { params: Promise<{
                     <div className="flex px-4 py-2.5">
                       <dt className="w-28 shrink-0 text-sm text-stone-400">本籍</dt>
                       <dd className="text-sm text-stone-800">{h.domicile}</dd>
-                    </div>
-                  )}
-                  {h.joinedAt && (
-                    <div className="flex px-4 py-2.5">
-                      <dt className="w-28 shrink-0 text-sm text-stone-400">入檀日</dt>
-                      <dd className="text-sm text-stone-800">{formatDate(h.joinedAt)}</dd>
                     </div>
                   )}
                   {h.leftAt && (
