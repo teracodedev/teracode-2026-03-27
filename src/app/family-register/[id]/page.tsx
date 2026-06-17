@@ -733,14 +733,16 @@ export default function FamilyRegisterDetailPage({ params }: { params: Promise<{
                       <dd className="text-sm text-stone-800">〒{h.postalCode}</dd>
                     </div>
                   )}
-                  {(address || h.phone1) && (
+                  {address && (
                     <div className="flex px-4 py-2.5">
                       <dt className="w-28 shrink-0 text-sm text-stone-400">住所</dt>
-                      <dd className="text-sm text-stone-800">
-                        {address}
-                        {address && h.phone1 && "　"}
-                        {h.phone1}
-                      </dd>
+                      <dd className="text-sm text-stone-800">{address}</dd>
+                    </div>
+                  )}
+                  {h.phone1 && (
+                    <div className="flex px-4 py-2.5">
+                      <dt className="w-28 shrink-0 text-sm text-stone-400">電話番号1</dt>
+                      <dd className="text-sm text-stone-800">{h.phone1}</dd>
                     </div>
                   )}
                   {h.phone2 && (
