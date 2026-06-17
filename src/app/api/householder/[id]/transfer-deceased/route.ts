@@ -11,6 +11,7 @@
  */
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { parseDateFieldForApi, toPrismaDate } from "@/lib/parse-optional-date";
 import { resolveTransferPhone1 } from "@/lib/phone-utils";
 import { requireAuth } from "@/lib/require-auth";
 
@@ -47,6 +48,11 @@ export async function POST(req: NextRequest, { params }: Params) {
     return NextResponse.json({ error: "故人を新しい戸主にすることはできません" }, { status: 400 });
   }
 
+  const parsedDeathDate = parseDateFieldForApi(deathDate, "命日");
+  if (parsedDeathDate !== null && !(parsedDeathDate instanceof Date)) {
+    return NextResponse.json({ error: parsedDeathDate.error }, { status: 400 });
+  }
+
   try {
     const result = await prisma.$transaction(async (tx) => {
       // familyRegisterId はユニーク制約があるため、先に旧戸主から外す
@@ -75,7 +81,7 @@ export async function POST(req: NextRequest, { params }: Params) {
           familyNameKana:  member.familyNameKana  || null,
           givenNameKana:   member.givenNameKana   || null,
           gender:          member.gender          || null,
-          birthDate:       member.birthDate       || null,
+          birthDate:       toPrismaDate(member.birthDate),
           postalCode,
           address1,
           address2,
@@ -88,7 +94,7 @@ export async function POST(req: NextRequest, { params }: Params) {
           note:            member.note      || null,
           familyRegisterId: oldHouseholder.familyRegisterId,
           isActive:        true,
-          joinedAt:        oldHouseholder.joinedAt,
+          joinedAt:        toPrismaDate(oldHouseholder.joinedAt),
         },
       });
 
@@ -141,8 +147,8 @@ export async function POST(req: NextRequest, { params }: Params) {
           familyNameKana: oldHouseholder.familyNameKana || null,
           givenNameKana:  oldHouseholder.givenNameKana  || null,
           gender:         oldHouseholder.gender         || null,
-          birthDate:      oldHouseholder.birthDate      || null,
-          deathDate:      deathDate ? new Date(deathDate) : null,
+          birthDate:      toPrismaDate(oldHouseholder.birthDate),
+          deathDate:      parsedDeathDate,
           dharmaName:     dharmaName     || null,
           dharmaNameKana: dharmaNameKana || null,
           postalCode:     oldHouseholder.postalCode || null,

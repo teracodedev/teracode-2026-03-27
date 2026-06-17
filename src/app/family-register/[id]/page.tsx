@@ -1131,6 +1131,7 @@ export default function FamilyRegisterDetailPage({ params }: { params: Promise<{
                 <div>
                   <label className="block text-xs text-stone-500 mb-1">命日</label>
                   <input type="date" value={householderKakochoForm.deathDate}
+                    min="1000-01-01" max="9999-12-31"
                     onChange={e => setHouseholderKakochoForm(f => ({ ...f, deathDate: e.target.value }))}
                     className={inputCls} />
                 </div>
