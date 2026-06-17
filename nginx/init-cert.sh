@@ -7,14 +7,15 @@ DOMAIN="teracode6.zenpoji.or.jp"
 
 echo "=== 証明書取得開始: $DOMAIN ==="
 
-# certbotコンテナで証明書取得（webroot方式）
-# まずnginxをHTTPのみで起動するため一時設定を使う
-docker compose run --rm certbot certonly \
+# certbot コンテナで証明書取得（webroot 方式。standalone は使わない）
+# 初回のみ init.conf.example を default.conf にコピーして nginx を起動してから実行する
+docker compose --profile manual run -T --rm --entrypoint certbot certbot certonly \
   --webroot \
   --webroot-path=/var/www/certbot \
   --email "$EMAIL" \
   --agree-tos \
   --no-eff-email \
+  --non-interactive \
   -d "$DOMAIN"
 
 echo "=== 証明書取得完了 ==="
