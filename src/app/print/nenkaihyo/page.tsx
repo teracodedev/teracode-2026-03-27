@@ -61,6 +61,7 @@ export default function NenkaihyoPrintPage() {
   const [year, setYear] = useState<number>(initialYear);
   const [month, setMonth] = useState<number>(initialMonth);
   const [items, setItems] = useState<NenkaiItem[]>([]);
+  const [excludedIds, setExcludedIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(false);
   const [loaded, setLoaded] = useState(false);
 
@@ -79,9 +80,11 @@ export default function NenkaihyoPrintPage() {
       const res = await fetchWithAuth(`/api/kakocho/nenkai?year=${year}&month=${month}`);
       const data = await res.json();
       setItems(Array.isArray(data?.items) ? data.items : []);
+      setExcludedIds(new Set());
     } catch (err) {
       console.error(err);
       setItems([]);
+      setExcludedIds(new Set());
     } finally {
       setLoading(false);
       setLoaded(true);
@@ -157,7 +160,20 @@ export default function NenkaihyoPrintPage() {
     }
   };
 
-  const qs = `?year=${year}&month=${month}`;
+  const toggleExcluded = (id: string) => {
+    setExcludedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const printableCount = items.length - excludedIds.size;
+
+  const excludeParam =
+    excludedIds.size > 0 ? `&exclude=${Array.from(excludedIds).join(",")}` : "";
+  const qs = `?year=${year}&month=${month}${excludeParam}`;
 
   const inputCls =
     "w-full rounded-lg border border-stone-300 px-3 py-2 text-stone-800 focus:ring-2 focus:ring-amber-500 focus:border-amber-500";
@@ -212,7 +228,7 @@ export default function NenkaihyoPrintPage() {
             target="_blank"
             className={
               "inline-block px-4 py-2 rounded-lg text-white font-medium " +
-              (items.length === 0 ? "bg-stone-300 pointer-events-none" : "bg-amber-700 hover:bg-amber-800")
+              (printableCount === 0 ? "bg-stone-300 pointer-events-none" : "bg-amber-700 hover:bg-amber-800")
             }
           >
             案内ハガキ(裏面) PDF
@@ -222,7 +238,7 @@ export default function NenkaihyoPrintPage() {
             target="_blank"
             className={
               "inline-block px-4 py-2 rounded-lg text-white font-medium " +
-              (items.length === 0 ? "bg-stone-300 pointer-events-none" : "bg-amber-700 hover:bg-amber-800")
+              (printableCount === 0 ? "bg-stone-300 pointer-events-none" : "bg-amber-700 hover:bg-amber-800")
             }
           >
             宛名(表面) PDF
@@ -238,11 +254,21 @@ export default function NenkaihyoPrintPage() {
         </div>
       ) : (
         <div className="space-y-3">
-          <div className="text-sm text-stone-500">{items.length}名</div>
+          <div className="text-sm text-stone-500">
+            {items.length}名
+            {excludedIds.size > 0 && (
+              <span className="ml-2 text-amber-700">
+                （印刷不要 {excludedIds.size}名 / 印刷対象 {printableCount}名）
+              </span>
+            )}
+          </div>
           <div className="bg-white rounded-xl shadow-sm border border-stone-200 overflow-hidden">
             <table className="w-full text-sm">
               <thead className="bg-stone-50 border-b border-stone-200">
                 <tr>
+                  <th className="text-center px-4 py-3 text-stone-600 font-medium whitespace-nowrap">
+                    印刷不要
+                  </th>
                   <th className="text-left px-4 py-3 text-stone-600 font-medium">戸主</th>
                   <th className="text-left px-4 py-3 text-stone-600 font-medium">故人</th>
                   <th className="text-left px-4 py-3 text-stone-600 font-medium">命日</th>
@@ -252,8 +278,22 @@ export default function NenkaihyoPrintPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-stone-100">
-                {items.map((m) => (
-                  <tr key={m.memberId} className="hover:bg-stone-50">
+                {items.map((m) => {
+                  const excluded = excludedIds.has(m.memberId);
+                  return (
+                  <tr
+                    key={m.memberId}
+                    className={excluded ? "bg-stone-100 text-stone-400" : "hover:bg-stone-50"}
+                  >
+                    <td className="px-4 py-3 text-center">
+                      <input
+                        type="checkbox"
+                        checked={excluded}
+                        onChange={() => toggleExcluded(m.memberId)}
+                        className="h-4 w-4 cursor-pointer accent-amber-700"
+                        aria-label="印刷不要"
+                      />
+                    </td>
                     <td className="px-4 py-3 text-stone-700">
                       {m.householder.familyName} {m.householder.givenName}
                     </td>
@@ -272,7 +312,8 @@ export default function NenkaihyoPrintPage() {
                         .join("")}
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>

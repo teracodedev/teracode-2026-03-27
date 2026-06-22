@@ -69,6 +69,7 @@ export default function NenkaihyoAddressPage() {
   const sp = useSearchParams();
   const year = parseInt(sp.get("year") ?? String(new Date().getFullYear()), 10);
   const month = parseInt(sp.get("month") ?? String(new Date().getMonth() + 1), 10);
+  const excludeParam = sp.get("exclude") ?? "";
 
   const [items, setItems] = useState<NenkaiItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -82,7 +83,9 @@ export default function NenkaihyoAddressPage() {
           fetchWithAuth(`/api/settings/nenkai-postcard`),
         ]);
         const data = await resItems.json();
-        setItems(Array.isArray(data?.items) ? data.items : []);
+        const excluded = new Set(excludeParam.split(",").filter(Boolean));
+        const all: NenkaiItem[] = Array.isArray(data?.items) ? data.items : [];
+        setItems(excluded.size > 0 ? all.filter((it) => !excluded.has(it.memberId)) : all);
 
         if (resCfg.ok) {
           const j = (await resCfg.json()) as PostcardConfig;
@@ -109,7 +112,7 @@ export default function NenkaihyoAddressPage() {
         setLoading(false);
       }
     })();
-  }, [year, month]);
+  }, [year, month, excludeParam]);
 
   /** 裏面と同じ物故者単位で1枚。戸主・物故者とも五十音の逆順（裏面の昇順と逆） */
   const surfaceItems = useMemo(() => {
