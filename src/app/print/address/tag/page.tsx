@@ -151,7 +151,7 @@ export default function TagAddressPrintPage() {
     [sortedItems, excludedIds],
   );
 
-  const printHref = useMemo(() => {
+  const printQueryString = useMemo(() => {
     const sp = new URLSearchParams();
     if (query.trim()) sp.set("q", query.trim());
     if (selectedTagIds.length > 0) sp.set("tags", selectedTagIds.join(","));
@@ -160,8 +160,18 @@ export default function TagAddressPrintPage() {
       .filter((h) => excludedIds.has(h.id))
       .map((h) => h.id);
     if (excluded.length > 0) sp.set("exclude", excluded.join(","));
-    return `/print/address/tag/surface?${sp.toString()}`;
+    return sp.toString();
   }, [excludedIds, notTagIds, query, selectedTagIds, sortedItems]);
+
+  const printHref = useMemo(
+    () => `/print/address/tag/surface?${printQueryString}`,
+    [printQueryString],
+  );
+
+  const listHref = useMemo(
+    () => `/print/address/tag/list?${printQueryString}`,
+    [printQueryString],
+  );
 
   return (
     <div className="space-y-6">
@@ -200,11 +210,24 @@ export default function TagAddressPrintPage() {
                 : `${sortedItems.length}件`}
           </span>
           <a
+            href={listHref}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={
+              "ml-auto inline-block px-4 py-2 rounded-lg font-medium border " +
+              (printableItems.length === 0
+                ? "bg-stone-100 text-stone-400 border-stone-200 pointer-events-none"
+                : "bg-white text-amber-700 border-amber-700 hover:bg-amber-50")
+            }
+          >
+            一覧PDF
+          </a>
+          <a
             href={printHref}
             target="_blank"
             rel="noopener noreferrer"
             className={
-              "ml-auto inline-block px-4 py-2 rounded-lg text-white font-medium " +
+              "inline-block px-4 py-2 rounded-lg text-white font-medium " +
               (printableItems.length === 0
                 ? "bg-stone-300 pointer-events-none"
                 : "bg-amber-700 hover:bg-amber-800")
