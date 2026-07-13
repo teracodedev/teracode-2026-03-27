@@ -5,7 +5,9 @@
   "scripts": {
     "postinstall": "prisma generate",
     "dev": "next dev --webpack -H 0.0.0.0 -p 3000",
-    "build": "next build --webpack",
+    "build": "next build --turbopack",
+    "build:webpack": "next build --webpack",
+    "typecheck": "tsc --noEmit",
     "start": "bash scripts/start-standalone.sh",
     "lint": "eslint",
     "verify-static": "bash scripts/verify-next-static.sh",

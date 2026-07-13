@@ -15,7 +15,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 npm run dev          # Dev server at localhost:3000 (uses webpack, not Turbopack)
 
 # Build & Production
-npm run build        # Build standalone Next.js app
+npm run build        # Build standalone Next.js app (Turbopack)
+npm run build:webpack # Webpack フォールバック（互換確認用）
+npm run typecheck    # tsc --noEmit（デプロイ時は省略されるためローカル/CI で実行）
 npm start            # Start production server
 
 # Linting
@@ -84,7 +86,7 @@ Browser → Nginx (HTTPS) → Next.js (port 3000) ↔ PostgreSQL
 
 Production runs as a **standalone Next.js build** managed by PM2, behind Nginx with Let's Encrypt SSL.
 
-- `deploy.sh` — Full deploy pipeline: git pull → npm ci (if needed) → prisma generate → build → sync assets → PM2 restart → nginx reload
+- `deploy.sh` — Full deploy pipeline: git pull → npm ci (if needed) → prisma generate/migrate (if needed) → Turbopack build → sync assets → PM2 restart → nginx reload
 - `ecosystem.config.cjs` — PM2 process config
 - `nginx/conf.d/default.conf` — Reverse proxy; 50MB upload limit; long-term cache for `/_next/static/`; no-cache for HTML/API
 - `docker-compose.yml` — PostgreSQL + Nginx + Certbot containers
@@ -92,7 +94,8 @@ Production runs as a **standalone Next.js build** managed by PM2, behind Nginx w
 ### Important Configuration Notes
 
 - **Prisma is an external package** in the standalone build (`serverExternalPackages` in `next.config.ts`). Generated client lives in `src/generated/prisma/`.
-- **Webpack is forced** in dev (`next dev --turbopack` is explicitly avoided) due to compatibility issues.
+- **Webpack is forced in dev** (`next dev --webpack`) due to compatibility issues. **Production builds use Turbopack** (`next build --turbopack`) for faster deploys.
+- **Deploy skips TypeScript type-checking** (`SKIP_TYPECHECK=1` → `typescript.ignoreBuildErrors`). Run `npm run typecheck` locally/CI when needed.
 - **Static asset sync** during deploy is critical — the `deploy.sh` script copies `public/` and `.next/static/` into the standalone output directory to avoid stale chunk errors.
 - Chunk recovery logic in `src/app/layout.tsx` auto-reloads the page if old chunk references fail to load after a deploy.
 
