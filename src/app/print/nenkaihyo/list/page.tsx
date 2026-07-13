@@ -9,17 +9,12 @@ interface NenkaiItem {
   familyName: string;
   givenName: string | null;
   dharmaName: string | null;
-  ageAtDeath: string | null;
   deathDate: string;
   kaikiLabel: string;
   householder: {
     id: string;
     familyName: string;
     givenName: string;
-    postalCode: string | null;
-    address1: string | null;
-    address2: string | null;
-    address3: string | null;
   };
 }
 
@@ -107,12 +102,12 @@ export default function NenkaihyoPrintListPage() {
         .list-table {
           width: 100%;
           border-collapse: collapse;
-          font-size: 9.5pt;
+          font-size: 10.5pt;
         }
         .list-table th,
         .list-table td {
           border: 0.3mm solid #555;
-          padding: 1.4mm 1.8mm;
+          padding: 1.6mm 2.2mm;
           text-align: left;
           vertical-align: top;
         }
@@ -124,33 +119,21 @@ export default function NenkaihyoPrintListPage() {
         .list-table td.col-no,
         .list-table th.col-no {
           text-align: center;
-          width: 10mm;
+          width: 12mm;
           white-space: nowrap;
         }
         .list-table td.col-name,
         .list-table th.col-name {
-          width: 28mm;
           white-space: nowrap;
         }
         .list-table td.col-date,
         .list-table th.col-date {
-          width: 18mm;
+          width: 22mm;
           white-space: nowrap;
         }
         .list-table td.col-kaiki,
         .list-table th.col-kaiki {
-          width: 16mm;
-          white-space: nowrap;
-        }
-        .list-table td.col-age,
-        .list-table th.col-age {
-          width: 12mm;
-          white-space: nowrap;
-          text-align: center;
-        }
-        .list-table td.col-zip,
-        .list-table th.col-zip {
-          width: 22mm;
+          width: 20mm;
           white-space: nowrap;
         }
       `}</style>
@@ -183,9 +166,6 @@ export default function NenkaihyoPrintListPage() {
                   <th className="col-name">故人</th>
                   <th className="col-date">命日</th>
                   <th className="col-kaiki">回忌</th>
-                  <th className="col-age">享年</th>
-                  <th className="col-zip">郵便番号</th>
-                  <th>住所</th>
                 </tr>
               </thead>
               <tbody>
@@ -201,13 +181,6 @@ export default function NenkaihyoPrintListPage() {
                     </td>
                     <td className="col-date">{formatMD(m.deathDate)}</td>
                     <td className="col-kaiki">{m.kaikiLabel}</td>
-                    <td className="col-age">{m.ageAtDeath ?? ""}</td>
-                    <td className="col-zip">{m.householder.postalCode || "-"}</td>
-                    <td>
-                      {[m.householder.address1, m.householder.address2, m.householder.address3]
-                        .filter(Boolean)
-                        .join("") || "-"}
-                    </td>
                   </tr>
                 ))}
               </tbody>
