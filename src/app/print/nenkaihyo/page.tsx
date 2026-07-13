@@ -183,7 +183,8 @@ export default function NenkaihyoPrintPage() {
       <div>
         <h1 className="text-2xl font-bold text-amber-700">年回表の印刷</h1>
         <p className="text-sm text-stone-500 mt-1">
-          月を選ぶとその月に年回が当たる方を抽出します。案内文面（裏面）と宛名（表面・差出人印字）を PDF として出力できます。
+          月を選ぶとその月に年回が当たる方を抽出します。対象者一覧・案内文面（裏面）・宛名（表面・差出人印字）を
+          PDF として出力できます。
         </p>
       </div>
 
@@ -223,6 +224,18 @@ export default function NenkaihyoPrintPage() {
           >
             文面の編集
           </button>
+          <Link
+            href={`/print/nenkaihyo/list${qs}`}
+            target="_blank"
+            className={
+              "inline-block px-4 py-2 rounded-lg font-medium border " +
+              (printableCount === 0
+                ? "bg-stone-100 text-stone-400 border-stone-200 pointer-events-none"
+                : "bg-white text-amber-700 border-amber-700 hover:bg-amber-50")
+            }
+          >
+            一覧PDF
+          </Link>
           <Link
             href={`/print/nenkaihyo/postcard${qs}`}
             target="_blank"
