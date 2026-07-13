@@ -10,11 +10,11 @@ import { compareHouseholderGojuon } from "@/lib/householder-sort";
 
 export const runtime = "nodejs";
 
-// この寺院で案内する年回(回忌)とその「死後経過年数」
+// この寺院で案内する年回(回忌)とその「死後経過年数」（五十回忌まで）
 //   1周忌 = 死後 1 年
 //   3回忌 = 死後 2 年
 //   7回忌 = 死後 6 年
-//   ... 50回忌 = 死後 49 年, 100回忌 = 死後 99 年
+//   ... 50回忌 = 死後 49 年
 const KAIKI_TABLE: { kaiki: number; delta: number; label: string }[] = [
   { kaiki: 1,   delta: 1,  label: "一周忌"   },
   { kaiki: 3,   delta: 2,  label: "三回忌"   },
@@ -24,7 +24,6 @@ const KAIKI_TABLE: { kaiki: number; delta: number; label: string }[] = [
   { kaiki: 25,  delta: 24, label: "二十五回忌" },
   { kaiki: 33,  delta: 32, label: "三十三回忌" },
   { kaiki: 50,  delta: 49, label: "五十回忌" },
-  { kaiki: 100, delta: 99, label: "百回忌"   },
 ];
 
 export async function GET(request: NextRequest) {
