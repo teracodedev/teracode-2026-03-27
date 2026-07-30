@@ -8,6 +8,7 @@ import { RelationInput } from "@/components/RelationInput";
 import { graveContractPeriodGaSentence } from "@/lib/grave-contract-period-text";
 import { getUpcomingNenkaiLabel } from "@/lib/upcoming-nenkai";
 import { willInheritTransferPhone1 } from "@/lib/phone-utils";
+import { buildFamilyRegisterName, buildFamilyRegisterNameKana } from "@/lib/family-register-names";
 
 interface GraveContract {
   id: string;
@@ -350,6 +351,22 @@ export default function FamilyRegisterDetailPage({ params }: { params: Promise<{
     fetchData();
   };
 
+  const handleUseHouseholderName = async () => {
+    const h = toHouseholderList(data?.householders)[0];
+    if (!h) return;
+    const name = buildFamilyRegisterName(h.familyName, h.givenName);
+    const nameKana = buildFamilyRegisterNameKana(h.familyNameKana, h.givenNameKana) || "";
+    await fetchWithAuth(`/api/family-register/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, nameKana, note: editNote }),
+    });
+    setEditName(name);
+    setEditNameKana(nameKana);
+    setEditing(false);
+    fetchData();
+  };
+
   const handleAddLiving = async (e: React.FormEvent) => {
     e.preventDefault();
     const householderId = householders[0]?.id;
@@ -622,6 +639,12 @@ export default function FamilyRegisterDetailPage({ params }: { params: Promise<{
           className="border border-stone-300 text-stone-600 px-4 py-1.5 rounded-lg hover:bg-stone-50 text-sm font-medium">
           {editing ? "キャンセル" : "名称編集"}
         </button>
+        {editing && householders[0] && (
+          <button type="button" onClick={handleUseHouseholderName}
+            className="border border-amber-300 text-amber-700 px-4 py-1.5 rounded-lg hover:bg-amber-50 text-sm font-medium">
+            現在の戸主氏名を使用
+          </button>
+        )}
         <button onClick={handleDelete} disabled={deleting}
           className="border border-red-200 text-red-600 px-4 py-1.5 rounded-lg hover:bg-red-50 text-sm font-medium disabled:opacity-50">
           {deleting ? "削除中..." : "台帳削除"}
