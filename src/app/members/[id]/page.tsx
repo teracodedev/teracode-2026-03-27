@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouteParams } from "@/lib/use-route-params";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { fetchWithAuth } from "@/lib/fetch-with-auth";
 import { PostalCodeSearch } from "@/components/PostalCodeSearch";
@@ -275,6 +275,13 @@ export default function MemberDetailPage({ params }: { params: Promise<{ id: str
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
+  // 操作メニュー（過去帳へ移動）
+  const [openMenu, setOpenMenu] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const [kakochoModal, setKakochoModal] = useState(false);
+  const [kakochoForm, setKakochoForm] = useState({ deathDate: "", dharmaName: "", dharmaNameKana: "" });
+  const [savingKakocho, setSavingKakocho] = useState(false);
+
   useEffect(() => {
     fetchWithAuth("/api/members/" + id)
       .then((res) => {
@@ -286,6 +293,17 @@ export default function MemberDetailPage({ params }: { params: Promise<{ id: str
       })
       .catch(() => setLoading(false));
   }, [id]);
+
+  useEffect(() => {
+    if (!openMenu) return;
+    function handleClickOutside(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setOpenMenu(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [openMenu]);
 
   function openEdit() {
     if (!member) return;
@@ -366,6 +384,40 @@ export default function MemberDetailPage({ params }: { params: Promise<{ id: str
     }
   }
 
+  async function handleKakochoMove(e: React.FormEvent) {
+    e.preventDefault();
+    if (!member) return;
+    setSavingKakocho(true);
+    try {
+      const res = await fetchWithAuth(
+        `/api/householder/${member.householderId}/members/${member.id}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            deathDate: kakochoForm.deathDate,
+            dharmaName: kakochoForm.dharmaName || null,
+            dharmaNameKana: kakochoForm.dharmaNameKana || null,
+          }),
+        }
+      );
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        alert((err as { error?: string }).error || "過去帳への移動に失敗しました");
+        return;
+      }
+      const updated = await fetchWithAuth("/api/members/" + id);
+      const data = await updated.json();
+      setMember(data);
+      setKakochoModal(false);
+      setKakochoForm({ deathDate: "", dharmaName: "", dharmaNameKana: "" });
+    } catch {
+      alert("通信エラーが発生しました");
+    } finally {
+      setSavingKakocho(false);
+    }
+  }
+
   if (loading) return <div className="text-center py-12 text-stone-400">読み込み中...</div>;
   if (notFound || !member) return <div className="text-center py-12 text-stone-400">記録が見つかりません</div>;
 
@@ -392,15 +444,38 @@ export default function MemberDetailPage({ params }: { params: Promise<{ id: str
           )}
         </div>
 
-        {/* タイトルと編集ボタン */}
+        {/* タイトルと操作・編集ボタン */}
         <div className="flex items-center justify-between flex-wrap gap-2">
           <h1 className="text-2xl font-bold text-stone-800">{fullName}</h1>
-          <button
-            onClick={openEdit}
-            className="border border-stone-300 text-stone-600 px-4 py-1.5 rounded-lg hover:bg-stone-50 transition-colors text-sm font-medium"
-          >
-            編集
-          </button>
+          <div className="flex items-center gap-2">
+            <div className="relative" ref={menuRef}>
+              <button
+                onClick={() => setOpenMenu((v) => !v)}
+                className="border border-stone-300 text-stone-600 px-4 py-1.5 rounded-lg hover:bg-stone-50 transition-colors text-sm font-medium"
+              >
+                操作
+              </button>
+              {openMenu && (
+                <div className="absolute right-0 top-full mt-1 z-20 bg-white rounded-lg shadow-lg border border-stone-200 py-1 min-w-[148px]">
+                  <button
+                    onClick={() => {
+                      setOpenMenu(false);
+                      setKakochoModal(true);
+                    }}
+                    className="w-full text-left px-4 py-2 text-sm text-stone-700 hover:bg-stone-50"
+                  >
+                    過去帳へ移動
+                  </button>
+                </div>
+              )}
+            </div>
+            <button
+              onClick={openEdit}
+              className="border border-stone-300 text-stone-600 px-4 py-1.5 rounded-lg hover:bg-stone-50 transition-colors text-sm font-medium"
+            >
+              編集
+            </button>
+          </div>
         </div>
 
         {/* タグ */}
@@ -471,6 +546,44 @@ export default function MemberDetailPage({ params }: { params: Promise<{ id: str
             </tbody>
           </table>
         </div>
+
+        {/* 過去帳へ移動 モーダル */}
+        {kakochoModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+            <form onSubmit={handleKakochoMove} className="bg-white rounded-xl p-6 w-full max-w-sm space-y-4 shadow-xl mx-4">
+              <h3 className="font-bold text-stone-700">過去帳へ移動</h3>
+              <p className="text-sm text-stone-500">
+                <span className="font-medium text-stone-700">{member.familyName}{member.givenName ? ` ${member.givenName}` : ""}</span> を過去帳に移動します。
+              </p>
+              <div>
+                <label className="block text-xs text-stone-500 mb-1">命日</label>
+                <input type="date" value={kakochoForm.deathDate}
+                  onChange={e => setKakochoForm(f => ({ ...f, deathDate: e.target.value }))}
+                  className="w-full border border-stone-300 rounded-lg px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-stone-400" />
+              </div>
+              <div>
+                <label className="block text-xs text-stone-500 mb-1">法名</label>
+                <input value={kakochoForm.dharmaName}
+                  onChange={e => setKakochoForm(f => ({ ...f, dharmaName: e.target.value }))}
+                  className="w-full border border-stone-300 rounded-lg px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-stone-400" placeholder="釋○○" />
+              </div>
+              <div>
+                <label className="block text-xs text-stone-500 mb-1">法名フリガナ</label>
+                <input value={kakochoForm.dharmaNameKana}
+                  onChange={e => setKakochoForm(f => ({ ...f, dharmaNameKana: e.target.value }))}
+                  className="w-full border border-stone-300 rounded-lg px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-stone-400" />
+              </div>
+              <div className="flex gap-2 justify-end pt-1">
+                <button type="button" onClick={() => { setKakochoModal(false); setKakochoForm({ deathDate: "", dharmaName: "", dharmaNameKana: "" }); }}
+                  className="border border-stone-300 text-stone-600 px-4 py-1.5 rounded-lg text-sm">キャンセル</button>
+                <button type="submit" disabled={savingKakocho}
+                  className="bg-amber-600 text-white px-4 py-1.5 rounded-lg text-sm font-medium disabled:opacity-50">
+                  {savingKakocho ? "移動中..." : "移動"}
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
 
         {/* 編集モーダル */}
         {isEditing && (
