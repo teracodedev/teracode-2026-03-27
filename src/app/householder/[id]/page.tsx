@@ -742,115 +742,119 @@ export default function HouseholderDetailPage({ params }: { params: Promise<{ id
         </div>
       )}
 
-      {/* タブ */}
-      <div className="border-b border-stone-200 overflow-x-auto">
-        <nav className="flex gap-0 min-w-max" aria-label="タブ">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => {
-                setActiveTab(tab.id);
-                setShowAddForm(false);
-                setEditingMemberId(null);
-              }}
-              className={`whitespace-nowrap px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
-                activeTab === tab.id
-                  ? "border-amber-600 text-amber-700"
-                  : "border-transparent text-stone-500 hover:text-stone-700 hover:border-stone-300"
-              }`}
-            >
-              {tab.label}
-              {tab.count !== undefined && (
-                <span className={`ml-1.5 text-xs px-1.5 py-0.5 rounded-full ${
-                  activeTab === tab.id ? "bg-amber-100 text-amber-700" : "bg-stone-100 text-stone-500"
-                }`}>
-                  {tab.count}
-                </span>
-              )}
-            </button>
-          ))}
-        </nav>
-      </div>
+      {/* タブ（編集中は非表示） */}
+      {!isEditing && (
+        <>
+          <div className="border-b border-stone-200 overflow-x-auto">
+            <nav className="flex gap-0 min-w-max" aria-label="タブ">
+              {tabs.map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => {
+                    setActiveTab(tab.id);
+                    setShowAddForm(false);
+                    setEditingMemberId(null);
+                  }}
+                  className={`whitespace-nowrap px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
+                    activeTab === tab.id
+                      ? "border-amber-600 text-amber-700"
+                      : "border-transparent text-stone-500 hover:text-stone-700 hover:border-stone-300"
+                  }`}
+                >
+                  {tab.label}
+                  {tab.count !== undefined && (
+                    <span className={`ml-1.5 text-xs px-1.5 py-0.5 rounded-full ${
+                      activeTab === tab.id ? "bg-amber-100 text-amber-700" : "bg-stone-100 text-stone-500"
+                    }`}>
+                      {tab.count}
+                    </span>
+                  )}
+                </button>
+              ))}
+            </nav>
+          </div>
 
-      {/* 基本情報タブ */}
-      {activeTab === "info" && (
-        <div className="bg-white rounded-xl shadow-sm border border-stone-200 overflow-hidden">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="bg-stone-50 border-b border-stone-200">
-                <th className="text-left px-4 py-2 font-medium text-stone-600 w-2/5">項目</th>
-                <th className="text-left px-4 py-2 font-medium text-stone-600">内容</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr className="border-b border-stone-100">
-                <td className="px-4 py-2.5 text-stone-500">氏名フリガナ</td>
-                <td className="px-4 py-2.5 text-stone-700">{[householder.familyNameKana, householder.givenNameKana].filter(Boolean).join(" ")}</td>
-              </tr>
-              <tr className="border-b border-stone-100">
-                <td className="px-4 py-2.5 text-stone-500">氏名</td>
-                <td className="px-4 py-2.5 text-stone-700">{householder.familyName} {householder.givenName}</td>
-              </tr>
-              <tr className="border-b border-stone-100">
-                <td className="px-4 py-2.5 text-stone-500">続柄</td>
-                <td className="px-4 py-2.5 text-stone-700">{householder.relation || ""}</td>
-              </tr>
-              <tr className="border-b border-stone-100">
-                <td className="px-4 py-2.5 text-stone-500">郵便番号</td>
-                <td className="px-4 py-2.5 text-stone-700">{householder.postalCode ? `〒${householder.postalCode}` : ""}</td>
-              </tr>
-              <tr className="border-b border-stone-100">
-                <td className="px-4 py-2.5 text-stone-500">住所</td>
-                <td className="px-4 py-2.5 text-stone-700">{[householder.address1, householder.address2, householder.address3].filter(Boolean).join("")}</td>
-              </tr>
-              <tr className="border-b border-stone-100">
-                <td className="px-4 py-2.5 text-stone-500">電話番号1</td>
-                <td className="px-4 py-2.5 text-stone-700">{householder.phone1 || ""}</td>
-              </tr>
-              <tr className="border-b border-stone-100">
-                <td className="px-4 py-2.5 text-stone-500">電話番号2</td>
-                <td className="px-4 py-2.5 text-stone-700">{householder.phone2 || ""}</td>
-              </tr>
-              <tr>
-                <td className="px-4 py-2.5 text-stone-500">メールアドレス</td>
-                <td className="px-4 py-2.5 text-stone-700">{householder.email || ""}</td>
-              </tr>
-            </tbody>
-          </table>
+          {/* 基本情報タブ */}
+          {activeTab === "info" && (
+            <div className="bg-white rounded-xl shadow-sm border border-stone-200 overflow-hidden">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-stone-50 border-b border-stone-200">
+                    <th className="text-left px-4 py-2 font-medium text-stone-600 w-2/5">項目</th>
+                    <th className="text-left px-4 py-2 font-medium text-stone-600">内容</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr className="border-b border-stone-100">
+                    <td className="px-4 py-2.5 text-stone-500">氏名フリガナ</td>
+                    <td className="px-4 py-2.5 text-stone-700">{[householder.familyNameKana, householder.givenNameKana].filter(Boolean).join(" ")}</td>
+                  </tr>
+                  <tr className="border-b border-stone-100">
+                    <td className="px-4 py-2.5 text-stone-500">氏名</td>
+                    <td className="px-4 py-2.5 text-stone-700">{householder.familyName} {householder.givenName}</td>
+                  </tr>
+                  <tr className="border-b border-stone-100">
+                    <td className="px-4 py-2.5 text-stone-500">続柄</td>
+                    <td className="px-4 py-2.5 text-stone-700">{householder.relation || ""}</td>
+                  </tr>
+                  <tr className="border-b border-stone-100">
+                    <td className="px-4 py-2.5 text-stone-500">郵便番号</td>
+                    <td className="px-4 py-2.5 text-stone-700">{householder.postalCode ? `〒${householder.postalCode}` : ""}</td>
+                  </tr>
+                  <tr className="border-b border-stone-100">
+                    <td className="px-4 py-2.5 text-stone-500">住所</td>
+                    <td className="px-4 py-2.5 text-stone-700">{[householder.address1, householder.address2, householder.address3].filter(Boolean).join("")}</td>
+                  </tr>
+                  <tr className="border-b border-stone-100">
+                    <td className="px-4 py-2.5 text-stone-500">電話番号1</td>
+                    <td className="px-4 py-2.5 text-stone-700">{householder.phone1 || ""}</td>
+                  </tr>
+                  <tr className="border-b border-stone-100">
+                    <td className="px-4 py-2.5 text-stone-500">電話番号2</td>
+                    <td className="px-4 py-2.5 text-stone-700">{householder.phone2 || ""}</td>
+                  </tr>
+                  <tr>
+                    <td className="px-4 py-2.5 text-stone-500">メールアドレス</td>
+                    <td className="px-4 py-2.5 text-stone-700">{householder.email || ""}</td>
+                  </tr>
+                </tbody>
+              </table>
 
-        </div>
-      )}
+            </div>
+          )}
 
-      {/* 戸主詳細タブ */}
-      {activeTab === "detail" && (
-        <div className="bg-white rounded-xl shadow-sm border border-stone-200 overflow-hidden">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="bg-stone-50 border-b border-stone-200">
-                <th className="text-left px-4 py-2 font-medium text-stone-600 w-2/5">項目</th>
-                <th className="text-left px-4 py-2 font-medium text-stone-600">内容</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr className="border-b border-stone-100">
-                <td className="px-4 py-2.5 text-stone-500">移動時間(単位：分)</td>
-                <td className="px-4 py-2.5 text-stone-700"></td>
-              </tr>
-              <tr className="border-b border-stone-100">
-                <td className="px-4 py-2.5 text-stone-500">駐車場</td>
-                <td className="px-4 py-2.5 text-stone-700"></td>
-              </tr>
-              <tr className="border-b border-stone-100">
-                <td className="px-4 py-2.5 text-stone-500">性別</td>
-                <td className="px-4 py-2.5 text-stone-700">{formatGenderLabel(householder.gender)}</td>
-              </tr>
-              <tr>
-                <td className="px-4 py-2.5 text-stone-500">本籍地</td>
-                <td className="px-4 py-2.5 text-stone-700">{householder.domicile || ""}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+          {/* 戸主詳細タブ */}
+          {activeTab === "detail" && (
+            <div className="bg-white rounded-xl shadow-sm border border-stone-200 overflow-hidden">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-stone-50 border-b border-stone-200">
+                    <th className="text-left px-4 py-2 font-medium text-stone-600 w-2/5">項目</th>
+                    <th className="text-left px-4 py-2 font-medium text-stone-600">内容</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr className="border-b border-stone-100">
+                    <td className="px-4 py-2.5 text-stone-500">移動時間(単位：分)</td>
+                    <td className="px-4 py-2.5 text-stone-700"></td>
+                  </tr>
+                  <tr className="border-b border-stone-100">
+                    <td className="px-4 py-2.5 text-stone-500">駐車場</td>
+                    <td className="px-4 py-2.5 text-stone-700"></td>
+                  </tr>
+                  <tr className="border-b border-stone-100">
+                    <td className="px-4 py-2.5 text-stone-500">性別</td>
+                    <td className="px-4 py-2.5 text-stone-700">{formatGenderLabel(householder.gender)}</td>
+                  </tr>
+                  <tr>
+                    <td className="px-4 py-2.5 text-stone-500">本籍地</td>
+                    <td className="px-4 py-2.5 text-stone-700">{householder.domicile || ""}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          )}
+        </>
       )}
 
     </div>
