@@ -165,7 +165,13 @@ export async function POST(req: NextRequest, { params }: Params) {
         },
       });
 
-      // 6. 旧戸主レコードを削除
+      // 6. 住所変更履歴を新戸主に引き継ぐ
+      await tx.householderAddressHistory.updateMany({
+        where: { householderId: oldHouseholderId },
+        data: { householderId: newHouseholder.id },
+      });
+
+      // 7. 旧戸主レコードを削除
       await tx.householder.delete({ where: { id: oldHouseholderId } });
 
       return newHouseholder;
