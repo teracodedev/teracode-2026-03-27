@@ -352,7 +352,7 @@ export default function FamilyRegisterDetailPage({ params }: { params: Promise<{
   };
 
   const handleUseHouseholderName = async () => {
-    const h = toHouseholderList(data?.householders)[0];
+    const h = toHouseholderList(data?.householders ?? null)[0];
     if (!h) return;
     const name = buildFamilyRegisterName(h.familyName, h.givenName);
     const nameKana = buildFamilyRegisterNameKana(h.familyNameKana, h.givenNameKana) || "";
