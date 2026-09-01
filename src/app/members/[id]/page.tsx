@@ -8,6 +8,11 @@ import { PostalCodeSearch } from "@/components/PostalCodeSearch";
 import { RelationInput } from "@/components/RelationInput";
 import { TagManager } from "@/components/TagManager";
 import { formatPostalCode, lookupPostalCode } from "@/lib/postal-code";
+import {
+  getUpcomingMemorialDisplay,
+  memorialDateToYmd,
+  NENKAI_SCHEDULE,
+} from "@/lib/memorial-schedule";
 
 interface MemberDetail {
   id: string;
@@ -152,20 +157,6 @@ function resolveAgeAtDeathForSave(birthDate: string, deathDate: string, ageAtDea
   return trimmed || null;
 }
 
-// 年回表データ
-function getNenkai(deathDate: string): { label: string; years: number }[] {
-  return [
-    { label: "一周忌", years: 1 },
-    { label: "三回忌", years: 2 },
-    { label: "七回忌", years: 6 },
-    { label: "十三回忌", years: 12 },
-    { label: "十七回忌", years: 16 },
-    { label: "二十五回忌", years: 24 },
-    { label: "三十三回忌", years: 32 },
-    { label: "五十回忌", years: 49 },
-  ];
-}
-
 // 中陰表データ（命日を1日目として数える）
 function getChuIn(): { label: string; days: number }[] {
   return [
@@ -179,38 +170,12 @@ function getChuIn(): { label: string; days: number }[] {
   ];
 }
 
-// 直近の仏事を計算（四十九日忌 + 年回）
 function getNextCeremony(deathDate: string): { label: string; date: string } | null {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  // 四十九日忌のみチェック
-  const shijukuDate = new Date(addDays(deathDate, 48));
-  shijukuDate.setHours(0, 0, 0, 0);
-  if (shijukuDate >= today) {
-    return { label: "四十九日忌", date: addDays(deathDate, 48) };
-  }
-
-  // 年回チェック
-  for (const nk of getNenkai(deathDate)) {
-    const d = new Date(addYears(deathDate, nk.years));
-    d.setHours(0, 0, 0, 0);
-    if (d >= today) {
-      return { label: nk.label, date: addYears(deathDate, nk.years) };
-    }
-    // 一周忌は当日を過ぎても1ヶ月間、それ以外は1年間は同じ年回を表示
-    const grace = new Date(d);
-    if (nk.label === "一周忌") {
-      grace.setMonth(grace.getMonth() + 1);
-    } else {
-      grace.setFullYear(grace.getFullYear() + 1);
-    }
-    if (today < grace) {
-      return { label: nk.label, date: addYears(deathDate, nk.years) };
-    }
-  }
-
-  return null;
+  const death = new Date(deathDate);
+  if (Number.isNaN(death.getTime())) return null;
+  const memorial = getUpcomingMemorialDisplay(death);
+  if (!memorial) return null;
+  return { label: memorial.label, date: memorialDateToYmd(memorial.date) };
 }
 
 function handleYamlExport(member: MemberDetail) {
@@ -711,7 +676,7 @@ export default function MemberDetailPage({ params }: { params: Promise<{ id: str
     );
   }
 
-  const nenkai = getNenkai(member.deathDate!);
+  const nenkai = NENKAI_SCHEDULE.map(({ key, years }) => ({ label: key, years }));
   const chuIn = getChuIn();
   const nextCeremony = getNextCeremony(member.deathDate!);
 

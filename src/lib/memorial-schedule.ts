@@ -51,32 +51,53 @@ function nenkaiGraceEnd(memorialDate: Date, key: string): Date {
   return grace;
 }
 
-function resolveNenkaiLabel(deathDate: Date, today: Date): string | null {
+export function memorialDateToYmd(date: Date): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+function resolveUpcomingMemorial(
+  deathDate: Date,
+  today: Date
+): { label: string; date: Date } | null {
   const day7 = addDays(deathDate, 6);
   day7.setHours(0, 0, 0, 0);
-  if (day7 >= today) return "葬儀";
+  if (day7 >= today) return { label: "葬儀", date: day7 };
 
   const shijukuDisplayEnd = addDays(deathDate, NENKAI_SHIJUKU_DISPLAY_UNTIL_DAYS);
   shijukuDisplayEnd.setHours(0, 0, 0, 0);
-  if (shijukuDisplayEnd >= today) return "四十九日忌";
+  if (shijukuDisplayEnd >= today) {
+    const shijukuDate = addDays(deathDate, 48);
+    shijukuDate.setHours(0, 0, 0, 0);
+    return { label: "四十九日忌", date: shijukuDate };
+  }
 
   for (const { key, years } of NENKAI_SCHEDULE) {
     const d = addYears(deathDate, years);
     d.setHours(0, 0, 0, 0);
-    if (d >= today) return key;
-    if (today < nenkaiGraceEnd(d, key)) return key;
+    if (d >= today) return { label: key, date: d };
+    if (today < nenkaiGraceEnd(d, key)) return { label: key, date: d };
   }
   return null;
 }
 
 /** 年回法名・過去帳用：次の法要ラベル（該当なしは null） */
 export function getUpcomingNenkaiDisplayLabel(deathDate: Date): string | null {
-  return resolveNenkaiLabel(deathDate, todayStart());
+  return resolveUpcomingMemorial(deathDate, todayStart())?.label ?? null;
+}
+
+/** 過去帳詳細用：次の法要ラベルと法要日（該当なしは null） */
+export function getUpcomingMemorialDisplay(
+  deathDate: Date
+): { label: string; date: Date } | null {
+  return resolveUpcomingMemorial(deathDate, todayStart());
 }
 
 /** 年回法名用ラベル：葬儀 → 四十九日忌（死後60日まで） → 一周忌 → 三回忌 … の順 */
 export function getNenkaiLabel(deathDate: Date): string {
-  return resolveNenkaiLabel(deathDate, todayStart()) ?? "五十回忌";
+  return resolveUpcomingMemorial(deathDate, todayStart())?.label ?? "五十回忌";
 }
 
 /** 直近の仏事ラベルを返す（中陰 → 年回の順） */
