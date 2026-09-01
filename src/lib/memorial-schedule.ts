@@ -21,8 +21,11 @@ export const CHUIN_SCHEDULE = [
   { key: "四十九日忌", days: 48 },
 ];
 
-/** 年回法名・過去帳表示：葬儀期間（初七日）終了後〜死後60日目まで「四十九日忌」（命日を1日目） */
-export const NENKAI_SHIJUKU_DISPLAY_UNTIL_DAYS = 59;
+/** 葬儀表示：命日〜死後3日目まで */
+export const NENKAI_SOUGI_DISPLAY_UNTIL_DAYS = 3;
+
+/** 四十九日忌表示：死後4日目〜死後60日目まで */
+export const NENKAI_SHIJUKU_DISPLAY_UNTIL_DAYS = 60;
 
 // 年回表
 export const NENKAI_SCHEDULE = [
@@ -62,9 +65,9 @@ function resolveUpcomingMemorial(
   deathDate: Date,
   today: Date
 ): { label: string; date: Date } | null {
-  const day7 = addDays(deathDate, 6);
-  day7.setHours(0, 0, 0, 0);
-  if (day7 >= today) return { label: "葬儀", date: day7 };
+  const sougiEnd = addDays(deathDate, NENKAI_SOUGI_DISPLAY_UNTIL_DAYS);
+  sougiEnd.setHours(0, 0, 0, 0);
+  if (sougiEnd >= today) return { label: "葬儀", date: sougiEnd };
 
   const shijukuDisplayEnd = addDays(deathDate, NENKAI_SHIJUKU_DISPLAY_UNTIL_DAYS);
   shijukuDisplayEnd.setHours(0, 0, 0, 0);
@@ -95,7 +98,7 @@ export function getUpcomingMemorialDisplay(
   return resolveUpcomingMemorial(deathDate, todayStart());
 }
 
-/** 年回法名用ラベル：葬儀 → 四十九日忌（死後60日まで） → 一周忌 → 三回忌 … の順 */
+/** 年回法名用ラベル：葬儀（死後3日まで） → 四十九日忌（死後4〜60日） → 一周忌 → 三回忌 … の順 */
 export function getNenkaiLabel(deathDate: Date): string {
   return resolveUpcomingMemorial(deathDate, todayStart())?.label ?? "五十回忌";
 }
