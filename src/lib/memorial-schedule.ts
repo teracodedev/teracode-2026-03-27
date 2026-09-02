@@ -86,6 +86,31 @@ function resolveUpcomingMemorial(
   return null;
 }
 
+/** 今日以降に迎える最初の年回の法要日（該当なしは null） */
+export function getNextNenkaiCeremonyDate(
+  deathDate: Date,
+  today: Date = todayStart()
+): Date | null {
+  for (const { years } of NENKAI_SCHEDULE) {
+    const d = addYears(deathDate, years);
+    d.setHours(0, 0, 0, 0);
+    if (d >= today) return d;
+  }
+  return null;
+}
+
+/** 指定日が基準日から1年以内か */
+export function isDateWithinOneYearFrom(
+  target: Date,
+  from: Date = todayStart()
+): boolean {
+  const limit = addYears(from, 1);
+  limit.setHours(0, 0, 0, 0);
+  const t = new Date(target);
+  t.setHours(0, 0, 0, 0);
+  return t <= limit;
+}
+
 /** 年回法名・過去帳用：次の法要ラベル（該当なしは null） */
 export function getUpcomingNenkaiDisplayLabel(deathDate: Date): string | null {
   return resolveUpcomingMemorial(deathDate, todayStart())?.label ?? null;

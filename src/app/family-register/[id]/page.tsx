@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { RelationInput } from "@/components/RelationInput";
 import { graveContractPeriodGaSentence } from "@/lib/grave-contract-period-text";
-import { getUpcomingNenkaiLabel } from "@/lib/upcoming-nenkai";
+import { getUpcomingNenkaiLabelForPastLedgerList } from "@/lib/upcoming-nenkai";
 import { willInheritTransferPhone1 } from "@/lib/phone-utils";
 import { buildFamilyRegisterName, buildFamilyRegisterNameKana } from "@/lib/family-register-names";
 
@@ -1087,7 +1087,7 @@ export default function FamilyRegisterDetailPage({ params }: { params: Promise<{
                   </thead>
                   <tbody>
                     {deceasedMembers.map((m) => {
-                      const nenkaiLabel = getUpcomingNenkaiLabel(m.deathDate);
+                      const nenkaiLabel = getUpcomingNenkaiLabelForPastLedgerList(m.deathDate);
                       return (
                       <tr key={m.id} className="border-b border-stone-100 last:border-0 hover:bg-stone-50">
                         <td className="px-3 py-2.5 text-stone-700 whitespace-nowrap">
