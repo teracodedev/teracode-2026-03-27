@@ -174,7 +174,7 @@ export default function TagAddressPrintSurfacePage() {
         }
         .recipient-area {
           position: absolute;
-          top: 16mm;
+          top: 24mm; /* 官製ハガキ郵便番号枠の下から開始 */
           left: 0;
           right: 0;
           bottom: 40mm;
@@ -185,13 +185,15 @@ export default function TagAddressPrintSurfacePage() {
           -webkit-writing-mode: vertical-rl;
           top: 50%;
         }
+        /* 住所は上揃え（長い住所が中央揃えだと郵便番号枠に食い込むため） */
         .recipient-area .col-address {
           right: 10mm;
-          transform: translateY(-50%);
+          top: 0;
+          transform: none;
           font-size: 13pt;
           line-height: 1.55;
           letter-spacing: 0.08em;
-          max-height: 90mm;
+          max-height: 84mm;
         }
         .recipient-area .col-address > div {
           white-space: nowrap;
