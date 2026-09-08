@@ -185,7 +185,7 @@ export default function NenkaihyoAddressPage() {
         /* 宛名・住所のブロック */
         .recipient-area {
           position: absolute;
-          top: 24mm; /* 官製ハガキ郵便番号枠の下から開始 */
+          top: 34mm; /* 官製ハガキ郵便番号枠の下から開始 */
           left: 0;
           right: 0;
           bottom: 40mm;
