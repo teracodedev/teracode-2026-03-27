@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/require-auth";
 import { buildFamilyRegisterName, buildFamilyRegisterNameKana } from "@/lib/family-register-names";
+import { parseMdbAddressHistoryText } from "@/lib/mdb-address-history";
 import { toFullWidthKatakana } from "@/lib/yaml-utils";
 import MDBReader from "mdb-reader";
 
@@ -159,15 +160,27 @@ export async function POST(req: NextRequest) {
   }
 
   // ───── 既存データをクリア（外部キー制約の順序で削除） ─────
+  await prisma.householderAddressHistory.deleteMany();
   await prisma.householderMember.deleteMany();
   await prisma.householder.deleteMany();
   await prisma.familyRegister.deleteMany();
 
   // 台帳ID（MDB整数） → 新しい Householder UUID のマップ
   const idMap = new Map<number, string>();
+  // 住所履歴は戸主作成後にまとめて投入する
+  const pendingAddressHistories: {
+    householderId: string;
+    postalCode: string | null;
+    address1: string | null;
+    address2: string | null;
+    address3: string | null;
+    movedAt: Date;
+    note: string | null;
+  }[] = [];
 
   let householderCount = 0;
   let memberCount = 0;
+  let addressHistoryCount = 0;
   const errorList: string[] = [];
 
   // ───── 戸主をインポート ─────
@@ -246,8 +259,45 @@ export async function POST(req: NextRequest) {
 
       idMap.set(daichodId, householder.id);
       householderCount++;
+
+      // UTB001_戸主.住所履歴（テキスト）をパースして履歴候補に追加
+      if (householderColumns.includes("住所履歴")) {
+        const histories = parseMdbAddressHistoryText(row["住所履歴"]);
+        for (const h of histories) {
+          pendingAddressHistories.push({
+            householderId: householder.id,
+            postalCode: h.postalCode,
+            address1: h.address1,
+            address2: h.address2,
+            address3: h.address3,
+            movedAt: h.movedAt ?? new Date(),
+            note: h.note,
+          });
+        }
+      }
     } catch (e) {
       errorList.push(`戸主 台帳ID=${row["台帳ID"]}: ${(e as Error).message}`);
+    }
+  }
+
+  // ───── 住所履歴を一括登録 ─────
+  if (pendingAddressHistories.length > 0) {
+    try {
+      const result = await prisma.householderAddressHistory.createMany({
+        data: pendingAddressHistories,
+      });
+      addressHistoryCount = result.count;
+    } catch (e) {
+      errorList.push(`住所履歴の一括登録: ${(e as Error).message}`);
+      // フォールバック: 1件ずつ
+      for (const h of pendingAddressHistories) {
+        try {
+          await prisma.householderAddressHistory.create({ data: h });
+          addressHistoryCount++;
+        } catch (err) {
+          errorList.push(`住所履歴 householderId=${h.householderId}: ${(err as Error).message}`);
+        }
+      }
     }
   }
 
@@ -307,6 +357,7 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({
     householders: householderCount,
     members: memberCount,
+    addressHistories: addressHistoryCount,
     errors: errorList.length,
     errorDetails: errorList.slice(0, 50),
     debug: {
@@ -314,6 +365,7 @@ export async function POST(req: NextRequest) {
       familyAnnaiFuyoCol,
       familyColumns,
       householderColumns,
+      hasAddressHistoryColumn: householderColumns.includes("住所履歴"),
     },
   });
 }
