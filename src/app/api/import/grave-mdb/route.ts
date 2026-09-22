@@ -202,16 +202,54 @@ export async function POST(req: NextRequest) {
     },
   });
 
+  type MatchedHouseholder = {
+    id: string;
+    familyName: string;
+    givenName: string;
+    familyRegister: { id: string; name: string } | null;
+  };
+
+  const normalizePersonName = (familyName: string, givenName: string | null | undefined) =>
+    `${familyName}${givenName ?? ""}`.replace(/[\s\u3000]+/g, "");
+
   // Build name → householder map for matching
-  const nameToHouseholder = new Map<
-    string,
-    { id: string; familyName: string; givenName: string; familyRegister: { id: string; name: string } | null }
-  >();
+  const nameToHouseholder = new Map<string, MatchedHouseholder>();
   for (const h of allHouseholders) {
-    const key = `${h.familyName}${h.givenName}`.replace(/\s+/g, "");
+    const key = normalizePersonName(h.familyName, h.givenName);
     if (!nameToHouseholder.has(key)) {
       nameToHouseholder.set(key, h);
     }
+  }
+
+  // 過去帳（命日ありの世帯員）の氏名 → 所属戸主（家族・親族台帳）
+  // 戸主名が一致しない場合のフォールバック照合用
+  const deceasedMembers = await prisma.householderMember.findMany({
+    where: { deathDate: { not: null } },
+    select: {
+      familyName: true,
+      givenName: true,
+      householder: {
+        select: {
+          id: true,
+          familyName: true,
+          givenName: true,
+          familyRegister: { select: { id: true, name: true } },
+        },
+      },
+    },
+  });
+
+  const nameToKakochoHouseholder = new Map<string, MatchedHouseholder>();
+  for (const m of deceasedMembers) {
+    const key = normalizePersonName(m.familyName, m.givenName);
+    if (!key || nameToKakochoHouseholder.has(key)) continue;
+    nameToKakochoHouseholder.set(key, m.householder);
+  }
+
+  /** 戸主名優先、なければ過去帳の氏名で家族・親族台帳の戸主を解決 */
+  function resolveHouseholderByUserName(userName: string): MatchedHouseholder | undefined {
+    const nameKey = userName.replace(/[\s\u3000]+/g, "");
+    return nameToHouseholder.get(nameKey) ?? nameToKakochoHouseholder.get(nameKey);
   }
 
   // Clear existing grave data
@@ -247,8 +285,7 @@ export async function POST(req: NextRequest) {
           if (user) {
             const userName = str(user["氏名"]);
             if (userName) {
-              const nameKey = userName.replace(/[\s\u3000]+/g, "");
-              const matched = nameToHouseholder.get(nameKey);
+              const matched = resolveHouseholderByUserName(userName);
               if (matched) {
                 const plotStart = contractStartDate(plotNumber);
                 const created = await prisma.graveContract.create({
@@ -300,8 +337,7 @@ export async function POST(req: NextRequest) {
         if (user) {
           const userName = str(user["氏名"]);
           if (userName) {
-            const nameKey = userName.replace(/[\s\u3000]+/g, "");
-            const matched = nameToHouseholder.get(nameKey);
+            const matched = resolveHouseholderByUserName(userName);
             if (matched) {
               const plotStart = contractStartDate(plotNumber);
               const created = await prisma.graveContract.create({
@@ -320,7 +356,7 @@ export async function POST(req: NextRequest) {
               contractCount++;
             } else {
               errorList.push(
-                `墓地番号=${plotNumber}: 使用者「${userName}」に一致する戸主が見つかりません`
+                `墓地番号=${plotNumber}: 使用者「${userName}」に一致する戸主・過去帳が見つかりません`
               );
             }
           }
