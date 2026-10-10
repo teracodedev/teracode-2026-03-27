@@ -83,8 +83,8 @@ export async function GET(req: NextRequest) {
   const city = req.nextUrl.searchParams.get("city") ?? "";
   if (!pref || !city) return NextResponse.json([]);
 
+  if (!Object.hasOwn(PREF_RANGES, pref)) return NextResponse.json([]);
   const range = PREF_RANGES[pref];
-  if (!range) return NextResponse.json([]);
 
   const [start, end] = range;
   const prefixes: string[] = [];

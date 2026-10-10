@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getHouseholderDelegate, getHouseholderFieldMap, getHouseholderModelKind } from "@/lib/prisma-models";
 import { requireAuth } from "@/lib/require-auth";
+import { apiErrorResponse } from "@/lib/api-error";
 import { prisma } from "@/lib/prisma";
 import { buildFamilyRegisterName, buildFamilyRegisterNameKana } from "@/lib/family-register-names";
 import { toFullWidthKatakana, buildFullNameOrConditions } from "@/lib/yaml-utils";
@@ -68,8 +69,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(householderList);
   } catch (error) {
-    console.error("GET /api/householder error:", error);
-    return NextResponse.json({ error: (error as Error).message || "エラーが発生しました" }, { status: 500 });
+    return apiErrorResponse("GET /api/householder", error);
   }
 }
 
@@ -181,7 +181,6 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(householder, { status: 201 });
   } catch (error) {
-    console.error("POST /api/householder error:", error);
-    return NextResponse.json({ error: (error as Error).message || "エラーが発生しました" }, { status: 500 });
+    return apiErrorResponse("POST /api/householder", error);
   }
 }

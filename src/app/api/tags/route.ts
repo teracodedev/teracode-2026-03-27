@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/require-auth";
+import { MAX_TAG_NAME_LENGTH, isTagColor } from "@/lib/tag-input";
 
 // タグ一覧取得
 export async function GET() {
@@ -24,6 +25,12 @@ export async function POST(request: NextRequest) {
   const { name, color } = await request.json();
   if (!name || typeof name !== "string" || !name.trim()) {
     return NextResponse.json({ error: "name is required" }, { status: 400 });
+  }
+  if (name.trim().length > MAX_TAG_NAME_LENGTH) {
+    return NextResponse.json({ error: `タグ名は${MAX_TAG_NAME_LENGTH}文字以内で入力してください` }, { status: 400 });
+  }
+  if (color && !isTagColor(color)) {
+    return NextResponse.json({ error: "色の指定が正しくありません" }, { status: 400 });
   }
   try {
     const tag = await prisma.tag.create({

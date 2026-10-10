@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/require-auth";
+import { apiErrorResponse } from "@/lib/api-error";
 import { effectiveGraveContractStartDate } from "@/lib/grave-contract-start-date";
 
 export const runtime = "nodejs";
@@ -80,11 +81,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(normalized);
   } catch (error) {
-    console.error("GET /api/graves error:", error);
-    return NextResponse.json(
-      { error: (error as Error).message || "エラーが発生しました" },
-      { status: 500 }
-    );
+    return apiErrorResponse("GET /api/graves", error);
   }
 }
 
@@ -163,10 +160,6 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(normalized, { status: 201 });
   } catch (error) {
-    console.error("POST /api/graves error:", error);
-    return NextResponse.json(
-      { error: (error as Error).message || "エラーが発生しました" },
-      { status: 500 }
-    );
+    return apiErrorResponse("POST /api/graves", error);
   }
 }

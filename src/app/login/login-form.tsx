@@ -2,12 +2,19 @@
 
 import { useState } from "react";
 
+export type LoginErrorKind = "credentials" | "rate_limited";
+
+const ERROR_MESSAGES: Record<LoginErrorKind, string> = {
+  credentials: "メールアドレスまたはパスワードが正しくありません",
+  rate_limited: "ログインの失敗が続いたため、一時的にログインを制限しています。15分ほど待ってから再度お試しください",
+};
+
 export function LoginForm({
   callbackUrl,
   error,
 }: {
   callbackUrl: string;
-  error?: boolean;
+  error?: LoginErrorKind;
 }) {
   const [loading, setLoading] = useState(false);
 
@@ -15,7 +22,7 @@ export function LoginForm({
     <>
       {error && (
         <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
-          メールアドレスまたはパスワードが正しくありません
+          {ERROR_MESSAGES[error]}
         </div>
       )}
 

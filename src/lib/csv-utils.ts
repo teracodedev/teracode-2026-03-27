@@ -11,7 +11,11 @@ function escapeCsvValue(value: string): string {
   if (/^\d+[-\/]\d+([-\/]\d+)?$/.test(value.trim())) {
     return `="${value.replace(/"/g, '""')}"`;
   }
-  if (value.includes(",") || value.includes('"') || value.includes("\n")) {
+  // = + - @ タブ CR で始まる値は Excel 等で数式として実行されうるため、' を前置して文字列にする（CSV インジェクション対策）
+  if (/^[=+\-@\t\r]/.test(value)) {
+    value = `'${value}`;
+  }
+  if (/[,"\r\n]/.test(value)) {
     return '"' + value.replace(/"/g, '""') + '"';
   }
   return value;

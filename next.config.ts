@@ -24,6 +24,8 @@ const nextConfig: NextConfig = {
   experimental: {
     serverSourceMaps: false,
   },
+  // X-Powered-By: Next.js でフレームワークを明かさない
+  poweredByHeader: false,
   ...(skipTypecheck && {
     typescript: {
       // デプロイ時のみ。型チェックは npm run typecheck / ローカルの通常ビルドで行う
@@ -35,16 +37,25 @@ const nextConfig: NextConfig = {
 
   // ハッシュ付きアセットのみ長期キャッシュ（HTML の no-store は nginx 側で付与）
   async headers() {
+    // ページの CSP は nonce が必要なため middleware.ts で付与する
     const securityHeaders = [
+      { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains" },
       { key: "X-Frame-Options", value: "SAMEORIGIN" },
       { key: "X-Content-Type-Options", value: "nosniff" },
       { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
       { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
+      { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
+      { key: "Cross-Origin-Resource-Policy", value: "same-origin" },
     ];
     return [
       {
         source: "/:path*",
         headers: securityHeaders,
+      },
+      {
+        // JSON・ファイルを返すだけの API はスクリプト等を一切読み込まない
+        source: "/api/:path*",
+        headers: [{ key: "Content-Security-Policy", value: "default-src 'none'; frame-ancestors 'none'" }],
       },
       {
         source: "/_next/static/:path*",

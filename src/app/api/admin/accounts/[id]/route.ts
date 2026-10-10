@@ -1,22 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@/generated/prisma";
-import { auth } from "@/auth";
-import { requireAdmin } from "@/lib/require-auth";
-
-const prisma = new PrismaClient();
+import { prisma } from "@/lib/prisma";
+import { getSessionUser } from "@/lib/require-auth";
 
 export async function DELETE(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const denied = await requireAdmin();
-  if (denied) return denied;
+  const currentUser = await getSessionUser();
+  if (!currentUser) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  if (!currentUser.isAdmin) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
 
-  const session = await auth();
   const { id } = await params;
 
   // 自分自身は削除できない
-  if (id === session!.user!.id) {
+  if (id === currentUser.id) {
     return NextResponse.json({ error: "自分自身のアカウントは削除できません" }, { status: 400 });
   }
 

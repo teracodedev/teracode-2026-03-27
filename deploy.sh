@@ -5,6 +5,11 @@ echo "=== テラコード デプロイ ==="
 
 cd "$(dirname "$0")"
 
+# .env には AUTH_SECRET（セッション署名鍵）と DB パスワードが入る。他ユーザーから読めるとセッションを偽造される
+for f in .env .env.*; do
+  [ -f "$f" ] && chmod 600 "$f"
+done
+
 # デプロイ常時: Next ビルドと付帯処理を速める（next.config の SKIP_TYPECHECK も参照）
 export NEXT_TELEMETRY_DISABLED=1
 export GIT_TERMINAL_PROMPT=0

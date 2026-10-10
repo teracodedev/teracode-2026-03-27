@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/require-auth";
+import { apiErrorResponse } from "@/lib/api-error";
 
 export const runtime = "nodejs";
 
@@ -50,13 +51,13 @@ export async function POST(request: NextRequest, { params }: Params) {
       );
     }
 
-    const contract = await prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx) => {
       const gravePlot = await tx.gravePlot.findUnique({
         where: { id: gravePlotId },
       });
 
       if (!gravePlot) {
-        throw new Error("gravePlotId is required");
+        return { error: "墓所が見つかりません", status: 404 } as const;
       }
 
       const duplicate = await tx.graveContract.findFirst({
@@ -65,10 +66,10 @@ export async function POST(request: NextRequest, { params }: Params) {
       });
 
       if (duplicate) {
-        throw new Error("Duplicate grave contract for this householder and grave plot");
+        return { error: "この戸主はすでにこの墓所の契約があります", status: 409 } as const;
       }
 
-      return tx.graveContract.create({
+      const contract = await tx.graveContract.create({
         data: {
           gravePlotId: gravePlot.id,
           householderId,
@@ -79,14 +80,14 @@ export async function POST(request: NextRequest, { params }: Params) {
         },
         include: { gravePlot: true },
       });
+      return { contract };
     });
 
-    return NextResponse.json(contract, { status: 201 });
+    if ("error" in result) {
+      return NextResponse.json({ error: result.error }, { status: result.status });
+    }
+    return NextResponse.json(result.contract, { status: 201 });
   } catch (error) {
-    console.error("POST /api/family-register/[id]/grave-contracts error:", error);
-    return NextResponse.json(
-      { error: (error as Error).message || "Failed to add grave contract" },
-      { status: 500 }
-    );
+    return apiErrorResponse("POST /api/family-register/[id]/grave-contracts", error, "墓所契約の追加に失敗しました");
   }
 }

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/require-auth";
-import { toFullWidthKatakana } from "@/lib/yaml-utils";
+import { MAX_SPLIT_SEARCH_LENGTH, toFullWidthKatakana } from "@/lib/yaml-utils";
 
 export const runtime = "nodejs";
 
@@ -26,7 +26,7 @@ export async function GET(req: NextRequest) {
           { AND: [{ familyNameKana: { contains: kParts[0], mode: "insensitive" } }, { givenNameKana: { contains: kParts[1], mode: "insensitive" } }] },
         );
       }
-    } else {
+    } else if (q.length <= MAX_SPLIT_SEARCH_LENGTH) {
       for (let i = 1; i < q.length; i++) {
         fullNameOrConditions.push(
           { AND: [{ familyName: { contains: q.slice(0, i), mode: "insensitive" } }, { givenName: { contains: q.slice(i), mode: "insensitive" } }] },

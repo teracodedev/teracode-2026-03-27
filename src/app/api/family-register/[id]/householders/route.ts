@@ -13,7 +13,9 @@ export async function POST(req: NextRequest, { params }: Params) {
 
   const { id } = await params;
   const { householderId } = await req.json();
-  if (!householderId) return NextResponse.json({ error: "householderIdは必須です" }, { status: 400 });
+  if (typeof householderId !== "string" || !householderId) {
+    return NextResponse.json({ error: "householderIdは必須です" }, { status: 400 });
+  }
 
   await prisma.householder.update({
     where: { id: householderId },

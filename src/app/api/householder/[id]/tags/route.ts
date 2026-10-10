@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/require-auth";
+import { apiErrorResponse } from "@/lib/api-error";
 
 // 戸主のタグ一覧取得
 export async function GET(
@@ -29,15 +30,19 @@ export async function POST(
 
   const { id } = await params;
   const { tagId } = await request.json();
-  if (!tagId) {
+  if (typeof tagId !== "string" || !tagId) {
     return NextResponse.json({ error: "tagId is required" }, { status: 400 });
   }
-  await prisma.householderTag.upsert({
-    where: { householderId_tagId: { householderId: id, tagId } },
-    create: { householderId: id, tagId },
-    update: {},
-  });
-  return NextResponse.json({ ok: true }, { status: 201 });
+  try {
+    await prisma.householderTag.upsert({
+      where: { householderId_tagId: { householderId: id, tagId } },
+      create: { householderId: id, tagId },
+      update: {},
+    });
+    return NextResponse.json({ ok: true }, { status: 201 });
+  } catch (e) {
+    return apiErrorResponse(`POST /api/householder/${id}/tags`, e, "タグの付与に失敗しました");
+  }
 }
 
 // タグ解除
@@ -50,7 +55,8 @@ export async function DELETE(
 
   const { id } = await params;
   const { tagId } = await request.json();
-  if (!tagId) {
+  // 文字列以外（{ not: "..." } 等）を通すと where 条件として解釈され、複数のタグが外れてしまう
+  if (typeof tagId !== "string" || !tagId) {
     return NextResponse.json({ error: "tagId is required" }, { status: 400 });
   }
   await prisma.householderTag.deleteMany({

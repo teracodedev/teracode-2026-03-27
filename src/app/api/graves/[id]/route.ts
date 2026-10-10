@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/require-auth";
+import { apiErrorResponse } from "@/lib/api-error";
 import { effectiveGraveContractStartDate } from "@/lib/grave-contract-start-date";
 
 export const runtime = "nodejs";
@@ -63,11 +64,7 @@ export async function GET(
 
     return NextResponse.json(normalized);
   } catch (error) {
-    console.error("GET /api/graves/[id] error:", error);
-    return NextResponse.json(
-      { error: (error as Error).message || "エラーが発生しました" },
-      { status: 500 }
-    );
+    return apiErrorResponse("GET /api/graves/[id]", error);
   }
 }
 
@@ -141,11 +138,7 @@ export async function PUT(
 
     return NextResponse.json(grave);
   } catch (error) {
-    console.error("PUT /api/graves/[id] error:", error);
-    return NextResponse.json(
-      { error: (error as Error).message || "エラーが発生しました" },
-      { status: 500 }
-    );
+    return apiErrorResponse("PUT /api/graves/[id]", error);
   }
 }
 
@@ -163,10 +156,6 @@ export async function DELETE(
     await prisma.gravePlot.delete({ where: { id } });
     return NextResponse.json({ ok: true });
   } catch (error) {
-    console.error("DELETE /api/graves/[id] error:", error);
-    return NextResponse.json(
-      { error: (error as Error).message || "エラーが発生しました" },
-      { status: 500 }
-    );
+    return apiErrorResponse("DELETE /api/graves/[id]", error);
   }
 }

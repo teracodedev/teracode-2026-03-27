@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getHouseholderFieldMap, getHouseholderModelKind, getMemberDelegate } from "@/lib/prisma-models";
 import { requireAuth } from "@/lib/require-auth";
+import { apiErrorResponse } from "@/lib/api-error";
 import { toFullWidthKatakana, buildFullNameOrConditions, buildNestedFullNameOrConditions } from "@/lib/yaml-utils";
 
 export const runtime = "nodejs";
@@ -85,7 +86,6 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(records);
   } catch (error) {
-    console.error("GET /api/genzaicho error:", error);
-    return NextResponse.json({ error: (error as Error).message || "エラーが発生しました" }, { status: 500 });
+    return apiErrorResponse("GET /api/genzaicho", error);
   }
 }

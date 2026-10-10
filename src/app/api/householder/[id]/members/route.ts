@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getHouseholderFieldMap, getHouseholderModelKind, getMemberDelegate } from "@/lib/prisma-models";
 import { requireAuth } from "@/lib/require-auth";
+import { apiErrorResponse } from "@/lib/api-error";
 
 export const runtime = "nodejs";
 
@@ -79,7 +80,6 @@ export async function POST(request: NextRequest, { params }: Params) {
 
     return NextResponse.json(member, { status: 201 });
   } catch (error) {
-    console.error(`POST /api/householder/${id}/members error:`, error);
-    return NextResponse.json({ error: (error as Error).message || "登録に失敗しました" }, { status: 500 });
+    return apiErrorResponse(`POST /api/householder/${id}/members`, error, "登録に失敗しました");
   }
 }

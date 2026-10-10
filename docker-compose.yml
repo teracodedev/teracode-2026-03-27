@@ -5,8 +5,9 @@ services:
       POSTGRES_USER: teracode
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: teracode
+    # Docker が公開したポートは UFW 等のホストのファイアウォールを素通りするため、ループバックにだけ公開する
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
 

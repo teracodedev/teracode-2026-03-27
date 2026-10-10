@@ -19,7 +19,8 @@ module.exports = {
       env: {
         NODE_ENV: "production",
         PORT: "3000",
-        HOSTNAME: "0.0.0.0",
+        // nginx（network_mode: host）経由でのみ受け付ける。0.0.0.0 にすると 3000 番が外部へ直接公開される
+        HOSTNAME: "127.0.0.1",
       },
     },
   ],

@@ -1,20 +1,28 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { requireAuth } from "@/lib/require-auth";
+import { requireAdmin } from "@/lib/require-auth";
+import { apiErrorResponse } from "@/lib/api-error";
+import { MAX_TAG_NAME_LENGTH, isTagColor } from "@/lib/tag-input";
 
 // タグ更新
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const unauth = await requireAuth();
-  if (unauth) return unauth;
+  const denied = await requireAdmin();
+  if (denied) return denied;
 
   const { id } = await params;
   const { name, color } = await request.json();
   if (name !== undefined && name !== null && !String(name).trim()) {
     return NextResponse.json({ error: "タグ名を入力してください" }, { status: 400 });
+  }
+  if (name !== undefined && name !== null && String(name).trim().length > MAX_TAG_NAME_LENGTH) {
+    return NextResponse.json({ error: `タグ名は${MAX_TAG_NAME_LENGTH}文字以内で入力してください` }, { status: 400 });
+  }
+  if (color && !isTagColor(color)) {
+    return NextResponse.json({ error: "色の指定が正しくありません" }, { status: 400 });
   }
   try {
     const tag = await prisma.tag.update({
@@ -29,7 +37,7 @@ export async function PUT(
     if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
       return NextResponse.json({ error: "同じ名前のタグが既に存在します" }, { status: 409 });
     }
-    throw e;
+    return apiErrorResponse(`PUT /api/tags/${id}`, e, "更新に失敗しました");
   }
 }
 
@@ -38,10 +46,14 @@ export async function DELETE(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const unauth = await requireAuth();
-  if (unauth) return unauth;
+  const denied = await requireAdmin();
+  if (denied) return denied;
 
   const { id } = await params;
-  await prisma.tag.delete({ where: { id } });
-  return NextResponse.json({ ok: true });
+  try {
+    await prisma.tag.delete({ where: { id } });
+    return NextResponse.json({ ok: true });
+  } catch (e) {
+    return apiErrorResponse(`DELETE /api/tags/${id}`, e, "削除に失敗しました");
+  }
 }

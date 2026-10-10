@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import Link from "next/link";
+import { headers } from "next/headers";
 import { auth } from "@/auth";
 import NavMenu from "@/components/NavMenu";
 
@@ -23,6 +24,8 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const session = await auth();
+  // middleware が発行した CSP の nonce（これがないインラインスクリプトはブラウザに実行を拒否される）
+  const nonce = (await headers()).get("x-nonce") ?? undefined;
 
   return (
     <html lang="ja">
@@ -30,6 +33,8 @@ export default async function RootLayout({
         className="font-sans antialiased bg-gray-50 text-stone-900"
       >
         <script
+          nonce={nonce}
+          suppressHydrationWarning
           dangerouslySetInnerHTML={{ __html: CHUNK_RECOVERY_INLINE }}
         />
         <nav className="bg-stone-800 text-white shadow-md relative">

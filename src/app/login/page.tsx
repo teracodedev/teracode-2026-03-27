@@ -1,11 +1,10 @@
 import Link from "next/link";
-import { LoginForm } from "./login-form";
+import { safeCallbackPath } from "@/lib/safe-redirect";
+import { LoginForm, type LoginErrorKind } from "./login-form";
 
-function normalizeCallbackUrl(raw: string | string[] | undefined): string {
+function normalizeError(raw: string | string[] | undefined): LoginErrorKind | undefined {
   const v = Array.isArray(raw) ? raw[0] : raw;
-  if (typeof v !== "string") return "/";
-  if (!v.startsWith("/") || v.startsWith("//")) return "/";
-  return v;
+  return v === "credentials" || v === "rate_limited" ? v : undefined;
 }
 
 export default async function LoginPage({
@@ -17,8 +16,8 @@ export default async function LoginPage({
   }>;
 }) {
   const sp = searchParams ? await searchParams : {};
-  const callbackUrl = normalizeCallbackUrl(sp.callbackUrl);
-  const error = sp.error === "credentials";
+  const callbackUrl = safeCallbackPath(sp.callbackUrl);
+  const error = normalizeError(sp.error);
 
   return (
     <div className="min-h-screen bg-stone-50 flex items-center justify-center">

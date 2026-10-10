@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getMemberDelegate } from "@/lib/prisma-models";
 import { requireAuth } from "@/lib/require-auth";
+import { apiErrorResponse } from "@/lib/api-error";
 
 export const runtime = "nodejs";
 
@@ -52,8 +53,7 @@ export async function PUT(request: NextRequest, { params }: Params) {
 
     return NextResponse.json(member);
   } catch (error) {
-    console.error(`PUT /api/householder/members/${memberId} error:`, error);
-    return NextResponse.json({ error: (error as Error).message || "更新に失敗しました" }, { status: 500 });
+    return apiErrorResponse(`PUT /api/householder/members/${memberId}`, error, "更新に失敗しました");
   }
 }
 
@@ -82,8 +82,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
 
     return NextResponse.json(member);
   } catch (error) {
-    console.error(`PATCH /api/householder/members/${memberId} error:`, error);
-    return NextResponse.json({ error: (error as Error).message || "更新に失敗しました" }, { status: 500 });
+    return apiErrorResponse(`PATCH /api/householder/members/${memberId}`, error, "更新に失敗しました");
   }
 }
 
@@ -101,7 +100,6 @@ export async function DELETE(_request: NextRequest, { params }: Params) {
     await memberDelegate.delete({ where: { id: memberId } });
     return NextResponse.json({ message: "削除しました" });
   } catch (error) {
-    console.error(`DELETE /api/householder/members/${memberId} error:`, error);
-    return NextResponse.json({ error: (error as Error).message || "削除に失敗しました" }, { status: 500 });
+    return apiErrorResponse(`DELETE /api/householder/members/${memberId}`, error, "削除に失敗しました");
   }
 }

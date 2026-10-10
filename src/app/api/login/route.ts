@@ -1,29 +1,33 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
-import bcrypt from "bcryptjs";
 import { encode } from "next-auth/jwt";
+import { verifyCredentials } from "@/lib/credentials";
+import { getClientIp } from "@/lib/login-throttle";
+import { safeCallbackPath } from "@/lib/safe-redirect";
+import {
+  SESSION_COOKIE_NAME,
+  SESSION_IDLE_TIMEOUT_SEC,
+  USE_SECURE_COOKIES,
+} from "@/lib/session-config";
 
-// auth.config.ts の useSecureCookies: false に合わせる
-const SESSION_COOKIE = "authjs.session-token";
-const SESSION_MAX_AGE = 30 * 24 * 60 * 60; // 30日
+type LoginErrorReason = "credentials" | "rate_limited";
 
 export async function POST(request: NextRequest) {
   let email: unknown, password: unknown;
-  let callbackUrl = "/";
+  let callbackUrl: unknown = "/";
 
   const ct = request.headers.get("content-type") ?? "";
+  const isForm = ct.includes("application/x-www-form-urlencoded");
 
-  if (ct.includes("application/x-www-form-urlencoded")) {
+  if (isForm) {
     // 通常のフォーム送信
     const formData = await request.formData();
     email = formData.get("email");
     password = formData.get("password");
-    callbackUrl = (formData.get("callbackUrl") as string) || "/";
+    callbackUrl = formData.get("callbackUrl");
   } else if (ct.includes("application/json")) {
     // fetch() からの JSON リクエスト
     try {
       ({ email, password, callbackUrl } = await request.json());
-      callbackUrl = callbackUrl || "/";
     } catch {
       return NextResponse.json({ error: "invalid_request" }, { status: 400 });
     }
@@ -31,19 +35,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "invalid_request" }, { status: 400 });
   }
 
-  if (typeof email !== "string" || typeof password !== "string" || !email || !password) {
-    return loginError(ct, callbackUrl, "メールアドレスまたはパスワードが正しくありません");
-  }
+  const safeCallback = safeCallbackPath(callbackUrl);
 
-  const user = await prisma.user.findUnique({ where: { email } });
-  if (!user) {
-    return loginError(ct, callbackUrl, "メールアドレスまたはパスワードが正しくありません");
+  const result = await verifyCredentials(email, password, getClientIp(request.headers));
+  if (result.status !== "ok") {
+    return loginError(isForm, safeCallback, result.status === "throttled" ? "rate_limited" : "credentials");
   }
-
-  const isValid = await bcrypt.compare(password, user.password);
-  if (!isValid) {
-    return loginError(ct, callbackUrl, "メールアドレスまたはパスワードが正しくありません");
-  }
+  const { user } = result;
 
   // NextAuth 互換の JWT を生成（salt = cookie名 が NextAuth v5 の仕様）
   const token = await encode({
@@ -53,43 +51,41 @@ export async function POST(request: NextRequest) {
       email: user.email,
       name: user.name,
       isAdmin: user.isAdmin,
+      loginAt: Math.floor(Date.now() / 1000),
     },
     secret: process.env.AUTH_SECRET!,
-    salt: SESSION_COOKIE,
-    maxAge: SESSION_MAX_AGE,
+    salt: SESSION_COOKIE_NAME,
+    maxAge: SESSION_IDLE_TIMEOUT_SEC,
   });
 
-  // callbackUrl のバリデーション（オープンリダイレクト防止）
-  const safeCallback =
-    typeof callbackUrl === "string" && callbackUrl.startsWith("/") && !callbackUrl.startsWith("//")
-      ? callbackUrl
-      : "/";
-
   // フォーム送信の場合は 302 リダイレクト、JSON の場合は 200
-  const isForm = ct.includes("application/x-www-form-urlencoded");
-  const baseUrl = process.env.AUTH_URL || `http://localhost:3000`;
   const response = isForm
-    ? NextResponse.redirect(new URL(safeCallback, baseUrl), 302)
+    ? NextResponse.redirect(new URL(safeCallback, baseUrl()), 302)
     : NextResponse.json({ ok: true });
 
-  response.cookies.set(SESSION_COOKIE, token, {
+  response.cookies.set(SESSION_COOKIE_NAME, token, {
     httpOnly: true,
-    secure: process.env.AUTH_URL?.startsWith("https:") ?? false,
+    secure: USE_SECURE_COOKIES,
     sameSite: "lax",
     path: "/",
-    maxAge: SESSION_MAX_AGE,
+    maxAge: SESSION_IDLE_TIMEOUT_SEC,
   });
 
   return response;
 }
 
-function loginError(contentType: string, callbackUrl: string, message: string) {
-  if (contentType.includes("application/x-www-form-urlencoded")) {
-    const baseUrl = process.env.AUTH_URL || `http://localhost:3000`;
-    const loginUrl = new URL("/login", baseUrl);
-    loginUrl.searchParams.set("error", "credentials");
+function baseUrl(): string {
+  return process.env.AUTH_URL || "http://localhost:3000";
+}
+
+function loginError(isForm: boolean, callbackUrl: string, reason: LoginErrorReason) {
+  if (isForm) {
+    const loginUrl = new URL("/login", baseUrl());
+    loginUrl.searchParams.set("error", reason);
     loginUrl.searchParams.set("callbackUrl", callbackUrl);
     return NextResponse.redirect(loginUrl, 302);
   }
-  return NextResponse.json({ error: "invalid_credentials" }, { status: 401 });
+  return reason === "rate_limited"
+    ? NextResponse.json({ error: "too_many_attempts" }, { status: 429 })
+    : NextResponse.json({ error: "invalid_credentials" }, { status: 401 });
 }

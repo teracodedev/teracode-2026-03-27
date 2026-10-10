@@ -20,5 +20,7 @@ declare module "next-auth/jwt" {
     isAdmin?: boolean;
     email?: string;
     name?: string;
+    /** ログイン時刻（UNIX 秒）。セッションの絶対期限の判定に使う */
+    loginAt?: number;
   }
 }

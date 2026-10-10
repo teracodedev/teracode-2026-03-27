@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getMemberDelegate } from "@/lib/prisma-models";
 import { requireAuth } from "@/lib/require-auth";
+import { apiErrorResponse } from "@/lib/api-error";
 
 export const runtime = "nodejs";
 
@@ -35,10 +36,6 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     const member = await memberDelegate.update({ where: { id }, data });
     return NextResponse.json(member);
   } catch (error) {
-    console.error(`PATCH /api/kakocho/${id}/flags error:`, error);
-    return NextResponse.json(
-      { error: (error as Error).message || "更新に失敗しました" },
-      { status: 500 }
-    );
+    return apiErrorResponse(`PATCH /api/kakocho/${id}/flags`, error, "更新に失敗しました");
   }
 }

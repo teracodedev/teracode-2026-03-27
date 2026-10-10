@@ -26,7 +26,7 @@ export async function POST(req: NextRequest, { params }: Params) {
   const { id: oldHouseholderId } = await params;
   const { memberId, deathDate, dharmaName, dharmaNameKana } = await req.json();
 
-  if (!memberId) {
+  if (typeof memberId !== "string" || !memberId) {
     return NextResponse.json({ error: "memberIdは必須です" }, { status: 400 });
   }
 

@@ -6,6 +6,7 @@ import {
   getMemberDelegate,
 } from "@/lib/prisma-models";
 import { requireAuth } from "@/lib/require-auth";
+import { apiErrorResponse } from "@/lib/api-error";
 import { compareHouseholderGojuon } from "@/lib/householder-sort";
 
 export const runtime = "nodejs";
@@ -217,10 +218,6 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ year, month, items });
   } catch (error) {
-    console.error("GET /api/kakocho/nenkai error:", error);
-    return NextResponse.json(
-      { error: (error as Error).message || "エラーが発生しました" },
-      { status: 500 }
-    );
+    return apiErrorResponse("GET /api/kakocho/nenkai", error);
   }
 }

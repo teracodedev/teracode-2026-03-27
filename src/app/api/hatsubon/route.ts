@@ -6,6 +6,7 @@ import {
   getMemberDelegate,
 } from "@/lib/prisma-models";
 import { requireAuth } from "@/lib/require-auth";
+import { apiErrorResponse } from "@/lib/api-error";
 import { compareHouseholderGojuon } from "@/lib/householder-sort";
 
 export const runtime = "nodejs";
@@ -186,10 +187,6 @@ export async function GET() {
       items,
     });
   } catch (error) {
-    console.error("GET /api/hatsubon error:", error);
-    return NextResponse.json(
-      { error: (error as Error).message || "エラーが発生しました" },
-      { status: 500 },
-    );
+    return apiErrorResponse("GET /api/hatsubon", error);
   }
 }

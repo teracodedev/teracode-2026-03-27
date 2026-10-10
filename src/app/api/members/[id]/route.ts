@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getMemberDelegate, getHouseholderFieldMap, getHouseholderModelKind } from "@/lib/prisma-models";
 import { requireAuth } from "@/lib/require-auth";
+import { apiErrorResponse } from "@/lib/api-error";
 
 export const runtime = "nodejs";
 
@@ -44,8 +45,7 @@ export async function GET(_request: NextRequest, { params }: Params) {
 
     return NextResponse.json(member);
   } catch (error) {
-    console.error(`GET /api/members/${id} error:`, error);
-    return NextResponse.json({ error: (error as Error).message || "エラーが発生しました" }, { status: 500 });
+    return apiErrorResponse(`GET /api/members/${id}`, error);
   }
 }
 
@@ -117,7 +117,6 @@ export async function PATCH(request: NextRequest, { params }: Params) {
 
     return NextResponse.json(member);
   } catch (error) {
-    console.error(`PATCH /api/members/${id} error:`, error);
-    return NextResponse.json({ error: (error as Error).message || "更新に失敗しました" }, { status: 500 });
+    return apiErrorResponse(`PATCH /api/members/${id}`, error, "更新に失敗しました");
   }
 }

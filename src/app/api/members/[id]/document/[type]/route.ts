@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import path from "path";
 import fs from "fs";
 import { requireAuth } from "@/lib/require-auth";
+import { apiErrorResponse } from "@/lib/api-error";
 import { getMemberDelegate, getHouseholderFieldMap, getHouseholderModelKind } from "@/lib/prisma-models";
 import {
   fillDocxTemplate,
@@ -37,7 +38,7 @@ export async function GET(request: NextRequest, { params }: Params) {
 
   const { id, type } = await params;
 
-  const templateFile = TEMPLATE_MAP[type];
+  const templateFile = Object.hasOwn(TEMPLATE_MAP, type) ? TEMPLATE_MAP[type] : undefined;
   if (!templateFile) {
     return NextResponse.json({ error: "無効なドキュメント種別です" }, { status: 400 });
   }
@@ -83,11 +84,7 @@ export async function GET(request: NextRequest, { params }: Params) {
       headers: buildHeaders(downloadName),
     });
   } catch (error) {
-    console.error(`GET /api/members/${id}/document/${type} error:`, error);
-    return NextResponse.json(
-      { error: (error as Error).message || "エラーが発生しました" },
-      { status: 500 }
-    );
+    return apiErrorResponse(`GET /api/members/${id}/document/${type}`, error);
   }
 }
 

@@ -2,6 +2,9 @@ import * as yaml from "js-yaml";
 
 export { toFullWidthKatakana } from "./kana-normalize";
 
+/** 分割パターン検索は文字数に比例して条件が増えるため、これより長い検索語では行わない（巨大クエリによる DB 負荷対策） */
+export const MAX_SPLIT_SEARCH_LENGTH = 40;
+
 /**
  * フルネーム検索用の OR 条件を生成する。
  * - スペース区切り「青井 秀夫」→ familyName AND givenName の AND 条件
@@ -31,7 +34,7 @@ export function buildFullNameOrConditions(
         { givenNameKana:  { contains: kParts[1], mode: "insensitive" } },
       ]});
     }
-  } else if (q.length >= 2) {
+  } else if (q.length >= 2 && q.length <= MAX_SPLIT_SEARCH_LENGTH) {
     // スペースなし: すべての分割位置を試みる
     for (let i = 1; i < q.length; i++) {
       extra.push({ AND: [
@@ -39,7 +42,7 @@ export function buildFullNameOrConditions(
         { givenName:  { contains: q.slice(i),    mode: "insensitive" } },
       ]});
     }
-    if (qk && qk !== q) {
+    if (qk && qk !== q && qk.length <= MAX_SPLIT_SEARCH_LENGTH) {
       for (let i = 1; i < qk.length; i++) {
         extra.push({ AND: [
           { familyNameKana: { contains: qk.slice(0, i), mode: "insensitive" } },
@@ -69,7 +72,7 @@ export function buildNestedFullNameOrConditions(
       { [prefix]: { familyName: { contains: parts[0], mode: "insensitive" } } },
       { [prefix]: { givenName:  { contains: parts[1], mode: "insensitive" } } },
     ]});
-  } else if (q.length >= 2) {
+  } else if (q.length >= 2 && q.length <= MAX_SPLIT_SEARCH_LENGTH) {
     for (let i = 1; i < q.length; i++) {
       extra.push({ AND: [
         { [prefix]: { familyName: { contains: q.slice(0, i), mode: "insensitive" } } },

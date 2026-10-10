@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { auth } from "@/auth";
-import { requireAdmin as requireAdminSession } from "@/lib/require-auth";
+import { requireAuth, requireAdmin as requireAdminSession } from "@/lib/require-auth";
+import { apiErrorResponse } from "@/lib/api-error";
 import {
   DEFAULT_NENKAI_POSTCARD_FOOTER,
   DEFAULT_NENKAI_POSTCARD_INTRO,
@@ -71,18 +71,14 @@ function jsonFromRow(row: Awaited<ReturnType<typeof prisma.appConfig.findUnique>
 
 /** ログインユーザー向け: 案内ハガキ用の差出人（表面）・連絡（裏面）設定 */
 export async function GET() {
-  const session = await auth();
-  if (!session?.user) {
-    return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
-  }
+  const unauth = await requireAuth();
+  if (unauth) return unauth;
 
   try {
     const row = await prisma.appConfig.findUnique({ where: { id: CONFIG_ID } });
     return NextResponse.json(jsonFromRow(row));
   } catch (e) {
-    console.error("[GET /api/settings/nenkai-postcard]", e);
-    const msg = e instanceof Error ? e.message : String(e);
-    return NextResponse.json({ error: `読み込みに失敗しました: ${msg}` }, { status: 500 });
+    return apiErrorResponse("GET /api/settings/nenkai-postcard", e, "読み込みに失敗しました");
   }
 }
 
@@ -160,8 +156,6 @@ export async function PUT(req: NextRequest) {
     const row = await prisma.appConfig.findUnique({ where: { id: CONFIG_ID } });
     return NextResponse.json(jsonFromRow(row));
   } catch (e) {
-    console.error("[PUT /api/settings/nenkai-postcard]", e);
-    const msg = e instanceof Error ? e.message : String(e);
-    return NextResponse.json({ error: `保存に失敗しました: ${msg}` }, { status: 500 });
+    return apiErrorResponse("PUT /api/settings/nenkai-postcard", e, "保存に失敗しました");
   }
 }

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/require-auth";
+import { apiErrorResponse } from "@/lib/api-error";
+import { isTagColor } from "@/lib/tag-input";
 import * as yaml from "js-yaml";
 import JSZip from "jszip";
 
@@ -45,6 +47,31 @@ function toFloat(v: unknown): number | null {
 
 type R = Record<string, unknown>;
 
+/** 展開後の合計サイズの上限（高圧縮の ZIP 爆弾でメモリを使い切らせない） */
+const MAX_UNCOMPRESSED_BYTES = 200 * 1024 * 1024;
+
+class RestoreInputError extends Error {}
+
+/** ZIP 内ヘッダーの申告サイズは偽装できるため、実際に展開したバイト数で上限を判定する */
+function readEntryText(entry: JSZip.JSZipObject, budget: { remaining: number }): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const chunks: Buffer[] = [];
+    const stream = entry.nodeStream("nodebuffer");
+    stream
+      .on("data", (chunk: Buffer) => {
+        budget.remaining -= chunk.length;
+        if (budget.remaining < 0) {
+          stream.pause();
+          reject(new RestoreInputError("バックアップファイルの展開後のサイズが大きすぎます"));
+          return;
+        }
+        chunks.push(chunk);
+      })
+      .on("error", reject)
+      .on("end", () => resolve(Buffer.concat(chunks).toString("utf8")));
+  });
+}
+
 export async function POST(req: NextRequest) {
   const denied = await requireAdmin();
   if (denied) return denied;
@@ -61,10 +88,11 @@ export async function POST(req: NextRequest) {
 
     // --- YAML ファイルをパース ---
     const data: Record<string, R[]> = {};
+    const budget = { remaining: MAX_UNCOMPRESSED_BYTES };
     for (const [fileName, modelKey] of Object.entries(FILE_MAP)) {
       const entry = zip.file(fileName);
       if (!entry) continue;
-      const text = await entry.async("string");
+      const text = await readEntryText(entry, budget);
       const doc = yaml.load(text) as Record<string, unknown[]> | null;
       if (!doc) continue;
       const rootKey = Object.keys(doc)[0];
@@ -111,7 +139,7 @@ export async function POST(req: NextRequest) {
           data: data.tag.map((r) => ({
             id: r.id as string,
             name: r.name as string,
-            color: (r.color as string) || "#6b7280",
+            color: isTagColor(r.color) ? r.color : "#6b7280",
             createdAt: parseDate(r.createdAt) ?? new Date(),
           })),
         });
@@ -297,10 +325,9 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ ok: true, summary });
   } catch (e) {
-    console.error("リカバリーエラー:", e);
-    return NextResponse.json(
-      { error: `リカバリーに失敗しました: ${(e as Error).message}` },
-      { status: 500 },
-    );
+    if (e instanceof RestoreInputError) {
+      return NextResponse.json({ error: e.message }, { status: 400 });
+    }
+    return apiErrorResponse("POST /api/backup/restore", e, "リカバリーに失敗しました");
   }
 }

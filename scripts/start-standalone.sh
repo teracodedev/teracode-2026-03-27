@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 # Next standalone は process.env.HOSTNAME で bind アドレスを決める。
-# Linux ではシェルが HOSTNAME=ホスト名 を付与することがあり、0.0.0.0 で待ち受けられなくなるため明示する。
+# Linux ではシェルが HOSTNAME=ホスト名 を付与することがあり、意図したアドレスで待ち受けられなくなるため明示する。
+# 外部からは nginx（network_mode: host）経由でのみ受け付けるよう、ループバックにだけ bind する（3000 番を直接公開しない）。
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
-export HOSTNAME="0.0.0.0"
+export HOSTNAME="127.0.0.1"
 export PORT="${PORT:-3000}"
 # 手動起動や古い PM2 の残骸が 3000 を掴んだままだと EADDRINUSE で落ちる
 if command -v fuser >/dev/null 2>&1; then

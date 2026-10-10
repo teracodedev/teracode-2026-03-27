@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getHouseholderDelegate, getHouseholderFieldMap, getHouseholderModelKind } from "@/lib/prisma-models";
 import { requireAuth } from "@/lib/require-auth";
+import { apiErrorResponse } from "@/lib/api-error";
 import { buildFamilyRegisterName, buildFamilyRegisterNameKana } from "@/lib/family-register-names";
 import { prisma } from "@/lib/prisma";
 
@@ -50,8 +51,7 @@ export async function GET(_request: NextRequest, { params }: Params) {
 
     return NextResponse.json(householder);
   } catch (error) {
-    console.error(`GET /api/householder/${id} error:`, error);
-    return NextResponse.json({ error: (error as Error).message || "エラーが発生しました" }, { status: 500 });
+    return apiErrorResponse(`GET /api/householder/${id}`, error);
   }
 }
 
@@ -148,8 +148,7 @@ export async function PUT(request: NextRequest, { params }: Params) {
 
     return NextResponse.json(householder);
   } catch (error) {
-    console.error(`PUT /api/householder/${id} error:`, error);
-    return NextResponse.json({ error: (error as Error).message || "エラーが発生しました" }, { status: 500 });
+    return apiErrorResponse(`PUT /api/householder/${id}`, error);
   }
 }
 
@@ -167,7 +166,6 @@ export async function DELETE(_request: NextRequest, { params }: Params) {
     await delegate.delete({ where: { id } });
     return NextResponse.json({ message: "削除しました" });
   } catch (error) {
-    console.error(`DELETE /api/householder/${id} error:`, error);
-    return NextResponse.json({ error: (error as Error).message || "エラーが発生しました" }, { status: 500 });
+    return apiErrorResponse(`DELETE /api/householder/${id}`, error);
   }
 }
