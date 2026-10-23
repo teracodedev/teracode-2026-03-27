@@ -14,6 +14,7 @@ module.exports = {
       cwd: path.join(__dirname),
       script: path.join(__dirname, ".next/standalone/server.js"),
       interpreter: "node",
+      exec_mode: "fork",
       instances: 1,
       autorestart: true,
       env: {
