@@ -95,7 +95,15 @@ export async function POST(req: NextRequest) {
   const denied = await requireAdmin();
   if (denied) return denied;
 
-  const formData = await req.formData();
+  let formData: FormData;
+  try {
+    formData = await req.formData();
+  } catch {
+    return NextResponse.json(
+      { error: "ファイルの受信に失敗しました。サイズが上限を超えているか、ファイルが壊れている可能性があります。" },
+      { status: 400 },
+    );
+  }
   const file = formData.get("file") as File | null;
   if (!file) {
     return NextResponse.json({ error: "ファイルが選択されていません" }, { status: 400 });

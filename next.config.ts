@@ -23,6 +23,10 @@ const nextConfig: NextConfig = {
   },
   experimental: {
     serverSourceMaps: false,
+    // middleware がリクエスト本文を複製する上限。既定の 10MB を超える .mdb は
+    // 途中で切られ、FormData の解析に失敗して画面上は「通信エラー」になる。
+    // nginx の /api/import と /api/backup/restore と同じ 50MB。
+    proxyClientMaxBodySize: "50mb",
   },
   // X-Powered-By: Next.js でフレームワークを明かさない
   poweredByHeader: false,
