@@ -44,7 +44,8 @@ export async function POST(request: NextRequest, { params }: Params) {
     const body = await request.json();
     const { familyName, givenName, familyNameKana, givenNameKana, relation,
             postalCode, address1, address2, address3, phone1, phone2, fax, domicile,
-            birthDate, deathDate, ageAtDeath, dharmaName, dharmaNameKana, note } = body;
+            birthDate, deathDate, ageAtDeath, dharmaName, dharmaNameKana, note,
+            meinichiFusho } = body;
 
     if (!familyName) {
       return NextResponse.json({ error: "姓は必須です" }, { status: 400 });
@@ -75,6 +76,8 @@ export async function POST(request: NextRequest, { params }: Params) {
         dharmaName: dharmaName || null,
         dharmaNameKana: dharmaNameKana || null,
         note: note || null,
+        // 過去帳追加で命日なしの場合は命日不詳として扱う
+        meinichiFusho: deathDateObj ? false : Boolean(meinichiFusho),
       },
     });
 

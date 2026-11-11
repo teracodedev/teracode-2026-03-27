@@ -221,10 +221,10 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // 過去帳（命日ありの世帯員）の氏名 → 所属戸主（家族・親族台帳）
+  // 過去帳（命日あり、または命日不詳の世帯員）の氏名 → 所属戸主（家族・親族台帳）
   // 戸主名が一致しない場合のフォールバック照合用
   const deceasedMembers = await prisma.householderMember.findMany({
-    where: { deathDate: { not: null } },
+    where: { OR: [{ deathDate: { not: null } }, { meinichiFusho: true }] },
     select: {
       familyName: true,
       givenName: true,

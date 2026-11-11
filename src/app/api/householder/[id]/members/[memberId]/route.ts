@@ -70,13 +70,16 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     };
     const body = await request.json();
     const { deathDate, dharmaName, dharmaNameKana } = body;
+    const deathDateObj = deathDate ? new Date(deathDate) : null;
 
     const member = await memberDelegate.update({
       where: { id: memberId },
       data: {
-        deathDate: deathDate ? new Date(deathDate) : null,
+        deathDate: deathDateObj,
         dharmaName: dharmaName || null,
         dharmaNameKana: dharmaNameKana || null,
+        // 命日を登録したら命日不詳を解除
+        ...(deathDateObj ? { meinichiFusho: false } : {}),
       },
     });
 

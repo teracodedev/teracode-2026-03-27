@@ -328,6 +328,10 @@ export async function POST(req: NextRequest) {
       const memberBirthDate = toDate(row["生年月日"]);
       const memberDeathDate = toDate(row["命日"]);
       const ageAtDeath = pickAgeAtDeath(row) ?? calcAgeAtDeathFromDates(memberBirthDate, memberDeathDate);
+      // MTB002_家族区分: 0=家族（現在帳）, 1=故人（過去帳）
+      // 命日がなくても故人区分なら過去帳へ（命日不詳）
+      const isDeceased = row["家族区分"] === 1 || row["家族区分"] === "1";
+      const meinichiFusho = isDeceased && !memberDeathDate;
 
       await prisma.householderMember.create({
         data: {
@@ -345,6 +349,7 @@ export async function POST(req: NextRequest) {
           relation: str(row["続柄"]),
           note: str(row["個人備考"]),
           domicile: str(row["本籍"]),
+          meinichiFusho,
           annaiFuyo: familyAnnaiFuyoCol ? (row[familyAnnaiFuyoCol] === true || row[familyAnnaiFuyoCol] === 1 || row[familyAnnaiFuyoCol] === "1" || row[familyAnnaiFuyoCol] === -1) : false,
           // UTB003_家族住所 のデータがあれば住所・電話を設定
           postalCode: addr ? str(addr["〒"]) : null,

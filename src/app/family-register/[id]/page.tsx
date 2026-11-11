@@ -57,6 +57,7 @@ interface Member {
   note: string | null;
   householderId: string;
   annaiFuyo?: boolean;
+  meinichiFusho?: boolean;
 }
 
 interface Householder {
@@ -409,6 +410,7 @@ export default function FamilyRegisterDetailPage({ params }: { params: Promise<{
         ageAtDeath: resolveAgeAtDeathForSave(deceasedForm.birthDate, deceasedForm.deathDate, deceasedForm.ageAtDeath),
         dharmaName: deceasedForm.dharmaName || null,
         dharmaNameKana: deceasedForm.dharmaNameKana || null,
+        meinichiFusho: !deceasedForm.deathDate,
       }),
     });
     setSavingDeceased(false);
@@ -592,15 +594,20 @@ export default function FamilyRegisterDetailPage({ params }: { params: Promise<{
     (h.members ?? []).map((m) => ({ ...m, householderName: `${h.familyName}${h.givenName}`, householderId: h.id }))
   );
   const livingMembers = allMembers
-    .filter((m) => !m.deathDate)
+    .filter((m) => !m.deathDate && !m.meinichiFusho)
     .sort((a, b) => {
       const aKey = (a.familyNameKana || a.familyName) + (a.givenName ?? "");
       const bKey = (b.familyNameKana || b.familyName) + (b.givenName ?? "");
       return aKey.localeCompare(bKey, "ja");
     });
   const deceasedMembers = allMembers
-    .filter((m) => !!m.deathDate)
-    .sort((a, b) => new Date(b.deathDate!).getTime() - new Date(a.deathDate!).getTime());
+    .filter((m) => !!m.deathDate || !!m.meinichiFusho)
+    .sort((a, b) => {
+      if (!a.deathDate && !b.deathDate) return 0;
+      if (!a.deathDate) return 1;
+      if (!b.deathDate) return -1;
+      return new Date(b.deathDate).getTime() - new Date(a.deathDate).getTime();
+    });
   const graveContracts = householders.flatMap((h) =>
     (h.graveContracts ?? []).map((c) => ({ ...c, householderName: `${h.familyName}${h.givenName}` }))
   );
@@ -1105,7 +1112,7 @@ export default function FamilyRegisterDetailPage({ params }: { params: Promise<{
                         <td className="px-3 py-2.5 text-stone-500 whitespace-nowrap">{[m.familyNameKana, m.givenNameKana].filter(Boolean).join(" ") || "-"}</td>
                         <td className="px-3 py-2.5 text-stone-700 whitespace-nowrap">{m.dharmaName || "-"}</td>
                         <td className="px-3 py-2.5 text-stone-500 whitespace-nowrap">{m.dharmaNameKana || "-"}</td>
-                        <td className="px-3 py-2.5 text-stone-500 whitespace-nowrap">{formatDate(m.deathDate)}</td>
+                        <td className="px-3 py-2.5 text-stone-500 whitespace-nowrap">{m.deathDate ? formatDate(m.deathDate) : m.meinichiFusho ? "不詳" : "-"}</td>
                         <td className="px-3 py-2.5 text-stone-500 whitespace-nowrap">{formatAge(m)}</td>
                         <td className="px-3 py-2.5 text-stone-500 whitespace-nowrap">{m.relation || "-"}</td>
                         <td className="px-3 py-2.5 text-center">

@@ -77,45 +77,53 @@ export async function GET(request: NextRequest) {
     const baseFilter: any = {};
 
     // タグフィルター: AND条件 + NOT条件
-    const tagAndConditions = [
+    const andConditions: unknown[] = [
       ...tagIds.map((tagId: string) => ({ tags: { some: { tagId } } })),
       ...notTagIds.map((tagId: string) => ({ tags: { none: { tagId } } })),
     ];
-    if (tagAndConditions.length > 0) {
-      baseFilter.AND = tagAndConditions;
-    }
 
+    // 過去帳: 命日あり、または命日不詳（MDBの故人区分で命日なし）
     if (sort === "fusho") {
-      baseFilter.meinichiFusho = true;
+      andConditions.push({ meinichiFusho: true });
     } else {
-      baseFilter.deathDate = { not: null };
+      andConditions.push({
+        OR: [{ deathDate: { not: null } }, { meinichiFusho: true }],
+      });
     }
 
     if (era && yearStr) {
       const gYear = eraYearToGregorian(era, parseInt(yearStr, 10));
       if (gYear) {
-        baseFilter.deathDate = {
-          gte: new Date(`${gYear}-01-01`),
-          lte: new Date(`${gYear}-12-31`),
-        };
+        andConditions.push({
+          deathDate: {
+            gte: new Date(`${gYear}-01-01`),
+            lte: new Date(`${gYear}-12-31`),
+          },
+        });
       }
     }
 
     if (sort === "fumei") {
-      baseFilter[relationName] = { givenName: null };
+      andConditions.push({ [relationName]: { givenName: null } });
     }
 
     if (query) {
-      baseFilter.OR = [
-        { familyName:     { contains: query, mode: "insensitive" } },
-        { givenName:      { contains: query, mode: "insensitive" } },
-        { familyNameKana: { contains: queryKana, mode: "insensitive" } },
-        { givenNameKana:  { contains: queryKana, mode: "insensitive" } },
-        { dharmaName:     { contains: query, mode: "insensitive" } },
-        { dharmaNameKana: { contains: queryKana, mode: "insensitive" } },
-        { [relationName]: { familyName: { contains: query, mode: "insensitive" } } },
-        ...buildFullNameOrConditions(query, queryKana),
-      ];
+      andConditions.push({
+        OR: [
+          { familyName:     { contains: query, mode: "insensitive" } },
+          { givenName:      { contains: query, mode: "insensitive" } },
+          { familyNameKana: { contains: queryKana, mode: "insensitive" } },
+          { givenNameKana:  { contains: queryKana, mode: "insensitive" } },
+          { dharmaName:     { contains: query, mode: "insensitive" } },
+          { dharmaNameKana: { contains: queryKana, mode: "insensitive" } },
+          { [relationName]: { familyName: { contains: query, mode: "insensitive" } } },
+          ...buildFullNameOrConditions(query, queryKana),
+        ],
+      });
+    }
+
+    if (andConditions.length > 0) {
+      baseFilter.AND = andConditions;
     }
 
     const records = (await memberDelegate.findMany({

@@ -37,6 +37,7 @@ interface MemberDetail {
   dharmaName: string | null;
   dharmaNameKana: string | null;
   note: string | null;
+  meinichiFusho?: boolean;
   householder: {
     id: string;
     householderCode: string;
@@ -319,6 +320,7 @@ export default function MemberDetailPage({ params }: { params: Promise<{ id: str
           deathDate: editForm.deathDate || null,
           birthDate: editForm.birthDate || null,
           ageAtDeath: resolveAgeAtDeathForSave(editForm.birthDate, editForm.deathDate, editForm.ageAtDeath),
+          meinichiFusho: !editForm.deathDate && (!!member?.deathDate || !!member?.meinichiFusho),
           relation: editForm.relation || null,
           note: editForm.note || null,
           postalCode: editForm.postalCode || null,
@@ -386,7 +388,7 @@ export default function MemberDetailPage({ params }: { params: Promise<{ id: str
   if (loading) return <div className="text-center py-12 text-stone-400">読み込み中...</div>;
   if (notFound || !member) return <div className="text-center py-12 text-stone-400">記録が見つかりません</div>;
 
-  const isDeceased = !!member.deathDate;
+  const isDeceased = !!member.deathDate || !!member.meinichiFusho;
   const fullName = member.familyName + (member.givenName || "");
   const fullNameKana = [member.familyNameKana, member.givenNameKana].filter(Boolean).join(" ") || null;
 
@@ -881,11 +883,15 @@ export default function MemberDetailPage({ params }: { params: Promise<{ id: str
           </div>
           <div>
             <div className="text-xs text-stone-500 font-medium whitespace-nowrap">命日（西暦）</div>
-            <div className="text-amber-700 whitespace-nowrap">{formatDate(member.deathDate)}</div>
+            <div className="text-amber-700 whitespace-nowrap">
+              {member.deathDate ? formatDate(member.deathDate) : member.meinichiFusho ? "不詳" : "-"}
+            </div>
           </div>
           <div>
             <div className="text-xs text-stone-500 font-medium whitespace-nowrap">命日（和暦）</div>
-            <div className="text-amber-700 whitespace-nowrap">{toWareki(member.deathDate)}</div>
+            <div className="text-amber-700 whitespace-nowrap">
+              {member.deathDate ? toWareki(member.deathDate) : member.meinichiFusho ? "不詳" : "-"}
+            </div>
           </div>
           <div>
             <div className="text-xs text-stone-500 font-medium whitespace-nowrap">享年</div>

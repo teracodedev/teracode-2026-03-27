@@ -41,6 +41,7 @@ export async function GET(request: NextRequest) {
       where: {
         ...tagFilter,
         deathDate: null,
+        meinichiFusho: false, // 命日不詳の故人は過去帳へ
         [relationName]: { isActive: true },
         OR: query
           ? [

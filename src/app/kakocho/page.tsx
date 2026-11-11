@@ -25,6 +25,7 @@ interface KakochoRecord {
   dharmaName: string | null;
   dharmaNameKana: string | null;
   note: string | null;
+  meinichiFusho?: boolean;
   annaiFuyo: boolean;
   tags?: { tag: Tag }[];
   householder: {
@@ -202,7 +203,7 @@ export default function KakochoPage() {
       ) : records.length === 0 ? (
         <div className="text-center py-12 text-stone-400">
           <p>過去帳の記録がありません</p>
-          <p className="text-xs mt-2">戸主の世帯員に命日を登録すると過去帳に表示されます</p>
+          <p className="text-xs mt-2">戸主の世帯員を過去帳に登録するとここに表示されます</p>
         </div>
       ) : (
         <>
@@ -233,7 +234,11 @@ export default function KakochoPage() {
                       )}
                       <div className="text-sm text-stone-500 mt-1 flex flex-wrap gap-x-2">
                         {record.relation && <span>{record.relation}</span>}
-                        {record.deathDate && <span>命日: {formatDate(record.deathDate)}</span>}
+                        {record.deathDate ? (
+                          <span>命日: {formatDate(record.deathDate)}</span>
+                        ) : record.meinichiFusho ? (
+                          <span>命日: 不詳</span>
+                        ) : null}
                         <span>享年: {formatAgeAtDeath(record.birthDate, record.deathDate, record.ageAtDeath)}</span>
                       </div>
                       {record.dharmaName && (
@@ -320,7 +325,9 @@ export default function KakochoPage() {
                       <td className="px-4 py-3 text-stone-600 text-sm">
                         {record.dharmaName || <span className="text-stone-300">未登録</span>}
                       </td>
-                      <td className="px-4 py-3 text-stone-600 text-sm">{formatDate(record.deathDate)}</td>
+                      <td className="px-4 py-3 text-stone-600 text-sm">
+                        {record.deathDate ? formatDate(record.deathDate) : record.meinichiFusho ? "不詳" : "-"}
+                      </td>
                       <td className="px-4 py-3 text-stone-600 text-sm">{formatAgeAtDeath(record.birthDate, record.deathDate, record.ageAtDeath)}</td>
                       <td className="px-4 py-3 text-stone-600 text-sm">{record.relation || "-"}</td>
                       <td className="px-4 py-3">

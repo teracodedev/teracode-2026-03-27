@@ -151,6 +151,7 @@ export default function MdbImportPage() {
           <ul className="list-disc list-inside space-y-0.5 text-amber-700">
             <li>既存データは全て削除され、インポートデータで上書きされます。</li>
             <li>対象テーブル: UTB001_戸主（戸主台帳）・UTB002_家族（家族員）・住所履歴</li>
+            <li>家族区分が「故人」の人は命日がなくても過去帳（命日不詳）として取り込みます。</li>
             <li>戸主の「住所履歴」欄も過去の住所として取り込みます。</li>
             <li>大量データのインポートには数分かかる場合があります。</li>
           </ul>

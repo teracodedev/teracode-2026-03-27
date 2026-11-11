@@ -108,7 +108,12 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     if (annaiFuyo         !== undefined) updateData.annaiFuyo         = Boolean(annaiFuyo);
     if (keijiFuyo         !== undefined) updateData.keijiFuyo         = Boolean(keijiFuyo);
     if (notePrintDisabled !== undefined) updateData.notePrintDisabled = Boolean(notePrintDisabled);
-    if (meinichiFusho     !== undefined) updateData.meinichiFusho     = Boolean(meinichiFusho);
+    // 命日が入ったら命日不詳を解除。命日なしで明示指定があれば従う
+    if (updateData.deathDate) {
+      updateData.meinichiFusho = false;
+    } else if (meinichiFusho !== undefined) {
+      updateData.meinichiFusho = Boolean(meinichiFusho);
+    }
 
     const member = await memberDelegate.update({
       where: { id },
