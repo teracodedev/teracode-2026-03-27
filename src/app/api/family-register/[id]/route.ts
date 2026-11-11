@@ -25,6 +25,12 @@ export async function GET(_req: NextRequest, { params }: Params) {
                 histories: { orderBy: { transferredAt: "desc" } },
               },
             },
+            _count: {
+              select: {
+                relatedLedgersFrom: true,
+                relatedLedgersTo: true,
+              },
+            },
           },
         },
       },
@@ -35,16 +41,20 @@ export async function GET(_req: NextRequest, { params }: Params) {
     const normalized = {
       ...register,
       householders: h
-        ? {
-            ...h,
-            graveContracts: h.graveContracts.map((c) => {
-              const { histories, ...rest } = c;
-              return {
-                ...rest,
-                startDate: effectiveGraveContractStartDate(c, histories),
-              };
-            }),
-          }
+        ? (() => {
+            const { _count, ...rest } = h;
+            return {
+              ...rest,
+              relatedLedgerCount: (_count?.relatedLedgersFrom ?? 0) + (_count?.relatedLedgersTo ?? 0),
+              graveContracts: h.graveContracts.map((c) => {
+                const { histories, ...contractRest } = c;
+                return {
+                  ...contractRest,
+                  startDate: effectiveGraveContractStartDate(c, histories),
+                };
+              }),
+            };
+          })()
         : null,
     };
 

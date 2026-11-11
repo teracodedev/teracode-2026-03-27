@@ -86,6 +86,7 @@ interface Householder {
   leftAt: string | null;
   members: Member[];
   graveContracts?: GraveContract[];
+  relatedLedgerCount?: number;
 }
 
 interface RelatedLedgerLink {
@@ -260,6 +261,7 @@ export default function FamilyRegisterDetailPage({ params }: { params: Promise<{
   const [relatedTargetLabel, setRelatedTargetLabel] = useState("");
   const [relatedRelation, setRelatedRelation] = useState("");
   const [savingRelated, setSavingRelated] = useState(false);
+  const [hasRelatedLedgers, setHasRelatedLedgers] = useState(false);
 
   const fetchData = useCallback(async () => {
     try {
@@ -282,11 +284,15 @@ export default function FamilyRegisterDetailPage({ params }: { params: Promise<{
         setEditName(row.name);
         setEditNameKana(row.nameKana || "");
         setEditNote(row.note || "");
+        const hh = toHouseholderList(row.householders)[0];
+        setHasRelatedLedgers((hh?.relatedLedgerCount ?? 0) > 0);
       } else {
         setData(null);
+        setHasRelatedLedgers(false);
       }
     } catch {
       setData(null);
+      setHasRelatedLedgers(false);
     } finally {
       setLoading(false);
     }
@@ -608,12 +614,16 @@ export default function FamilyRegisterDetailPage({ params }: { params: Promise<{
       const rows = await res.json();
       if (!res.ok) {
         setRelatedLinks([]);
+        setHasRelatedLedgers(false);
         setRelatedError((rows as { error?: string }).error || "関係先の取得に失敗しました");
         return;
       }
-      setRelatedLinks(Array.isArray(rows) ? rows : []);
+      const list = Array.isArray(rows) ? rows : [];
+      setRelatedLinks(list);
+      setHasRelatedLedgers(list.length > 0);
     } catch {
       setRelatedLinks([]);
+      setHasRelatedLedgers(false);
       setRelatedError("関係先の取得に失敗しました");
     } finally {
       setRelatedLoading(false);
@@ -867,7 +877,11 @@ export default function FamilyRegisterDetailPage({ params }: { params: Promise<{
                     <button
                       type="button"
                       onClick={openRelatedModal}
-                      className="border border-amber-300 text-amber-700 px-3 py-1 rounded-lg text-sm font-medium hover:bg-amber-50">
+                      className={
+                        hasRelatedLedgers
+                          ? "border border-amber-300 text-amber-700 px-3 py-1 rounded-lg text-sm font-medium hover:bg-amber-50"
+                          : "border border-stone-300 text-stone-600 px-3 py-1 rounded-lg text-sm font-medium hover:bg-stone-50"
+                      }>
                       関係先の台帳
                     </button>
                     <button
