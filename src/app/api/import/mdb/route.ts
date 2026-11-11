@@ -168,6 +168,7 @@ export async function POST(req: NextRequest) {
   }
 
   // ───── 既存データをクリア（外部キー制約の順序で削除） ─────
+  await prisma.relatedLedger.deleteMany();
   await prisma.householderAddressHistory.deleteMany();
   await prisma.householderMember.deleteMany();
   await prisma.householder.deleteMany();
@@ -189,6 +190,7 @@ export async function POST(req: NextRequest) {
   let householderCount = 0;
   let memberCount = 0;
   let addressHistoryCount = 0;
+  let relatedLedgerCount = 0;
   const errorList: string[] = [];
 
   // ───── 戸主をインポート ─────
@@ -367,10 +369,70 @@ export async function POST(req: NextRequest) {
     }
   }
 
+  // ───── 関係先の台帳（UTC001_リンク台帳）をインポート ─────
+  // Access は双方向に2行持つため、ペアを1件に正規化して保存する
+  if (tableNames.includes("UTC001_リンク台帳")) {
+    const linkRows = reader.getTable("UTC001_リンク台帳").getData();
+    const seenPairs = new Set<string>();
+    const pendingLinks: {
+      householderId: string;
+      relatedHouseholderId: string;
+      relation: string | null;
+    }[] = [];
+
+    for (const row of linkRows) {
+      try {
+        const fromMdbId = row["台帳ID"] as number;
+        const toMdbId = row["相手台帳ID"] as number;
+        const fromId = idMap.get(fromMdbId);
+        const toId = idMap.get(toMdbId);
+        if (!fromId || !toId) {
+          errorList.push(
+            `関係先 LinkID=${row["LinkID"]}: 対応する戸主が見つかりません（台帳ID=${fromMdbId}, 相手台帳ID=${toMdbId}）`,
+          );
+          continue;
+        }
+        if (fromId === toId) continue;
+
+        const pairKey = [fromId, toId].sort().join(":");
+        if (seenPairs.has(pairKey)) continue;
+        seenPairs.add(pairKey);
+
+        pendingLinks.push({
+          householderId: fromId,
+          relatedHouseholderId: toId,
+          relation: str(row["関係"]),
+        });
+      } catch (e) {
+        errorList.push(`関係先 LinkID=${row["LinkID"]}: ${(e as Error).message}`);
+      }
+    }
+
+    if (pendingLinks.length > 0) {
+      try {
+        const result = await prisma.relatedLedger.createMany({ data: pendingLinks });
+        relatedLedgerCount = result.count;
+      } catch (e) {
+        errorList.push(`関係先の一括登録: ${(e as Error).message}`);
+        for (const link of pendingLinks) {
+          try {
+            await prisma.relatedLedger.create({ data: link });
+            relatedLedgerCount++;
+          } catch (err) {
+            errorList.push(
+              `関係先 householderId=${link.householderId} related=${link.relatedHouseholderId}: ${(err as Error).message}`,
+            );
+          }
+        }
+      }
+    }
+  }
+
   return NextResponse.json({
     householders: householderCount,
     members: memberCount,
     addressHistories: addressHistoryCount,
+    relatedLedgers: relatedLedgerCount,
     errors: errorList.length,
     errorDetails: errorList.slice(0, 50),
     debug: {
@@ -379,6 +441,7 @@ export async function POST(req: NextRequest) {
       familyColumns,
       householderColumns,
       hasAddressHistoryColumn: householderColumns.includes("住所履歴"),
+      hasRelatedLedgerTable: tableNames.includes("UTC001_リンク台帳"),
     },
   });
 }

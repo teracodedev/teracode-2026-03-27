@@ -53,6 +53,23 @@ model Householder {
   addressHistories HouseholderAddressHistory[]
   tags             HouseholderTag[]
   graveContracts   GraveContract[]
+  relatedLedgersFrom RelatedLedger[]     @relation("RelatedLedgerFrom")
+  relatedLedgersTo   RelatedLedger[]     @relation("RelatedLedgerTo")
+}
+
+/// 関係先の台帳（戸主どうしのリンク。Access UTC001_リンク台帳 相当）
+model RelatedLedger {
+  id                   String      @id @default(uuid())
+  householderId        String
+  relatedHouseholderId String
+  relation             String?
+  createdAt            DateTime    @default(now())
+  updatedAt            DateTime    @updatedAt
+  householder          Householder @relation("RelatedLedgerFrom", fields: [householderId], references: [id], onDelete: Cascade)
+  relatedHouseholder   Householder @relation("RelatedLedgerTo", fields: [relatedHouseholderId], references: [id], onDelete: Cascade)
+
+  @@unique([householderId, relatedHouseholderId])
+  @@index([relatedHouseholderId])
 }
 
 model HouseholderAddressHistory {

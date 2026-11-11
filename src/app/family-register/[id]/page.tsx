@@ -88,6 +88,20 @@ interface Householder {
   graveContracts?: GraveContract[];
 }
 
+interface RelatedLedgerLink {
+  id: string;
+  relation: string | null;
+  relatedHouseholder: {
+    id: string;
+    familyName: string;
+    givenName: string;
+    familyNameKana: string | null;
+    givenNameKana: string | null;
+    familyRegisterId: string | null;
+    isActive: boolean;
+  };
+}
+
 interface FamilyRegister {
   id: string;
   registerCode: string;
@@ -232,6 +246,20 @@ export default function FamilyRegisterDetailPage({ params }: { params: Promise<{
   const [moveResults, setMoveResults] = useState<{ id: string; familyName: string; givenName: string }[]>([]);
   const [moveTargetId, setMoveTargetId] = useState<string | null>(null);
   const [savingMove, setSavingMove] = useState(false);
+
+  // 関係先の台帳 モーダル
+  const [relatedModalOpen, setRelatedModalOpen] = useState(false);
+  const [relatedLinks, setRelatedLinks] = useState<RelatedLedgerLink[]>([]);
+  const [relatedLoading, setRelatedLoading] = useState(false);
+  const [relatedError, setRelatedError] = useState("");
+  const [relatedFormMode, setRelatedFormMode] = useState<"idle" | "add" | "edit">("idle");
+  const [editingRelatedId, setEditingRelatedId] = useState<string | null>(null);
+  const [relatedQuery, setRelatedQuery] = useState("");
+  const [relatedSearchResults, setRelatedSearchResults] = useState<{ id: string; familyName: string; givenName: string; familyNameKana: string | null; givenNameKana: string | null }[]>([]);
+  const [relatedTargetId, setRelatedTargetId] = useState<string | null>(null);
+  const [relatedTargetLabel, setRelatedTargetLabel] = useState("");
+  const [relatedRelation, setRelatedRelation] = useState("");
+  const [savingRelated, setSavingRelated] = useState(false);
 
   const fetchData = useCallback(async () => {
     try {
@@ -561,6 +589,129 @@ export default function FamilyRegisterDetailPage({ params }: { params: Promise<{
     setMoveResults(Array.isArray(rows) ? rows : []);
   };
 
+  const resetRelatedForm = () => {
+    setRelatedFormMode("idle");
+    setEditingRelatedId(null);
+    setRelatedQuery("");
+    setRelatedSearchResults([]);
+    setRelatedTargetId(null);
+    setRelatedTargetLabel("");
+    setRelatedRelation("");
+    setRelatedError("");
+  };
+
+  const fetchRelatedLinks = async (householderId: string) => {
+    setRelatedLoading(true);
+    setRelatedError("");
+    try {
+      const res = await fetchWithAuth(`/api/householder/${householderId}/related-ledgers`);
+      const rows = await res.json();
+      if (!res.ok) {
+        setRelatedLinks([]);
+        setRelatedError((rows as { error?: string }).error || "関係先の取得に失敗しました");
+        return;
+      }
+      setRelatedLinks(Array.isArray(rows) ? rows : []);
+    } catch {
+      setRelatedLinks([]);
+      setRelatedError("関係先の取得に失敗しました");
+    } finally {
+      setRelatedLoading(false);
+    }
+  };
+
+  const openRelatedModal = async () => {
+    const householderId = toHouseholderList(data?.householders ?? null)[0]?.id;
+    if (!householderId) return;
+    resetRelatedForm();
+    setRelatedModalOpen(true);
+    await fetchRelatedLinks(householderId);
+  };
+
+  const searchRelatedTargets = async (q: string) => {
+    if (!q.trim()) { setRelatedSearchResults([]); return; }
+    const res = await fetchWithAuth(`/api/householder?q=${encodeURIComponent(q)}&active=false`);
+    const rows = await res.json();
+    const currentId = toHouseholderList(data?.householders ?? null)[0]?.id;
+    setRelatedSearchResults(
+      Array.isArray(rows)
+        ? rows.filter((r: { id: string }) => r.id !== currentId)
+        : [],
+    );
+  };
+
+  const handleSaveRelated = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const householderId = householders[0]?.id;
+    if (!householderId) return;
+    if (!relatedTargetId) {
+      setRelatedError("関係先の戸主を選択してください");
+      return;
+    }
+    setSavingRelated(true);
+    setRelatedError("");
+    try {
+      const isEdit = relatedFormMode === "edit" && editingRelatedId;
+      const res = await fetchWithAuth(
+        isEdit
+          ? `/api/householder/${householderId}/related-ledgers/${editingRelatedId}`
+          : `/api/householder/${householderId}/related-ledgers`,
+        {
+          method: isEdit ? "PUT" : "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            relatedHouseholderId: relatedTargetId,
+            relation: relatedRelation.trim() || null,
+          }),
+        },
+      );
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setRelatedError((body as { error?: string }).error || "保存に失敗しました");
+        return;
+      }
+      resetRelatedForm();
+      await fetchRelatedLinks(householderId);
+    } catch {
+      setRelatedError("保存に失敗しました");
+    } finally {
+      setSavingRelated(false);
+    }
+  };
+
+  const startEditRelated = (link: RelatedLedgerLink) => {
+    setRelatedFormMode("edit");
+    setEditingRelatedId(link.id);
+    setRelatedTargetId(link.relatedHouseholder.id);
+    setRelatedTargetLabel(`${link.relatedHouseholder.familyName} ${link.relatedHouseholder.givenName}`);
+    setRelatedQuery(`${link.relatedHouseholder.familyName} ${link.relatedHouseholder.givenName}`);
+    setRelatedSearchResults([]);
+    setRelatedRelation(link.relation || "");
+    setRelatedError("");
+  };
+
+  const handleDeleteRelated = async (link: RelatedLedgerLink) => {
+    const householderId = householders[0]?.id;
+    if (!householderId) return;
+    const name = `${link.relatedHouseholder.familyName} ${link.relatedHouseholder.givenName}`;
+    if (!confirm(`${name} との関係を削除しますか？`)) return;
+    setRelatedError("");
+    try {
+      const res = await fetchWithAuth(`/api/householder/${householderId}/related-ledgers/${link.id}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        setRelatedError((body as { error?: string }).error || "削除に失敗しました");
+        return;
+      }
+      if (editingRelatedId === link.id) resetRelatedForm();
+      await fetchRelatedLinks(householderId);
+    } catch {
+      setRelatedError("削除に失敗しました");
+    }
+  };
+
   // 別の世帯へ移動 - 実行
   const handleMoveTo = async () => {
     if (!moveModal || !moveTargetId) return;
@@ -712,7 +863,13 @@ export default function FamilyRegisterDetailPage({ params }: { params: Promise<{
                       </div>
                     )}
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap justify-end">
+                    <button
+                      type="button"
+                      onClick={openRelatedModal}
+                      className="border border-amber-300 text-amber-700 px-3 py-1 rounded-lg text-sm font-medium hover:bg-amber-50">
+                      関係先の台帳
+                    </button>
                     <button
                       onClick={() => setHouseholderKakochoModal(true)}
                       className="border border-amber-300 text-amber-700 px-3 py-1 rounded-lg text-sm font-medium hover:bg-amber-50">
@@ -1247,6 +1404,174 @@ export default function FamilyRegisterDetailPage({ params }: { params: Promise<{
               </button>
             </div>
           </form>
+        </div>
+      )}
+
+      {/* 関係先の台帳 モーダル */}
+      {relatedModalOpen && householders[0] && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-xl w-full max-w-lg shadow-xl mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="px-6 py-4 border-b border-stone-100 flex items-center justify-between gap-3">
+              <div>
+                <h3 className="font-bold text-stone-700">関係先の台帳</h3>
+                <p className="text-xs text-stone-400 mt-0.5">
+                  {householders[0].familyName} {householders[0].givenName} との関係
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => { setRelatedModalOpen(false); resetRelatedForm(); }}
+                className="border border-stone-300 text-stone-600 px-3 py-1 rounded-lg text-sm">
+                閉じる
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4">
+              {relatedError && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">{relatedError}</div>
+              )}
+
+              {relatedLoading ? (
+                <p className="text-sm text-stone-400 text-center py-6">読み込み中...</p>
+              ) : relatedLinks.length === 0 ? (
+                <p className="text-sm text-stone-400 text-center py-4">関係先は登録されていません</p>
+              ) : (
+                <div className="border border-stone-200 rounded-lg divide-y divide-stone-100">
+                  {relatedLinks.map((link) => {
+                    const rh = link.relatedHouseholder;
+                    const name = `${rh.familyName} ${rh.givenName}`;
+                    return (
+                      <div key={link.id} className="px-3 py-3 flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          {rh.familyRegisterId ? (
+                            <Link
+                              href={`/family-register/${rh.familyRegisterId}`}
+                              className="font-medium text-stone-800 hover:text-amber-700"
+                              onClick={() => { setRelatedModalOpen(false); resetRelatedForm(); }}
+                            >
+                              {name}
+                            </Link>
+                          ) : (
+                            <span className="font-medium text-stone-800">{name}</span>
+                          )}
+                          {(rh.familyNameKana || rh.givenNameKana) && (
+                            <div className="text-xs text-stone-400">{rh.familyNameKana} {rh.givenNameKana}</div>
+                          )}
+                          <div className="text-sm text-stone-600 mt-1 whitespace-pre-wrap">
+                            {link.relation || "（関係の記載なし）"}
+                          </div>
+                          {!rh.isActive && (
+                            <span className="inline-block mt-1 text-xs px-2 py-0.5 rounded-full bg-stone-100 text-stone-500">離檀</span>
+                          )}
+                        </div>
+                        <div className="flex shrink-0 gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => startEditRelated(link)}
+                            className="border border-stone-300 text-stone-600 px-2.5 py-1 rounded-lg text-xs hover:bg-stone-50">
+                            編集
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteRelated(link)}
+                            className="border border-red-200 text-red-600 px-2.5 py-1 rounded-lg text-xs hover:bg-red-50">
+                            削除
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {relatedFormMode === "idle" ? (
+                <div className="flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => { setRelatedFormMode("add"); setRelatedError(""); }}
+                    className="bg-amber-600 text-white px-4 py-1.5 rounded-lg text-sm font-medium hover:bg-amber-700">
+                    ＋ 追加
+                  </button>
+                </div>
+              ) : (
+                <form onSubmit={handleSaveRelated} className="border border-amber-200 rounded-lg p-4 space-y-3">
+                  <h4 className="font-medium text-stone-700 text-sm">
+                    {relatedFormMode === "edit" ? "関係先を編集" : "関係先を追加"}
+                  </h4>
+                  <div>
+                    <label className="block text-xs text-stone-500 mb-1">関係先の戸主 <span className="text-red-500">*</span></label>
+                    {relatedFormMode === "edit" && relatedTargetLabel && (
+                      <p className="text-sm text-stone-600 mb-2">現在: {relatedTargetLabel}</p>
+                    )}
+                    <input
+                      value={relatedQuery}
+                      onChange={(e) => {
+                        setRelatedQuery(e.target.value);
+                        searchRelatedTargets(e.target.value);
+                        setRelatedTargetId(null);
+                        setRelatedTargetLabel("");
+                      }}
+                      className={inputCls}
+                      placeholder="戸主名で検索..."
+                    />
+                    {relatedSearchResults.length > 0 && (
+                      <div className="border border-stone-200 rounded-lg max-h-40 overflow-y-auto mt-2">
+                        {relatedSearchResults.map((r) => (
+                          <button
+                            key={r.id}
+                            type="button"
+                            onClick={() => {
+                              setRelatedTargetId(r.id);
+                              setRelatedTargetLabel(`${r.familyName} ${r.givenName}`);
+                              setRelatedQuery(`${r.familyName} ${r.givenName}`);
+                              setRelatedSearchResults([]);
+                            }}
+                            className={`w-full text-left px-3 py-2 text-sm border-b border-stone-100 last:border-0 ${
+                              relatedTargetId === r.id ? "bg-amber-50 text-amber-700 font-medium" : "text-stone-700 hover:bg-stone-50"
+                            }`}
+                          >
+                            {r.familyName} {r.givenName}
+                            {(r.familyNameKana || r.givenNameKana) && (
+                              <span className="ml-2 text-xs text-stone-400">{r.familyNameKana} {r.givenNameKana}</span>
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    {relatedQuery && relatedSearchResults.length === 0 && !relatedTargetId && (
+                      <p className="text-xs text-stone-400 mt-1">該当する戸主が見つかりません</p>
+                    )}
+                    {relatedTargetId && (
+                      <p className="text-xs text-amber-700 mt-1">選択中: {relatedTargetLabel}</p>
+                    )}
+                  </div>
+                  <div>
+                    <label className="block text-xs text-stone-500 mb-1">関係</label>
+                    <input
+                      value={relatedRelation}
+                      onChange={(e) => setRelatedRelation(e.target.value)}
+                      className={inputCls}
+                      placeholder="例: ○○は△△の親戚"
+                    />
+                  </div>
+                  <div className="flex gap-2 justify-end pt-1">
+                    <button
+                      type="button"
+                      onClick={resetRelatedForm}
+                      className="border border-stone-300 text-stone-600 px-4 py-1.5 rounded-lg text-sm">
+                      キャンセル
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={savingRelated || !relatedTargetId}
+                      className="bg-amber-600 text-white px-4 py-1.5 rounded-lg text-sm font-medium disabled:opacity-50">
+                      {savingRelated ? "保存中..." : relatedFormMode === "edit" ? "更新" : "追加"}
+                    </button>
+                  </div>
+                </form>
+              )}
+            </div>
+          </div>
         </div>
       )}
 

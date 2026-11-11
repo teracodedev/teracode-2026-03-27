@@ -6,6 +6,7 @@ type HouseholderImportResult = {
   householders: number;
   members: number;
   addressHistories?: number;
+  relatedLedgers?: number;
   errors: number;
   errorDetails: string[];
   debug?: {
@@ -14,6 +15,7 @@ type HouseholderImportResult = {
     familyColumns: string[];
     householderColumns: string[];
     hasAddressHistoryColumn?: boolean;
+    hasRelatedLedgerTable?: boolean;
   };
 };
 
@@ -235,7 +237,7 @@ export default function MdbImportPage() {
               <h3 className="font-semibold text-stone-700">インポート結果</h3>
             </div>
             <div className="p-6 space-y-4">
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
                 <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
                   <div className="text-3xl font-bold text-green-700">{householderResult.householders}</div>
                   <div className="text-sm text-green-600 mt-1">戸主</div>
@@ -247,6 +249,10 @@ export default function MdbImportPage() {
                 <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 text-center">
                   <div className="text-3xl font-bold text-amber-700">{householderResult.addressHistories ?? 0}</div>
                   <div className="text-sm text-amber-600 mt-1">住所履歴</div>
+                </div>
+                <div className="bg-violet-50 border border-violet-200 rounded-lg p-4 text-center">
+                  <div className="text-3xl font-bold text-violet-700">{householderResult.relatedLedgers ?? 0}</div>
+                  <div className="text-sm text-violet-600 mt-1">関係先</div>
                 </div>
                 <div className={`border rounded-lg p-4 text-center ${householderResult.errors > 0 ? "bg-red-50 border-red-200" : "bg-stone-50 border-stone-200"}`}>
                   <div className={`text-3xl font-bold ${householderResult.errors > 0 ? "text-red-700" : "text-stone-400"}`}>
@@ -260,7 +266,7 @@ export default function MdbImportPage() {
 
               {householderResult.errors === 0 && (
                 <div className="p-3 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm">
-                  インポートが完了しました。戸主 {householderResult.householders} 件・家族員 {householderResult.members} 件・住所履歴 {householderResult.addressHistories ?? 0} 件を登録しました。
+                  インポートが完了しました。戸主 {householderResult.householders} 件・家族員 {householderResult.members} 件・住所履歴 {householderResult.addressHistories ?? 0} 件・関係先 {householderResult.relatedLedgers ?? 0} 件を登録しました。
                 </div>
               )}
 

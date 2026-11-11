@@ -14,6 +14,7 @@ const FILE_MAP: Record<string, string> = {
   "戸主.yaml": "householder",
   "世帯員.yaml": "member",
   "住所変更履歴.yaml": "addressHistory",
+  "関係先台帳.yaml": "relatedLedger",
   "タグ.yaml": "tag",
   "戸主タグ.yaml": "householderTag",
   "世帯員タグ.yaml": "memberTag",
@@ -110,6 +111,7 @@ export async function POST(req: NextRequest) {
       await tx.gravePlot.deleteMany();
       await tx.memberTag.deleteMany();
       await tx.householderTag.deleteMany();
+      await tx.relatedLedger.deleteMany();
       await tx.householderAddressHistory.deleteMany();
       await tx.householderMember.deleteMany();
       await tx.householder.deleteMany();
@@ -229,6 +231,20 @@ export async function POST(req: NextRequest) {
             address3: (r.address3 as string) || null,
             movedAt: parseDate(r.movedAt) ?? new Date(),
             note: (r.note as string) || null,
+          })),
+        });
+      }
+
+      // 5b. 関係先台帳
+      if (data.relatedLedger?.length) {
+        await tx.relatedLedger.createMany({
+          data: data.relatedLedger.map((r) => ({
+            id: r.id as string,
+            householderId: r.householderId as string,
+            relatedHouseholderId: r.relatedHouseholderId as string,
+            relation: (r.relation as string) || null,
+            createdAt: parseDate(r.createdAt) ?? new Date(),
+            updatedAt: parseDate(r.updatedAt) ?? new Date(),
           })),
         });
       }
