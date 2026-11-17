@@ -3,11 +3,13 @@
 import { useRouteParams } from "@/lib/use-route-params";
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { fetchWithAuth } from "@/lib/fetch-with-auth";
 import { PostalCodeSearch } from "@/components/PostalCodeSearch";
 import { RelationInput } from "@/components/RelationInput";
 import { TagManager } from "@/components/TagManager";
 import { formatPostalCode, lookupPostalCode } from "@/lib/postal-code";
+import { willInheritTransferPhone1 } from "@/lib/phone-utils";
 import {
   getUpcomingMemorialDisplay,
   memorialDateToYmd,
@@ -45,6 +47,7 @@ interface MemberDetail {
     givenName: string;
     familyNameKana: string | null;
     givenNameKana: string | null;
+    postalCode: string | null;
     address1: string | null;
     address2: string | null;
     address3: string | null;
@@ -214,9 +217,11 @@ function toDateInputValue(dateStr: string | null): string {
 
 export default function MemberDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = useRouteParams(params);
+  const router = useRouter();
   const [member, setMember] = useState<MemberDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [transferring, setTransferring] = useState(false);
 
   // Googleカレンダー用テキスト
   const [ceremonyTime, setCeremonyTime] = useState("11:00");
@@ -385,6 +390,72 @@ export default function MemberDetailPage({ params }: { params: Promise<{ id: str
     }
   }
 
+  async function handleTransfer() {
+    if (!member || transferring) return;
+    const memberName = `${member.familyName}${member.givenName ? " " + member.givenName : ""}`;
+    if (!confirm(`${memberName} を新しい戸主に交代しますか？\n現在の戸主は現在帳に移ります。`)) return;
+
+    const hasOwnAddress =
+      Boolean(member.postalCode?.trim()) ||
+      Boolean(member.address1?.trim()) ||
+      Boolean(member.address2?.trim()) ||
+      Boolean(member.address3?.trim());
+    if (!hasOwnAddress) {
+      const oldAddressLabel = [
+        member.householder.postalCode ? `〒${member.householder.postalCode}` : null,
+        member.householder.address1,
+        member.householder.address2,
+        member.householder.address3,
+      ]
+        .filter(Boolean)
+        .join(" ") || "（住所未設定）";
+      if (!confirm(`${memberName} は住所が未設定のため、旧戸主の住所を引き継ぎます。\n引き継ぎ住所: ${oldAddressLabel}\nこの内容で実行しますか？`)) {
+        return;
+      }
+    }
+    if (willInheritTransferPhone1(member.phone1, member.householder.phone1)) {
+      const phoneText = member.householder.phone1 || "（電話番号未設定）";
+      if (!confirm(`${memberName} は電話番号1が未設定のため、旧戸主の固定電話を引き継ぎます。\n引き継ぎ電話番号1: ${phoneText}\nこの内容で実行しますか？`)) {
+        return;
+      }
+    }
+
+    setTransferring(true);
+    try {
+      const res = await fetchWithAuth(`/api/householder/${member.householderId}/transfer`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ memberId: member.id }),
+      });
+      if (!res.ok) {
+        let message = "戸主の交代に失敗しました";
+        try {
+          const body = await res.json();
+          if (body && typeof body.error === "string" && body.error) {
+            message = body.error;
+          }
+        } catch {
+          // ignore parse error
+        }
+        alert(message);
+        return;
+      }
+      const data = await res.json().catch(() => ({} as { id?: string }));
+      const familyRegisterId = member.householder.familyRegister?.id;
+      if (familyRegisterId) {
+        router.push(`/family-register/${familyRegisterId}`);
+      } else if (data?.id) {
+        router.push(`/householder/${data.id}`);
+      } else {
+        router.push("/genzaicho");
+      }
+    } catch {
+      alert("通信エラーが発生しました");
+    } finally {
+      setTransferring(false);
+    }
+  }
+
   if (loading) return <div className="text-center py-12 text-stone-400">読み込み中...</div>;
   if (notFound || !member) return <div className="text-center py-12 text-stone-400">記録が見つかりません</div>;
 
@@ -432,6 +503,16 @@ export default function MemberDetailPage({ params }: { params: Promise<{ id: str
                     className="w-full text-left px-4 py-2 text-sm text-stone-700 hover:bg-stone-50"
                   >
                     過去帳へ移動
+                  </button>
+                  <button
+                    onClick={() => {
+                      setOpenMenu(false);
+                      void handleTransfer();
+                    }}
+                    disabled={transferring}
+                    className="w-full text-left px-4 py-2 text-sm text-stone-700 hover:bg-stone-50 disabled:opacity-50"
+                  >
+                    {transferring ? "交代中..." : "戸主の交代"}
                   </button>
                 </div>
               )}
