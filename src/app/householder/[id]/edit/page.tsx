@@ -6,6 +6,7 @@ import { safeToDateInput } from "@/lib/safe-date-input";
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { PostalCodeSearch } from "@/components/PostalCodeSearch";
+import { RelationInput } from "@/components/RelationInput";
 import { TagManager } from "@/components/TagManager";
 import { formatPostalCode, lookupPostalCode } from "@/lib/postal-code";
 import { GENDER_SELECT_OPTIONS, genderFromDb, genderToDb } from "@/lib/gender";
@@ -16,6 +17,7 @@ interface HouseholderForm {
   gender: string;
   familyNameKana: string;
   givenNameKana: string;
+  relation: string;
   postalCode: string;
   address1: string;
   address2: string;
@@ -62,6 +64,7 @@ export default function EditHouseholderPage({ params }: { params: Promise<{ id: 
     gender: "",
     familyNameKana: "",
     givenNameKana: "",
+    relation: "",
     postalCode: "",
     address1: "",
     address2: "",
@@ -94,6 +97,7 @@ export default function EditHouseholderPage({ params }: { params: Promise<{ id: 
             gender: genderFromDb(data.gender),
             familyNameKana: data.familyNameKana || "",
             givenNameKana: data.givenNameKana || "",
+            relation: data.relation || "",
             postalCode: data.postalCode || "",
             address1: data.address1 || "",
             address2: data.address2 || "",
@@ -291,6 +295,19 @@ export default function EditHouseholderPage({ params }: { params: Promise<{ id: 
                 name="givenNameKana"
                 value={form.givenNameKana}
                 onChange={handleChange}
+                className="w-full border border-stone-300 rounded-lg px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-stone-400"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-stone-600 mb-1">続柄</label>
+              <RelationInput
+                value={form.relation}
+                onChange={v => setForm(f => ({ ...f, relation: v }))}
+                referencePersonName={form.familyName || form.givenName ? `${form.familyName}${form.givenName}` : undefined}
+                placeholder="父・祖父など"
                 className="w-full border border-stone-300 rounded-lg px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-stone-400"
               />
             </div>
