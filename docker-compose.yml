@@ -13,12 +13,15 @@ services:
       - pgdata:/var/lib/postgresql/data
 
   # nginx はホストのネットワークで 80/443 を直接掴む（ports: の二重公開はしない）。
+  # image は浮動タグ + pull_policy: always で、compose up のたびに最新 alpine を取得する。
+  # （reload / restart だけではバイナリは更新されない。更新時は up -d --force-recreate nginx）
   # 「Bind for 0.0.0.0:80 failed: port is already allocated」→ 古い nginx 等が 80 を占有している。
   #   sudo docker ps --format '{{.Names}}\t{{.Ports}}' | grep -E ':80->|:443->'
   #   sudo docker stop <該当コンテナ名>
   #   sudo docker compose up -d --force-recreate nginx
   nginx:
     image: nginx:alpine
+    pull_policy: always
     restart: unless-stopped
     network_mode: host
     volumes:
